@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-10";
+import { renderOffline } from "./offline-render.js?v=20260821-11";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -134,6 +134,13 @@ function setTransportBusy(isBusy) {
   stopButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
+}
+
+function setRenderBusy(isBusy) {
+  playButton.disabled = isBusy || !buffer;
+  stopButton.disabled = isBusy || !buffer;
+  fileInput.disabled = isBusy;
+  downloadButton.disabled = !buffer;
 }
 
 async function playAudio() {
@@ -303,7 +310,7 @@ async function ensureAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-10");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-11");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -383,7 +390,13 @@ downloadButton.addEventListener("click", async () => {
     return;
   }
 
+  if (isPlaying) {
+    stopAudio();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
   renderAbortController = new AbortController();
+  setRenderBusy(true);
   downloadReadout.textContent = "creating 0%";
   downloadButton.textContent = "Cancel";
   clearDownload();
@@ -419,6 +432,7 @@ downloadButton.addEventListener("click", async () => {
   } finally {
     renderAbortController = null;
     downloadButton.textContent = "Download WAV";
+    setRenderBusy(false);
   }
 });
 
