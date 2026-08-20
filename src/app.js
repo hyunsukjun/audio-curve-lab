@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-7";
+import { renderOffline } from "./offline-render.js?v=20260821-8";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -270,8 +270,17 @@ function buildWaveform(audioBuffer) {
 
 async function ensureAudio() {
   if (!audioContext) {
-    audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-7");
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      throw new Error("Web Audio is not available in this browser.");
+    }
+
+    audioContext = new AudioContextClass();
+    if (!audioContext.audioWorklet) {
+      throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
+    }
+
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-8");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -313,8 +322,8 @@ fileInput.addEventListener("change", async () => {
   downloadReadout.textContent = "loading";
   playButton.textContent = "Play";
   node?.port.postMessage({ type: "stop", reset: true });
-  await ensureAudio();
   try {
+    await ensureAudio();
     const data = await file.arrayBuffer();
     buffer = await audioContext.decodeAudioData(data);
     buildWaveform(buffer);
@@ -338,9 +347,14 @@ fileInput.addEventListener("change", async () => {
 });
 
 playButton.addEventListener("click", async () => {
-  await ensureAudio();
-  node.port.postMessage({ type: "play" });
-  playButton.textContent = "Playing";
+  try {
+    await ensureAudio();
+    node.port.postMessage({ type: "play" });
+    playButton.textContent = "Playing";
+  } catch (error) {
+    console.error(error);
+    fileStatus.textContent = error.message;
+  }
 });
 
 stopButton.addEventListener("click", () => {
