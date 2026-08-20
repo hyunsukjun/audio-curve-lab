@@ -1,0 +1,432 @@
+import { renderOffline } from "./offline-render.js";
+
+const fileInput = document.getElementById("fileInput");
+const fileStatus = document.getElementById("fileStatus");
+const playButton = document.getElementById("playButton");
+const stopButton = document.getElementById("stopButton");
+const downloadButton = document.getElementById("downloadButton");
+const clearCurveButton = document.getElementById("clearCurveButton");
+const resetButton = document.getElementById("resetButton");
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+const stretchMode = document.getElementById("stretchMode");
+const pitchMode = document.getElementById("pitchMode");
+const panMode = document.getElementById("panMode");
+const playheadReadout = document.getElementById("playheadReadout");
+const stretchReadout = document.getElementById("stretchReadout");
+const pitchReadout = document.getElementById("pitchReadout");
+const panReadout = document.getElementById("panReadout");
+const downloadReadout = document.getElementById("downloadReadout");
+const modeReadout = document.getElementById("modeReadout");
+const pointsReadout = document.getElementById("pointsReadout");
+
+const transformSettings = {
+  grainSizeMs: 140,
+  density: 5.5,
+  randomness: 0.02,
+  outputGain: 0.95
+};
+
+const curveColors = {
+  stretch: "#6de0c0",
+  pitch: "#eb6f75",
+  pan: "#b887f4"
+};
+
+let audioContext;
+let node;
+let buffer;
+let waveform = [];
+let activeCurve = "stretch";
+let selectedPoint = null;
+let dragging = false;
+let playheadSeconds = 0;
+let currentStretch = 1;
+let currentCents = 0;
+let currentPan = 0;
+let downloadUrl = null;
+
+const curves = {
+  stretch: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+  pitch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
+  pan: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
+};
+
+const defaultCurves = {
+  stretch: () => [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+  pitch: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
+  pan: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
+};
+
+const curveLabels = {
+  stretch: "Time Stretch",
+  pitch: "Pitch",
+  pan: "Pan"
+};
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const scale = window.devicePixelRatio || 1;
+  canvas.width = Math.max(800, Math.floor(rect.width * scale));
+  canvas.height = Math.max(360, Math.floor(rect.height * scale));
+  draw();
+}
+
+function formatTime(seconds) {
+  return `${seconds.toFixed(2)} s`;
+}
+
+function formatPan(value) {
+  if (Math.abs(value) < 0.02) return "center";
+  return value < 0 ? `L ${Math.round(Math.abs(value) * 100)}` : `R ${Math.round(value * 100)}`;
+}
+
+function sortCurve(curve) {
+  curve.sort((a, b) => a.x - b.x);
+}
+
+function sendCurves() {
+  markDownloadStale();
+  if (!node) return;
+  node.port.postMessage({
+    type: "curves",
+    stretchCurve: curves.stretch,
+    pitchCurve: curves.pitch,
+    panCurve: curves.pan
+  });
+}
+
+function sendSettings() {
+  markDownloadStale();
+  if (!node) return;
+  node.port.postMessage({
+    type: "settings",
+    settings: transformSettings
+  });
+}
+
+function markDownloadStale() {
+  if (!buffer) return;
+  if (downloadUrl) {
+    URL.revokeObjectURL(downloadUrl);
+    downloadUrl = null;
+  }
+  downloadReadout.textContent = "needs export";
+}
+
+function clearDownload() {
+  if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+  downloadUrl = null;
+}
+
+function getSettings() {
+  return { ...transformSettings };
+}
+
+function valueAt(curve, x) {
+  if (x <= curve[0].x) return curve[0].y;
+  for (let i = 1; i < curve.length; i += 1) {
+    const a = curve[i - 1];
+    const b = curve[i];
+    if (x <= b.x) {
+      const t = (x - a.x) / Math.max(1e-6, b.x - a.x);
+      const eased = t * t * (3 - (2 * t));
+      return a.y + ((b.y - a.y) * eased);
+    }
+  }
+  return curve[curve.length - 1].y;
+}
+
+function drawCurve(curve, color, width, fillPoints) {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  for (let i = 0; i <= w; i += 3) {
+    const x = i / w;
+    const y = valueAt(curve, x);
+    const px = x * w;
+    const py = (1 - y) * h;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  if (fillPoints) {
+    for (const point of curve) {
+      ctx.beginPath();
+      ctx.arc(point.x * w, (1 - point.y) * h, 6 * (window.devicePixelRatio || 1), 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#111316";
+      ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function draw() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#bdc8aa";
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = "rgba(55, 65, 55, 0.36)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i += 1) {
+    const x = (i / 10) * w;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 4; i += 1) {
+    const y = (i / 4) * h;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  if (waveform.length > 0) {
+    ctx.fillStyle = "rgba(108, 101, 72, 0.38)";
+    const midTop = h * 0.32;
+    const midBottom = h * 0.70;
+    const ampTop = h * 0.24;
+    const ampBottom = h * 0.18;
+    const step = Math.max(1, Math.floor(waveform.length / w));
+    for (let x = 0; x < w; x += 1) {
+      const sample = waveform[Math.min(waveform.length - 1, x * step)] || 0;
+      ctx.fillRect(x, midTop - (sample * ampTop), 1, Math.max(1, sample * ampTop * 2));
+      ctx.fillRect(x, midBottom - (sample * ampBottom), 1, Math.max(1, sample * ampBottom * 2));
+    }
+  }
+
+  drawCurve(curves.stretch, curveColors.stretch, 3 * (window.devicePixelRatio || 1), activeCurve === "stretch");
+  drawCurve(curves.pitch, curveColors.pitch, 2.5 * (window.devicePixelRatio || 1), activeCurve === "pitch");
+  drawCurve(curves.pan, curveColors.pan, 2.5 * (window.devicePixelRatio || 1), activeCurve === "pan");
+
+  if (buffer) {
+    const x = (playheadSeconds / buffer.duration) * w;
+    ctx.strokeStyle = "#d7bc52";
+    ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  playheadReadout.textContent = formatTime(playheadSeconds);
+  stretchReadout.textContent = `${currentStretch.toFixed(2)} x`;
+  pitchReadout.textContent = `${Math.round(currentCents)} cents`;
+  panReadout.textContent = formatPan(currentPan);
+  modeReadout.textContent = curveLabels[activeCurve];
+  pointsReadout.textContent = String(curves[activeCurve].length);
+}
+
+function buildWaveform(audioBuffer) {
+  const channel = audioBuffer.getChannelData(0);
+  const buckets = 4000;
+  const samplesPerBucket = Math.max(1, Math.floor(channel.length / buckets));
+  waveform = [];
+  for (let i = 0; i < buckets; i += 1) {
+    let peak = 0;
+    const start = i * samplesPerBucket;
+    for (let j = 0; j < samplesPerBucket; j += 1) {
+      peak = Math.max(peak, Math.abs(channel[start + j] || 0));
+    }
+    waveform.push(peak);
+  }
+}
+
+async function ensureAudio() {
+  if (!audioContext) {
+    audioContext = new AudioContext();
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js");
+    node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
+      numberOfInputs: 0,
+      numberOfOutputs: 1,
+      outputChannelCount: [2]
+    });
+    node.connect(audioContext.destination);
+    node.port.onmessage = (event) => {
+      if (event.data.type === "position") {
+        playheadSeconds = event.data.seconds;
+        currentStretch = event.data.stretch;
+        currentCents = event.data.cents;
+        currentPan = event.data.pan;
+        draw();
+      } else if (event.data.type === "ended") {
+        playButton.textContent = "Play";
+        if (buffer) playheadSeconds = buffer.duration;
+        draw();
+      }
+    };
+    sendSettings();
+    sendCurves();
+  }
+  if (audioContext.state !== "running") await audioContext.resume();
+}
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  await ensureAudio();
+  const data = await file.arrayBuffer();
+  buffer = await audioContext.decodeAudioData(data);
+  buildWaveform(buffer);
+  const left = new Float32Array(buffer.getChannelData(0));
+  const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
+  node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
+  fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s`;
+  playButton.disabled = false;
+  stopButton.disabled = false;
+  downloadButton.disabled = false;
+  clearDownload();
+  downloadReadout.textContent = "ready";
+  playheadSeconds = 0;
+  draw();
+});
+
+playButton.addEventListener("click", async () => {
+  await ensureAudio();
+  node.port.postMessage({ type: "play" });
+  playButton.textContent = "Playing";
+});
+
+stopButton.addEventListener("click", () => {
+  node?.port.postMessage({ type: "stop" });
+  node?.port.postMessage({ type: "seek", seconds: 0 });
+  playheadSeconds = 0;
+  playButton.textContent = "Play";
+  draw();
+});
+
+downloadButton.addEventListener("click", async () => {
+  if (!buffer) return;
+  downloadButton.disabled = true;
+  downloadReadout.textContent = "creating 0%";
+  clearDownload();
+
+  try {
+    const rendered = await renderOffline({
+      audioBuffer: buffer,
+      curves,
+      settings: getSettings(),
+      onProgress: (progress) => {
+        downloadReadout.textContent = `creating ${Math.round(progress * 100)}%`;
+      }
+    });
+
+    downloadUrl = URL.createObjectURL(rendered.blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = "AudioCurveLab-export.wav";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    downloadReadout.textContent = rendered.truncated
+      ? `${rendered.duration.toFixed(1)} s, capped`
+      : `${rendered.duration.toFixed(1)} s`;
+  } catch (error) {
+    console.error(error);
+    downloadReadout.textContent = "export failed";
+  } finally {
+    downloadButton.disabled = false;
+  }
+});
+
+resetButton.addEventListener("click", () => {
+  curves.stretch = defaultCurves.stretch();
+  curves.pitch = defaultCurves.pitch();
+  curves.pan = defaultCurves.pan();
+  markDownloadStale();
+  sendCurves();
+  draw();
+});
+
+clearCurveButton.addEventListener("click", () => {
+  curves[activeCurve] = defaultCurves[activeCurve]();
+  selectedPoint = null;
+  markDownloadStale();
+  sendCurves();
+  draw();
+});
+
+function setActiveCurve(name) {
+  activeCurve = name;
+  stretchMode.classList.toggle("active", name === "stretch");
+  pitchMode.classList.toggle("active", name === "pitch");
+  panMode.classList.toggle("active", name === "pan");
+  draw();
+}
+
+stretchMode.addEventListener("click", () => {
+  setActiveCurve("stretch");
+});
+
+pitchMode.addEventListener("click", () => {
+  setActiveCurve("pitch");
+});
+
+panMode.addEventListener("click", () => {
+  setActiveCurve("pan");
+});
+
+sendSettings();
+
+function pointerToPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  const y = Math.max(0, Math.min(1, 1 - ((event.clientY - rect.top) / rect.height)));
+  return { x, y };
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+  const p = pointerToPoint(event);
+  const curve = curves[activeCurve];
+  const hitRadius = 0.025;
+  selectedPoint = curve.findIndex((point) => Math.abs(point.x - p.x) < hitRadius && Math.abs(point.y - p.y) < hitRadius);
+  if (selectedPoint < 0) {
+    curve.push(p);
+    sortCurve(curve);
+    selectedPoint = curve.indexOf(p);
+  }
+  dragging = true;
+  canvas.setPointerCapture(event.pointerId);
+  sendCurves();
+  draw();
+});
+
+canvas.addEventListener("pointermove", (event) => {
+  if (!dragging || selectedPoint == null) return;
+  const p = pointerToPoint(event);
+  const curve = curves[activeCurve];
+  const point = curve[selectedPoint];
+  point.x = p.x;
+  point.y = p.y;
+  sortCurve(curve);
+  selectedPoint = curve.indexOf(point);
+  sendCurves();
+  draw();
+});
+
+canvas.addEventListener("pointerup", (event) => {
+  dragging = false;
+  canvas.releasePointerCapture(event.pointerId);
+});
+
+canvas.addEventListener("dblclick", (event) => {
+  if (!buffer || !node) return;
+  const p = pointerToPoint(event);
+  playheadSeconds = p.x * buffer.duration;
+  node.port.postMessage({ type: "seek", seconds: playheadSeconds });
+  draw();
+});
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();

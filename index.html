@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audio Curve Lab</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <h1>Audio Curve Lab</h1>
+          <p class="tagline">Draw time, pitch, and space onto sound.</p>
+          <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
+        </div>
+        <div class="transport">
+          <label class="fileButton">
+            Open Audio
+            <input id="fileInput" type="file" accept="audio/*">
+          </label>
+          <button id="playButton" type="button" disabled>Play</button>
+          <button id="stopButton" type="button" disabled>Stop</button>
+          <button id="downloadButton" type="button" disabled>Download WAV</button>
+        </div>
+      </header>
+
+      <section class="editor">
+        <canvas id="waveCanvas" width="1400" height="620"></canvas>
+        <div class="legend">
+          <button id="stretchMode" class="active curveMode" type="button">Time Stretch</button>
+          <button id="pitchMode" class="curveMode" type="button">Pitch</button>
+          <button id="panMode" class="curveMode" type="button">Pan</button>
+          <button id="clearCurveButton" type="button">Clear Curve</button>
+          <button id="resetButton" type="button">Reset All</button>
+          <span><b class="stretchSwatch"></b>time stretch 1x-50x</span>
+          <span><b class="pitchSwatch"></b>pitch -2400/+2400 cents</span>
+          <span><b class="panSwatch"></b>pan L/R</span>
+        </div>
+
+        <div class="panel">
+          <div class="readout">
+            <span>Curve</span>
+            <strong id="modeReadout">Time Stretch</strong>
+          </div>
+          <div class="readout">
+            <span>Points</span>
+            <strong id="pointsReadout">2</strong>
+          </div>
+          <div class="readout">
+            <span>Engine</span>
+            <strong>Audio Transform</strong>
+          </div>
+          <div class="readout">
+            <span>Playhead</span>
+            <strong id="playheadReadout">0.00 s</strong>
+          </div>
+          <div class="readout">
+            <span>Stretch</span>
+            <strong id="stretchReadout">1.00 x</strong>
+          </div>
+          <div class="readout">
+            <span>Pitch</span>
+            <strong id="pitchReadout">0 cents</strong>
+          </div>
+          <div class="readout">
+            <span>Pan</span>
+            <strong id="panReadout">center</strong>
+          </div>
+          <div class="readout">
+            <span>WAV</span>
+            <strong id="downloadReadout">not ready</strong>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="src/app.js" type="module"></script>
+  </body>
+</html>
