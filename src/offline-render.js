@@ -27,8 +27,14 @@ function readCubic(buffer, pos) {
   return (((a * frac) + b) * frac + c) * frac + x0;
 }
 
-function stretchFromNorm(y) {
-  return Math.exp(Math.max(0, Math.min(1, y)) * Math.log(50));
+function speedFromNorm(y) {
+  const minSpeed = 0.125;
+  const maxSpeed = 4;
+  const clamped = Math.max(0, Math.min(1, y));
+  if (clamped < 0.5) {
+    return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
+  }
+  return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
 }
 
 function centsFromNorm(y) {
@@ -43,11 +49,11 @@ function envelope(phase) {
   return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
 }
 
-function estimateDuration(sourceDuration, stretchCurve) {
+function estimateDuration(sourceDuration, speedCurve) {
   let sum = 0;
   const steps = 512;
   for (let i = 0; i < steps; i += 1) {
-    sum += stretchFromNorm(valueAt(stretchCurve, (i + 0.5) / steps));
+    sum += 1 / speedFromNorm(valueAt(speedCurve, (i + 0.5) / steps));
   }
   return sourceDuration * (sum / steps);
 }
@@ -107,7 +113,7 @@ export async function renderOffline({ audioBuffer, curves, settings, onProgress 
 
   for (let outPos = 0; outPos < outLength && sourceTime < sourceDuration; outPos += hop) {
     const norm = Math.min(1, sourceTime / sourceDuration);
-    const stretch = stretchFromNorm(valueAt(curves.stretch, norm));
+    const speed = speedFromNorm(valueAt(curves.stretch, norm));
     const cents = centsFromNorm(valueAt(curves.pitch, norm));
     const pan = panFromNorm(valueAt(curves.pan, norm));
     const rate = Math.pow(2, cents / 1200);
@@ -128,7 +134,7 @@ export async function renderOffline({ audioBuffer, curves, settings, onProgress 
       outR[write] += readCubic(right, read) * env * rightPan;
     }
 
-    sourceTime += hop / (sourceRate * stretch);
+    sourceTime += (hop / sourceRate) * speed;
     const progress = outPos / outLength;
     if (progress - lastProgress > 0.02) {
       lastProgress = progress;

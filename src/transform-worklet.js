@@ -10,11 +10,11 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.nextGrain = 0;
     this.grains = [];
     this.grainClock = 0;
-    this.smoothStretch = 1;
+    this.smoothSpeed = 1;
     this.smoothRate = 1;
     this.smoothGain = 0;
     this.smoothPan = 0;
-    this.stretchCurve = [{ x: 0, y: 0 }, { x: 1, y: 0 }];
+    this.stretchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.pitchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.panCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.settings = {
@@ -104,6 +104,16 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
   }
 
+  speedFromNorm(y) {
+    const minSpeed = 0.125;
+    const maxSpeed = 4;
+    const clamped = Math.max(0, Math.min(1, y));
+    if (clamped < 0.5) {
+      return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
+    }
+    return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
+  }
+
   spawnGrain(grainSamples, rate, sourceFrame, randomSamples) {
     const jitter = (Math.random() - 0.5) * randomSamples;
     this.grains.push({
@@ -126,14 +136,14 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
 
       if (this.left && this.settings.playing) {
         const norm = this.duration > 0 ? Math.min(1, this.sourcePos / this.duration) : 0;
-        const stretchNorm = this.valueAt(this.stretchCurve, norm);
+        const speedNorm = this.valueAt(this.stretchCurve, norm);
         const pitchNorm = this.valueAt(this.pitchCurve, norm);
         const panNorm = this.valueAt(this.panCurve, norm);
-        const stretch = Math.exp(stretchNorm * Math.log(50));
+        const speed = this.speedFromNorm(speedNorm);
         const cents = -2400 + (pitchNorm * 4800);
         const pan = Math.max(-1, Math.min(1, (panNorm - 0.5) * 2));
         const rate = Math.pow(2, cents / 1200);
-        this.smoothStretch += (stretch - this.smoothStretch) * 0.0008;
+        this.smoothSpeed += (speed - this.smoothSpeed) * 0.0008;
         this.smoothRate += (rate - this.smoothRate) * 0.0008;
         this.smoothGain += (this.settings.outputGain - this.smoothGain) * 0.0015;
         this.smoothPan += (pan - this.smoothPan) * 0.0015;
@@ -172,7 +182,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const rightPan = Math.sin(panAngle);
         l *= leftPan * 1.41421356237;
         r *= rightPan * 1.41421356237;
-        this.sourcePos += 1 / (sampleRate * Math.max(1, this.smoothStretch));
+        this.sourcePos += Math.max(0.03125, this.smoothSpeed) / sampleRate;
         if (this.sourcePos >= this.duration) {
           this.sourcePos = this.duration;
           this.settings.playing = false;
@@ -183,7 +193,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.port.postMessage({
             type: "position",
             seconds: this.sourcePos,
-            stretch,
+            speed,
             cents,
             pan: this.smoothPan
           });

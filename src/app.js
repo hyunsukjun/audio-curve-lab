@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-1";
+import { renderOffline } from "./offline-render.js?v=20260821-6";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -41,25 +41,31 @@ let activeCurve = "stretch";
 let selectedPoint = null;
 let dragging = false;
 let playheadSeconds = 0;
-let currentStretch = 1;
+let currentSpeed = 1;
 let currentCents = 0;
 let currentPan = 0;
 let downloadUrl = null;
 
 const curves = {
-  stretch: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+  stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pitch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pan: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
 };
 
 const defaultCurves = {
-  stretch: () => [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+  stretch: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pitch: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pan: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
 };
 
+const editedCurves = {
+  stretch: false,
+  pitch: false,
+  pan: false
+};
+
 const curveLabels = {
-  stretch: "Time Stretch",
+  stretch: "Speed",
   pitch: "Pitch",
   pan: "Pan"
 };
@@ -168,6 +174,17 @@ function drawCurve(curve, color, width, fillPoints) {
   ctx.restore();
 }
 
+function drawCurves() {
+  const scale = window.devicePixelRatio || 1;
+  const curveOrder = ["stretch", "pitch", "pan"];
+  for (const name of curveOrder) {
+    if (name === activeCurve) continue;
+    if (!editedCurves[name]) continue;
+    drawCurve(curves[name], curveColors[name], 1.8 * scale, false);
+  }
+  drawCurve(curves[activeCurve], curveColors[activeCurve], 3 * scale, true);
+}
+
 function draw() {
   const w = canvas.width;
   const h = canvas.height;
@@ -206,9 +223,7 @@ function draw() {
     }
   }
 
-  drawCurve(curves.stretch, curveColors.stretch, 3 * (window.devicePixelRatio || 1), activeCurve === "stretch");
-  drawCurve(curves.pitch, curveColors.pitch, 2.5 * (window.devicePixelRatio || 1), activeCurve === "pitch");
-  drawCurve(curves.pan, curveColors.pan, 2.5 * (window.devicePixelRatio || 1), activeCurve === "pan");
+  drawCurves();
 
   if (buffer) {
     const x = (playheadSeconds / buffer.duration) * w;
@@ -221,7 +236,7 @@ function draw() {
   }
 
   playheadReadout.textContent = formatTime(playheadSeconds);
-  stretchReadout.textContent = `${currentStretch.toFixed(2)} x`;
+  stretchReadout.textContent = `${currentSpeed.toFixed(2)} x`;
   pitchReadout.textContent = `${Math.round(currentCents)} cents`;
   panReadout.textContent = formatPan(currentPan);
   modeReadout.textContent = curveLabels[activeCurve];
@@ -246,7 +261,7 @@ function buildWaveform(audioBuffer) {
 async function ensureAudio() {
   if (!audioContext) {
     audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-1");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-6");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -256,7 +271,7 @@ async function ensureAudio() {
     node.port.onmessage = (event) => {
       if (event.data.type === "position") {
         playheadSeconds = event.data.seconds;
-        currentStretch = event.data.stretch;
+        currentSpeed = event.data.speed ?? event.data.stretch;
         currentCents = event.data.cents;
         currentPan = event.data.pan;
         draw();
@@ -347,6 +362,9 @@ resetButton.addEventListener("click", () => {
   curves.stretch = defaultCurves.stretch();
   curves.pitch = defaultCurves.pitch();
   curves.pan = defaultCurves.pan();
+  editedCurves.stretch = false;
+  editedCurves.pitch = false;
+  editedCurves.pan = false;
   markDownloadStale();
   sendCurves();
   draw();
@@ -354,6 +372,7 @@ resetButton.addEventListener("click", () => {
 
 clearCurveButton.addEventListener("click", () => {
   curves[activeCurve] = defaultCurves[activeCurve]();
+  editedCurves[activeCurve] = false;
   selectedPoint = null;
   markDownloadStale();
   sendCurves();
@@ -399,6 +418,7 @@ canvas.addEventListener("pointerdown", (event) => {
     sortCurve(curve);
     selectedPoint = curve.indexOf(p);
   }
+  editedCurves[activeCurve] = true;
   dragging = true;
   canvas.setPointerCapture(event.pointerId);
   sendCurves();
@@ -412,6 +432,7 @@ canvas.addEventListener("pointermove", (event) => {
   const point = curve[selectedPoint];
   point.x = p.x;
   point.y = p.y;
+  editedCurves[activeCurve] = true;
   sortCurve(curve);
   selectedPoint = curve.indexOf(point);
   sendCurves();
