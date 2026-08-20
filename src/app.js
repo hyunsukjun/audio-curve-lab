@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-9";
+import { renderOffline } from "./offline-render.js?v=20260821-10";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -48,6 +48,7 @@ let currentCents = 0;
 let currentPan = 0;
 let downloadUrl = null;
 let renderAbortController = null;
+let isPlaying = false;
 
 const curves = {
   stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
@@ -133,6 +134,28 @@ function setTransportBusy(isBusy) {
   stopButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
+}
+
+async function playAudio() {
+  if (!buffer) return;
+  try {
+    await ensureAudio();
+    node.port.postMessage({ type: "play" });
+    isPlaying = true;
+    playButton.textContent = "Playing";
+  } catch (error) {
+    console.error(error);
+    fileStatus.textContent = error.message;
+  }
+}
+
+function stopAudio() {
+  if (!buffer) return;
+  node?.port.postMessage({ type: "stop", reset: true });
+  isPlaying = false;
+  playheadSeconds = 0;
+  playButton.textContent = "Play";
+  draw();
 }
 
 function getSettings() {
@@ -280,7 +303,7 @@ async function ensureAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-9");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-10");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -296,10 +319,12 @@ async function ensureAudio() {
         draw();
       } else if (event.data.type === "ended") {
         playButton.textContent = "Play";
+        isPlaying = false;
         if (buffer) playheadSeconds = buffer.duration;
         draw();
       } else if (event.data.type === "stopped") {
         playButton.textContent = "Play";
+        isPlaying = false;
         playheadSeconds = 0;
         draw();
       }
@@ -321,6 +346,7 @@ fileInput.addEventListener("change", async () => {
   fileStatus.textContent = `Loading ${file.name}...`;
   downloadReadout.textContent = "loading";
   playButton.textContent = "Play";
+  isPlaying = false;
   node?.port.postMessage({ type: "stop", reset: true });
   try {
     await ensureAudio();
@@ -346,23 +372,9 @@ fileInput.addEventListener("change", async () => {
   }
 });
 
-playButton.addEventListener("click", async () => {
-  try {
-    await ensureAudio();
-    node.port.postMessage({ type: "play" });
-    playButton.textContent = "Playing";
-  } catch (error) {
-    console.error(error);
-    fileStatus.textContent = error.message;
-  }
-});
+playButton.addEventListener("click", playAudio);
 
-stopButton.addEventListener("click", () => {
-  node?.port.postMessage({ type: "stop", reset: true });
-  playheadSeconds = 0;
-  playButton.textContent = "Play";
-  draw();
-});
+stopButton.addEventListener("click", stopAudio);
 
 downloadButton.addEventListener("click", async () => {
   if (!buffer) return;
@@ -505,4 +517,14 @@ canvas.addEventListener("dblclick", (event) => {
 });
 
 window.addEventListener("resize", resizeCanvas);
+
+window.addEventListener("keydown", (event) => {
+  const target = event.target;
+  const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
+  if (event.code !== "Space" || isTyping || event.repeat || !buffer) return;
+  event.preventDefault();
+  if (isPlaying) stopAudio();
+  else playAudio();
+});
+
 resizeCanvas();
