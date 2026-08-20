@@ -53,6 +53,13 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       } else if (data.type === "stop") {
         this.settings.playing = false;
         this.grains = [];
+        this.nextGrain = 0;
+        this.grainClock = 0;
+        if (data.reset) {
+          this.sourcePos = 0;
+          this.outputTime = 0;
+        }
+        this.port.postMessage({ type: "stopped", seconds: this.sourcePos });
       } else if (data.type === "seek") {
         this.sourcePos = Math.max(0, Math.min(this.duration, data.seconds || 0));
         this.outputTime = this.sourcePos;

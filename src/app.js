@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js";
+import { renderOffline } from "./offline-render.js?v=20260821-1";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -246,7 +246,7 @@ function buildWaveform(audioBuffer) {
 async function ensureAudio() {
   if (!audioContext) {
     audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-1");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -263,6 +263,10 @@ async function ensureAudio() {
       } else if (event.data.type === "ended") {
         playButton.textContent = "Play";
         if (buffer) playheadSeconds = buffer.duration;
+        draw();
+      } else if (event.data.type === "stopped") {
+        playButton.textContent = "Play";
+        playheadSeconds = 0;
         draw();
       }
     };
@@ -299,8 +303,7 @@ playButton.addEventListener("click", async () => {
 });
 
 stopButton.addEventListener("click", () => {
-  node?.port.postMessage({ type: "stop" });
-  node?.port.postMessage({ type: "seek", seconds: 0 });
+  node?.port.postMessage({ type: "stop", reset: true });
   playheadSeconds = 0;
   playButton.textContent = "Play";
   draw();
