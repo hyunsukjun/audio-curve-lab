@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-12";
+import { renderOffline } from "./offline-render.js?v=20260821-13";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -21,10 +21,17 @@ const modeReadout = document.getElementById("modeReadout");
 const pointsReadout = document.getElementById("pointsReadout");
 
 const transformSettings = {
-  grainSizeMs: 140,
-  density: 5.5,
-  randomness: 0.02,
-  outputGain: 0.95
+  grainSizeMs: 160,
+  density: 7,
+  randomness: 0.01,
+  outputGain: 0.9
+};
+
+const exportSettings = {
+  grainSizeMs: 190,
+  density: 10,
+  randomness: 0.004,
+  outputGain: 0.92
 };
 
 const largeFileSeconds = 180;
@@ -167,6 +174,10 @@ function stopAudio() {
 
 function getSettings() {
   return { ...transformSettings };
+}
+
+function getExportSettings() {
+  return { ...exportSettings };
 }
 
 function valueAt(curve, x) {
@@ -318,7 +329,7 @@ async function ensureAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-12");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-13");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -413,7 +424,7 @@ downloadButton.addEventListener("click", async () => {
     const rendered = await renderOffline({
       audioBuffer: buffer,
       curves,
-      settings: getSettings(),
+      settings: getExportSettings(),
       signal: renderAbortController.signal,
       onProgress: (progress) => {
         downloadReadout.textContent = `creating ${Math.round(progress * 100)}%`;

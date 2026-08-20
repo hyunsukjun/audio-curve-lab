@@ -18,10 +18,10 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.pitchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.panCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.settings = {
-      grainSizeMs: 140,
-      density: 5.5,
-      randomness: 0.02,
-      outputGain: 0.95,
+      grainSizeMs: 160,
+      density: 7,
+      randomness: 0.01,
+      outputGain: 0.9,
       playing: false
     };
 
@@ -101,7 +101,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
   }
 
   envelope(phase) {
-    return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
+    const sine = Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
+    return sine * sine;
   }
 
   speedFromNorm(y) {
@@ -152,7 +153,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const density = Math.max(2, this.settings.density);
         const interval = Math.max(16, Math.round(grainSamples / density));
         const sourceFrame = this.sourcePos * this.sampleRateSource;
-        const randomSamples = this.settings.randomness * grainSamples * 1.5;
+        const randomSamples = this.settings.randomness * grainSamples;
 
         while (this.nextGrain <= 0) {
           this.spawnGrain(grainSamples, this.smoothRate * (this.sampleRateSource / sampleRate), sourceFrame, randomSamples);
@@ -200,8 +201,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         }
       }
 
-      outL[i] = Math.tanh(l);
-      outR[i] = Math.tanh(r);
+      outL[i] = Math.max(-1, Math.min(1, l));
+      outR[i] = Math.max(-1, Math.min(1, r));
     }
 
     return true;

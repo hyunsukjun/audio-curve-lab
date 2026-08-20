@@ -46,7 +46,33 @@ function panFromNorm(y) {
 }
 
 function envelope(phase) {
-  return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
+  const sine = Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
+  return sine * sine;
+}
+
+function createRng(seed = 0x12345678) {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function applyEdgeFade(left, right, sampleRate) {
+  const fadeSamples = Math.min(left.length, Math.max(1, Math.round(sampleRate * 0.005)));
+  for (let i = 0; i < fadeSamples; i += 1) {
+    const inGain = i / fadeSamples;
+    const outGain = (fadeSamples - i) / fadeSamples;
+    left[i] *= inGain;
+    right[i] *= inGain;
+    const tail = left.length - 1 - i;
+    left[tail] *= outGain;
+    right[tail] *= outGain;
+  }
 }
 
 function estimateDuration(sourceDuration, speedCurve) {
@@ -103,16 +129,16 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   const outL = new Float32Array(outLength);
   const outR = new Float32Array(outLength);
 
-  const grainSamples = Math.max(128, Math.round((settings.grainSizeMs / 1000) * sourceRate));
-  const density = Math.max(2, settings.density);
-  const hop = Math.max(24, Math.round(grainSamples / density));
-  const randomSamples = settings.randomness * grainSamples * 0.75;
+  const baseGrainSamples = Math.max(128, Math.round((settings.grainSizeMs / 1000) * sourceRate));
+  const baseDensity = Math.max(2, settings.density);
   const gain = settings.outputGain;
+  const rng = createRng();
   let sourceTime = 0;
+  let outPos = 0;
   let lastProgress = 0;
   let lastYield = performance.now();
 
-  for (let outPos = 0; outPos < outLength && sourceTime < sourceDuration; outPos += hop) {
+  while (outPos < outLength && sourceTime < sourceDuration) {
     if (signal?.aborted) {
       throw new DOMException("Render cancelled", "AbortError");
     }
@@ -122,8 +148,18 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     const cents = centsFromNorm(valueAt(curves.pitch, norm));
     const pan = panFromNorm(valueAt(curves.pan, norm));
     const rate = Math.pow(2, cents / 1200);
+    const slowStress = Math.min(3, Math.max(0, (1 / Math.max(0.125, speed)) - 1));
+    const pitchStress = Math.min(1, Math.abs(cents) / 2400);
+    const grainSamples = clamp(
+      Math.round(baseGrainSamples * (1 + (slowStress * 0.12) + (pitchStress * 0.18))),
+      128,
+      Math.round(sourceRate * 0.32)
+    );
+    const density = baseDensity * (1 + (slowStress * 0.28) + (pitchStress * 0.45));
+    const hop = Math.max(16, Math.round(grainSamples / density));
+    const randomSamples = settings.randomness * grainSamples * (1 - (pitchStress * 0.35));
     const center = sourceTime * sourceRate;
-    const jitter = (Math.random() - 0.5) * randomSamples;
+    const jitter = (rng() - 0.5) * randomSamples;
     const startSource = center + jitter;
     const panAngle = (pan + 1) * Math.PI * 0.25;
     const leftPan = Math.cos(panAngle) * 1.41421356237;
@@ -140,6 +176,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     }
 
     sourceTime += (hop / sourceRate) * speed;
+    outPos += hop;
     const progress = outPos / outLength;
     const now = performance.now();
     if (progress - lastProgress > 0.01 || now - lastYield > 60) {
@@ -156,9 +193,10 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   }
   const normalise = peak > 0 ? Math.min(1.0, 0.92 / peak) * gain : 1;
   for (let i = 0; i < outLength; i += 1) {
-    outL[i] = Math.tanh(outL[i] * normalise);
-    outR[i] = Math.tanh(outR[i] * normalise);
+    outL[i] = Math.max(-1, Math.min(1, outL[i] * normalise));
+    outR[i] = Math.max(-1, Math.min(1, outR[i] * normalise));
   }
+  applyEdgeFade(outL, outR, sourceRate);
 
   onProgress?.(1);
   return {
