@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-11";
+import { renderOffline } from "./offline-render.js?v=20260821-12";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -298,6 +298,14 @@ function buildWaveform(audioBuffer) {
   }
 }
 
+function decodeAudioFile(arrayBuffer) {
+  const data = arrayBuffer.slice(0);
+  return new Promise((resolve, reject) => {
+    const promise = audioContext.decodeAudioData(data, resolve, reject);
+    if (promise?.then) promise.then(resolve).catch(reject);
+  });
+}
+
 async function ensureAudio() {
   if (!audioContext) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -310,7 +318,7 @@ async function ensureAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-11");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-12");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -358,7 +366,7 @@ fileInput.addEventListener("change", async () => {
   try {
     await ensureAudio();
     const data = await file.arrayBuffer();
-    buffer = await audioContext.decodeAudioData(data);
+    buffer = await decodeAudioFile(data);
     buildWaveform(buffer);
     const left = new Float32Array(buffer.getChannelData(0));
     const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
@@ -371,7 +379,7 @@ fileInput.addEventListener("change", async () => {
     draw();
   } catch (error) {
     console.error(error);
-    fileStatus.textContent = "Could not load audio";
+    fileStatus.textContent = "Could not load audio. Try WAV, MP3, or M4A.";
     downloadReadout.textContent = "not ready";
     buffer = null;
   } finally {
