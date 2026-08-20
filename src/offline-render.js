@@ -91,7 +91,7 @@ function encodeWav(left, right, sampleRate) {
   return new Blob([view], { type: "audio/wav" });
 }
 
-export async function renderOffline({ audioBuffer, curves, settings, onProgress }) {
+export async function renderOffline({ audioBuffer, curves, settings, signal, onProgress }) {
   const sourceRate = audioBuffer.sampleRate;
   const left = audioBuffer.getChannelData(0);
   const right = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : left;
@@ -110,8 +110,13 @@ export async function renderOffline({ audioBuffer, curves, settings, onProgress 
   const gain = settings.outputGain;
   let sourceTime = 0;
   let lastProgress = 0;
+  let lastYield = performance.now();
 
   for (let outPos = 0; outPos < outLength && sourceTime < sourceDuration; outPos += hop) {
+    if (signal?.aborted) {
+      throw new DOMException("Render cancelled", "AbortError");
+    }
+
     const norm = Math.min(1, sourceTime / sourceDuration);
     const speed = speedFromNorm(valueAt(curves.stretch, norm));
     const cents = centsFromNorm(valueAt(curves.pitch, norm));
@@ -136,9 +141,11 @@ export async function renderOffline({ audioBuffer, curves, settings, onProgress 
 
     sourceTime += (hop / sourceRate) * speed;
     const progress = outPos / outLength;
-    if (progress - lastProgress > 0.02) {
+    const now = performance.now();
+    if (progress - lastProgress > 0.01 || now - lastYield > 60) {
       lastProgress = progress;
       onProgress?.(progress);
+      lastYield = now;
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
   }

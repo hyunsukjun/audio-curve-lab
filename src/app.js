@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-6";
+import { renderOffline } from "./offline-render.js?v=20260821-7";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -27,6 +27,8 @@ const transformSettings = {
   outputGain: 0.95
 };
 
+const largeFileSeconds = 180;
+
 const curveColors = {
   stretch: "#6de0c0",
   pitch: "#eb6f75",
@@ -45,6 +47,7 @@ let currentSpeed = 1;
 let currentCents = 0;
 let currentPan = 0;
 let downloadUrl = null;
+let renderAbortController = null;
 
 const curves = {
   stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
@@ -123,6 +126,13 @@ function markDownloadStale() {
 function clearDownload() {
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
   downloadUrl = null;
+}
+
+function setTransportBusy(isBusy) {
+  playButton.disabled = isBusy || !buffer;
+  stopButton.disabled = isBusy || !buffer;
+  downloadButton.disabled = isBusy || !buffer;
+  fileInput.disabled = isBusy;
 }
 
 function getSettings() {
@@ -261,7 +271,7 @@ function buildWaveform(audioBuffer) {
 async function ensureAudio() {
   if (!audioContext) {
     audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-6");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-7");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -294,21 +304,37 @@ async function ensureAudio() {
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files?.[0];
   if (!file) return;
+  if (renderAbortController) {
+    renderAbortController.abort();
+    renderAbortController = null;
+  }
+  setTransportBusy(true);
+  fileStatus.textContent = `Loading ${file.name}...`;
+  downloadReadout.textContent = "loading";
+  playButton.textContent = "Play";
+  node?.port.postMessage({ type: "stop", reset: true });
   await ensureAudio();
-  const data = await file.arrayBuffer();
-  buffer = await audioContext.decodeAudioData(data);
-  buildWaveform(buffer);
-  const left = new Float32Array(buffer.getChannelData(0));
-  const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
-  node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
-  fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s`;
-  playButton.disabled = false;
-  stopButton.disabled = false;
-  downloadButton.disabled = false;
-  clearDownload();
-  downloadReadout.textContent = "ready";
-  playheadSeconds = 0;
-  draw();
+  try {
+    const data = await file.arrayBuffer();
+    buffer = await audioContext.decodeAudioData(data);
+    buildWaveform(buffer);
+    const left = new Float32Array(buffer.getChannelData(0));
+    const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
+    node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
+    const longFileNote = buffer.duration > largeFileSeconds ? " - long file" : "";
+    fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s${longFileNote}`;
+    clearDownload();
+    downloadReadout.textContent = buffer.duration > largeFileSeconds ? "export capped" : "ready";
+    playheadSeconds = 0;
+    draw();
+  } catch (error) {
+    console.error(error);
+    fileStatus.textContent = "Could not load audio";
+    downloadReadout.textContent = "not ready";
+    buffer = null;
+  } finally {
+    setTransportBusy(false);
+  }
 });
 
 playButton.addEventListener("click", async () => {
@@ -326,8 +352,14 @@ stopButton.addEventListener("click", () => {
 
 downloadButton.addEventListener("click", async () => {
   if (!buffer) return;
-  downloadButton.disabled = true;
+  if (renderAbortController) {
+    renderAbortController.abort();
+    return;
+  }
+
+  renderAbortController = new AbortController();
   downloadReadout.textContent = "creating 0%";
+  downloadButton.textContent = "Cancel";
   clearDownload();
 
   try {
@@ -335,6 +367,7 @@ downloadButton.addEventListener("click", async () => {
       audioBuffer: buffer,
       curves,
       settings: getSettings(),
+      signal: renderAbortController.signal,
       onProgress: (progress) => {
         downloadReadout.textContent = `creating ${Math.round(progress * 100)}%`;
       }
@@ -351,10 +384,15 @@ downloadButton.addEventListener("click", async () => {
       ? `${rendered.duration.toFixed(1)} s, capped`
       : `${rendered.duration.toFixed(1)} s`;
   } catch (error) {
-    console.error(error);
-    downloadReadout.textContent = "export failed";
+    if (error.name === "AbortError") {
+      downloadReadout.textContent = "cancelled";
+    } else {
+      console.error(error);
+      downloadReadout.textContent = "export failed";
+    }
   } finally {
-    downloadButton.disabled = false;
+    renderAbortController = null;
+    downloadButton.textContent = "Download WAV";
   }
 });
 
