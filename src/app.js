@@ -7,7 +7,6 @@ const clearCurveButton = document.getElementById("clearCurveButton");
 const resetButton = document.getElementById("resetButton");
 const canvas = document.getElementById("waveCanvas");
 const ctx = canvas.getContext("2d");
-const canvasFrame = canvas.parentElement;
 const stretchMode = document.getElementById("stretchMode");
 const pitchMode = document.getElementById("pitchMode");
 const panMode = document.getElementById("panMode");
@@ -80,10 +79,6 @@ const curveLabels = {
 };
 
 function resizeCanvas() {
-  const frameRect = canvasFrame.getBoundingClientRect();
-  const targetHeight = Math.min(frameRect.height, frameRect.width * 0.56);
-  canvas.style.width = `${Math.max(1, frameRect.width)}px`;
-  canvas.style.height = `${Math.max(1, targetHeight)}px`;
   const rect = canvas.getBoundingClientRect();
   const scale = window.devicePixelRatio || 1;
   canvasCssWidth = Math.max(1, rect.width);
@@ -210,7 +205,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-28");
+    const module = await import("./offline-render.js?v=20260821-29");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -398,7 +393,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-28");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-29");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -627,7 +622,7 @@ canvas.addEventListener("dblclick", (event) => {
 window.addEventListener("resize", resizeCanvas);
 if ("ResizeObserver" in window) {
   const canvasResizeObserver = new ResizeObserver(resizeCanvas);
-  canvasResizeObserver.observe(canvasFrame);
+  canvasResizeObserver.observe(canvas);
 }
 
 window.addEventListener("keydown", (event) => {

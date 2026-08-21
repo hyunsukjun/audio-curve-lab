@@ -22,9 +22,9 @@
 
 body {
   margin: 0;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
   background: var(--bg);
 }
 
@@ -36,10 +36,9 @@ input {
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .topbar {
@@ -141,22 +140,17 @@ button:disabled {
   min-height: 0;
   padding: 12px;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
   gap: 8px;
-  overflow: hidden;
 }
 
 .canvasFrame {
   min-width: 0;
-  min-height: 0;
-  display: flex;
-  align-items: flex-start;
 }
 
 #waveCanvas {
   width: 100%;
-  height: auto;
-  min-height: 0;
+  height: 620px;
   display: block;
   background: #bfc9bd;
   border: 1px solid #52625d;
