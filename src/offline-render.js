@@ -124,7 +124,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     const rate = Math.pow(2, cents / 1200);
     const center = sourceTime * sourceRate;
     const jitter = (Math.random() - 0.5) * randomSamples;
-    const startSource = center + jitter;
+    const startSource = center + jitter - (((grainSamples - 1) * rate) * 0.5);
     const panAngle = (pan + 1) * Math.PI * 0.25;
     const leftPan = Math.cos(panAngle) * 1.41421356237;
     const rightPan = Math.sin(panAngle) * 1.41421356237;

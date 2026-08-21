@@ -5,7 +5,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.right = null;
     this.sampleRateSource = sampleRate;
     this.duration = 0;
-    this.sourcePos = 0;
+    this.sourceFrame = 0;
     this.outputTime = 0;
     this.nextGrain = 0;
     this.grains = [];
@@ -33,7 +33,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.right = data.right || data.left;
         this.sampleRateSource = data.sampleRate;
         this.duration = this.left.length / this.sampleRateSource;
-        this.sourcePos = 0;
+        this.sourceFrame = 0;
         this.outputTime = 0;
         this.grains = [];
         this.grainClock = 0;
@@ -45,8 +45,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         Object.assign(this.settings, data.settings);
       } else if (data.type === "play") {
         this.token = data.token ?? this.token;
-        if (this.sourcePos >= this.duration) {
-          this.sourcePos = 0;
+        if (this.sourceFrame >= this.left.length - 3) {
+          this.sourceFrame = 0;
         }
         this.settings.playing = true;
         this.grains = [];
@@ -59,14 +59,14 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.nextGrain = 0;
         this.grainClock = 0;
         if (data.reset) {
-          this.sourcePos = 0;
+          this.sourceFrame = 0;
           this.outputTime = 0;
         }
-        this.port.postMessage({ type: "stopped", seconds: this.sourcePos, token: this.token });
+        this.port.postMessage({ type: "stopped", seconds: this.sourceFrame / this.sampleRateSource, token: this.token });
       } else if (data.type === "seek") {
         this.token = data.token ?? this.token;
-        this.sourcePos = Math.max(0, Math.min(this.duration, data.seconds || 0));
-        this.outputTime = this.sourcePos;
+        this.sourceFrame = Math.max(0, Math.min(this.left.length - 3, (data.seconds || 0) * this.sampleRateSource));
+        this.outputTime = this.sourceFrame / this.sampleRateSource;
         this.grains = [];
         this.nextGrain = 0;
         this.grainClock = 0;
@@ -118,10 +118,17 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
   }
 
+  isNeutral(speedNorm, pitchNorm, panNorm) {
+    return Math.abs(speedNorm - 0.5) < 0.0001
+      && Math.abs(pitchNorm - 0.5) < 0.0001
+      && Math.abs(panNorm - 0.5) < 0.0001;
+  }
+
   spawnGrain(grainSamples, rate, sourceFrame, randomSamples) {
     const jitter = (Math.random() - 0.5) * randomSamples;
+    const centeredStart = sourceFrame + jitter - (((grainSamples - 1) * rate) * 0.5);
     this.grains.push({
-      pos: sourceFrame + jitter,
+      pos: centeredStart,
       age: 0,
       length: grainSamples,
       rate
@@ -139,7 +146,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       let r = 0;
 
       if (this.left && this.settings.playing) {
-        const norm = this.duration > 0 ? Math.min(1, this.sourcePos / this.duration) : 0;
+        const norm = this.left.length > 1 ? Math.min(1, this.sourceFrame / (this.left.length - 1)) : 0;
         const speedNorm = this.valueAt(this.stretchCurve, norm);
         const pitchNorm = this.valueAt(this.pitchCurve, norm);
         const panNorm = this.valueAt(this.panCurve, norm);
@@ -152,14 +159,19 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.smoothGain += (this.settings.outputGain - this.smoothGain) * 0.0015;
         this.smoothPan += (pan - this.smoothPan) * 0.0015;
 
+        if (this.isNeutral(speedNorm, pitchNorm, panNorm)) {
+          l = this.read(this.left, this.sourceFrame) * this.smoothGain;
+          r = this.read(this.right, this.sourceFrame) * this.smoothGain;
+          this.grains = [];
+          this.nextGrain = 0;
+        } else {
         const grainSamples = Math.max(64, Math.round((this.settings.grainSizeMs / 1000) * sampleRate));
         const density = Math.max(2, this.settings.density);
         const interval = Math.max(16, Math.round(grainSamples / density));
-        const sourceFrame = this.sourcePos * this.sampleRateSource;
         const randomSamples = this.settings.randomness * grainSamples * 1.5;
 
         while (this.nextGrain <= 0) {
-          this.spawnGrain(grainSamples, this.smoothRate * (this.sampleRateSource / sampleRate), sourceFrame, randomSamples);
+          this.spawnGrain(grainSamples, this.smoothRate * (this.sampleRateSource / sampleRate), this.sourceFrame, randomSamples);
           this.nextGrain += interval;
         }
         this.nextGrain -= 1;
@@ -181,14 +193,15 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const scale = this.smoothGain / Math.sqrt(Math.max(1, this.grains.length * 0.8));
         l *= scale;
         r *= scale;
+        }
         const panAngle = (this.smoothPan + 1) * Math.PI * 0.25;
         const leftPan = Math.cos(panAngle);
         const rightPan = Math.sin(panAngle);
         l *= leftPan * 1.41421356237;
         r *= rightPan * 1.41421356237;
-        this.sourcePos += Math.max(0.03125, this.smoothSpeed) / sampleRate;
-        if (this.sourcePos >= this.duration) {
-          this.sourcePos = this.duration;
+        this.sourceFrame += Math.max(0.03125, this.smoothSpeed) * (this.sampleRateSource / sampleRate);
+        if (this.sourceFrame >= this.left.length - 3) {
+          this.sourceFrame = this.left.length - 3;
           this.settings.playing = false;
           this.port.postMessage({ type: "ended", token: this.token });
         }
@@ -196,7 +209,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         if ((i & 63) === 0) {
           this.port.postMessage({
             type: "position",
-            seconds: this.sourcePos,
+            seconds: this.sourceFrame / this.sampleRateSource,
             speed,
             cents,
             pan: this.smoothPan,
