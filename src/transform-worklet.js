@@ -11,6 +11,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.grains = [];
     this.grainClock = 0;
     this.token = 0;
+    this.positionFramesUntilUpdate = 0;
+    this.positionUpdateInterval = Math.max(1, Math.round(sampleRate / 30));
     this.smoothSpeed = 1;
     this.smoothRate = 1;
     this.smoothGain = 0;
@@ -35,6 +37,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.duration = this.left.length / this.sampleRateSource;
         this.sourceFrame = 0;
         this.outputTime = 0;
+        this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.grainClock = 0;
       } else if (data.type === "curves") {
@@ -49,6 +52,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.sourceFrame = 0;
         }
         this.settings.playing = true;
+        this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.nextGrain = 0;
         this.grainClock = 0;
@@ -62,11 +66,13 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.sourceFrame = 0;
           this.outputTime = 0;
         }
+        this.positionFramesUntilUpdate = 0;
         this.port.postMessage({ type: "stopped", seconds: this.sourceFrame / this.sampleRateSource, token: this.token });
       } else if (data.type === "seek") {
         this.token = data.token ?? this.token;
         this.sourceFrame = Math.max(0, Math.min(this.left.length - 3, (data.seconds || 0) * this.sampleRateSource));
         this.outputTime = this.sourceFrame / this.sampleRateSource;
+        this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.nextGrain = 0;
         this.grainClock = 0;
@@ -206,7 +212,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.port.postMessage({ type: "ended", token: this.token });
         }
 
-        if ((i & 63) === 0) {
+        if (this.positionFramesUntilUpdate <= 0) {
           this.port.postMessage({
             type: "position",
             seconds: this.sourceFrame / this.sampleRateSource,
@@ -215,7 +221,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
             pan: this.smoothPan,
             token: this.token
           });
+          this.positionFramesUntilUpdate = this.positionUpdateInterval;
         }
+        this.positionFramesUntilUpdate -= 1;
       }
 
       outL[i] = Math.tanh(l);
