@@ -180,6 +180,45 @@ async function playAudio() {
   }
 }
 
+async function switchToWorkletPlayback() {
+  if (!buffer || playbackMode !== "native" || !isPlaying) return;
+  const seconds = playheadSeconds;
+  stopNativeAudio(false);
+  playbackMode = "worklet";
+  try {
+    await ensureAudio();
+    node.port.postMessage({ type: "seek", seconds, token: playbackToken });
+    node.port.postMessage({ type: "play", token: nextPlaybackToken() });
+    isPlaying = true;
+    playButton.textContent = "Playing";
+  } catch (error) {
+    console.error(error);
+    fileStatus.textContent = error.message;
+    isPlaying = false;
+    playbackMode = null;
+    playButton.textContent = "Play";
+  }
+}
+
+async function switchToNativePlayback() {
+  if (!buffer || playbackMode !== "worklet" || !isPlaying) return;
+  const seconds = playheadSeconds;
+  node?.port.postMessage({ type: "stop", reset: false, token: nextPlaybackToken() });
+  playbackMode = null;
+  isPlaying = false;
+  playheadSeconds = seconds;
+  await playNativeAudio();
+}
+
+function handleCurveChangeDuringPlayback() {
+  if (!isPlaying) return;
+  if (playbackMode === "native" && !curvesAreNeutral()) {
+    switchToWorkletPlayback();
+  } else if (playbackMode === "worklet" && curvesAreNeutral()) {
+    switchToNativePlayback();
+  }
+}
+
 function stopAudio() {
   if (!buffer) return;
   stopNativeAudio(true);
@@ -213,7 +252,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-22");
+    const module = await import("./offline-render.js?v=20260821-23");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -470,7 +509,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-22");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-23");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -612,6 +651,7 @@ resetButton.addEventListener("click", () => {
   editedCurves.pan = false;
   markDownloadStale();
   sendCurves();
+  handleCurveChangeDuringPlayback();
   draw();
 });
 
@@ -622,6 +662,7 @@ clearCurveButton.addEventListener("click", () => {
   selectedPoint = null;
   markDownloadStale();
   sendCurves();
+  handleCurveChangeDuringPlayback();
   draw();
 });
 
@@ -668,6 +709,7 @@ canvas.addEventListener("pointerdown", (event) => {
   dragging = true;
   canvas.setPointerCapture(event.pointerId);
   sendCurves();
+  handleCurveChangeDuringPlayback();
   draw();
 });
 
@@ -682,6 +724,7 @@ canvas.addEventListener("pointermove", (event) => {
   sortCurve(curve);
   selectedPoint = curve.indexOf(point);
   sendCurves();
+  handleCurveChangeDuringPlayback();
   draw();
 });
 
