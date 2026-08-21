@@ -79,8 +79,10 @@ const curveLabels = {
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const scale = window.devicePixelRatio || 1;
-  canvas.width = Math.max(800, Math.floor(rect.width * scale));
-  canvas.height = Math.max(360, Math.floor(rect.height * scale));
+  const nextWidth = Math.max(1, Math.floor(rect.width * scale));
+  const nextHeight = Math.max(1, Math.floor(rect.height * scale));
+  if (canvas.width !== nextWidth) canvas.width = nextWidth;
+  if (canvas.height !== nextHeight) canvas.height = nextHeight;
   draw();
 }
 
@@ -199,7 +201,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-25");
+    const module = await import("./offline-render.js?v=20260821-26");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -386,7 +388,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-25");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-26");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -613,6 +615,10 @@ canvas.addEventListener("dblclick", (event) => {
 });
 
 window.addEventListener("resize", resizeCanvas);
+if ("ResizeObserver" in window) {
+  const canvasResizeObserver = new ResizeObserver(resizeCanvas);
+  canvasResizeObserver.observe(canvas);
+}
 
 window.addEventListener("keydown", (event) => {
   const target = event.target;
