@@ -146,10 +146,10 @@ button:disabled {
 
 .canvasFrame {
   min-width: 0;
+  overflow: hidden;
 }
 
 #waveCanvas {
-  width: 100%;
   height: 620px;
   display: block;
   background: #bfc9bd;
