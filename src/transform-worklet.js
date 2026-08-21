@@ -10,6 +10,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.nextGrain = 0;
     this.grains = [];
     this.grainClock = 0;
+    this.token = 0;
     this.smoothSpeed = 1;
     this.smoothRate = 1;
     this.smoothGain = 0;
@@ -43,6 +44,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       } else if (data.type === "settings") {
         Object.assign(this.settings, data.settings);
       } else if (data.type === "play") {
+        this.token = data.token ?? this.token;
         if (this.sourcePos >= this.duration) {
           this.sourcePos = 0;
         }
@@ -51,6 +53,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.nextGrain = 0;
         this.grainClock = 0;
       } else if (data.type === "stop") {
+        this.token = data.token ?? this.token;
         this.settings.playing = false;
         this.grains = [];
         this.nextGrain = 0;
@@ -59,8 +62,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.sourcePos = 0;
           this.outputTime = 0;
         }
-        this.port.postMessage({ type: "stopped", seconds: this.sourcePos });
+        this.port.postMessage({ type: "stopped", seconds: this.sourcePos, token: this.token });
       } else if (data.type === "seek") {
+        this.token = data.token ?? this.token;
         this.sourcePos = Math.max(0, Math.min(this.duration, data.seconds || 0));
         this.outputTime = this.sourcePos;
         this.grains = [];
@@ -186,7 +190,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         if (this.sourcePos >= this.duration) {
           this.sourcePos = this.duration;
           this.settings.playing = false;
-          this.port.postMessage({ type: "ended" });
+          this.port.postMessage({ type: "ended", token: this.token });
         }
 
         if ((i & 63) === 0) {
@@ -195,7 +199,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
             seconds: this.sourcePos,
             speed,
             cents,
-            pan: this.smoothPan
+            pan: this.smoothPan,
+            token: this.token
           });
         }
       }
