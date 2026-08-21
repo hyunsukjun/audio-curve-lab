@@ -36,6 +36,12 @@ const curveColors = {
 let audioContext;
 let audioSetupPromise = null;
 let node;
+let workletBufferLoaded = false;
+let nativeSource = null;
+let nativeStartTime = 0;
+let nativeStartOffset = 0;
+let nativeAnimationFrame = null;
+let playbackMode = null;
 let buffer;
 let waveform = [];
 let activeCurve = "stretch";
@@ -157,8 +163,14 @@ async function playAudio() {
   if (!buffer) return;
   if (isPlaying) return;
   try {
+    if (curvesAreNeutral()) {
+      await playNativeAudio();
+      return;
+    }
     await ensureAudio();
     if (isPlaying) return;
+    stopNativeAudio(false);
+    playbackMode = "worklet";
     node.port.postMessage({ type: "play", token: nextPlaybackToken() });
     isPlaying = true;
     playButton.textContent = "Playing";
@@ -170,7 +182,9 @@ async function playAudio() {
 
 function stopAudio() {
   if (!buffer) return;
+  stopNativeAudio(true);
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
+  playbackMode = null;
   isPlaying = false;
   playheadSeconds = 0;
   playButton.textContent = "Play";
@@ -179,7 +193,9 @@ function stopAudio() {
 
 function forceStopAudio() {
   if (!buffer) return;
+  stopNativeAudio(true);
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
+  playbackMode = null;
   isPlaying = false;
   playheadSeconds = 0;
   playButton.textContent = "Play";
@@ -197,10 +213,99 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-21");
+    const module = await import("./offline-render.js?v=20260821-22");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
+}
+
+function curvesAreNeutral() {
+  return ["stretch", "pitch", "pan"].every((name) =>
+    curves[name].every((point) => Math.abs(point.y - 0.5) < 0.0001)
+  );
+}
+
+async function ensureAudioContext() {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      throw new Error("Web Audio is not available in this browser.");
+    }
+    audioContext = new AudioContextClass();
+  }
+  if (audioContext.state !== "running") await audioContext.resume();
+}
+
+function cancelNativeAnimation() {
+  if (nativeAnimationFrame != null) {
+    cancelAnimationFrame(nativeAnimationFrame);
+    nativeAnimationFrame = null;
+  }
+}
+
+function updateNativePlayhead() {
+  if (playbackMode !== "native" || !isPlaying || !buffer) return;
+  playheadSeconds = Math.min(buffer.duration, nativeStartOffset + (audioContext.currentTime - nativeStartTime));
+  currentSpeed = 1;
+  currentCents = 0;
+  currentPan = 0;
+  draw();
+  if (playheadSeconds < buffer.duration) {
+    nativeAnimationFrame = requestAnimationFrame(updateNativePlayhead);
+  }
+}
+
+async function playNativeAudio() {
+  await ensureAudioContext();
+  if (isPlaying) return;
+  stopNativeAudio(false);
+  const offset = playheadSeconds >= buffer.duration ? 0 : Math.max(0, playheadSeconds);
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioContext.destination);
+  nativeSource = source;
+  nativeStartOffset = offset;
+  nativeStartTime = audioContext.currentTime;
+  playbackMode = "native";
+  isPlaying = true;
+  playButton.textContent = "Playing";
+  source.onended = () => {
+    if (nativeSource !== source || playbackMode !== "native") return;
+    nativeSource = null;
+    cancelNativeAnimation();
+    isPlaying = false;
+    playbackMode = null;
+    playButton.textContent = "Play";
+    playheadSeconds = buffer ? buffer.duration : 0;
+    draw();
+  };
+  source.start(0, offset);
+  updateNativePlayhead();
+}
+
+function stopNativeAudio(reset) {
+  cancelNativeAnimation();
+  if (nativeSource) {
+    const source = nativeSource;
+    nativeSource = null;
+    source.onended = null;
+    try {
+      source.stop();
+    } catch (_) {
+      // Source may already have ended.
+    }
+  }
+  if (reset) {
+    nativeStartOffset = 0;
+  }
+}
+
+function sendBufferToWorklet() {
+  if (!node || !buffer) return;
+  const left = new Float32Array(buffer.getChannelData(0));
+  const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
+  node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
+  workletBufferLoaded = true;
 }
 
 function valueAt(curve, x) {
@@ -341,6 +446,7 @@ function decodeAudioFile(arrayBuffer) {
 }
 
 async function ensureAudio() {
+  await ensureAudioContext();
   if (!node) {
     if (!audioSetupPromise) {
       audioSetupPromise = setupAudio().catch((error) => {
@@ -353,22 +459,18 @@ async function ensureAudio() {
     }
     await audioSetupPromise;
   }
-  if (audioContext.state !== "running") await audioContext.resume();
+  if (!workletBufferLoaded) sendBufferToWorklet();
 }
 
 async function setupAudio() {
   if (!audioContext) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      throw new Error("Web Audio is not available in this browser.");
-    }
+    await ensureAudioContext();
+  }
+  if (!audioContext.audioWorklet) {
+    throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
+  }
 
-    audioContext = new AudioContextClass();
-    if (!audioContext.audioWorklet) {
-      throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
-    }
-
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-21");
+  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-22");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -395,9 +497,9 @@ async function setupAudio() {
         draw();
       }
     };
+    sendBufferToWorklet();
     sendSettings();
     sendCurves();
-  }
 }
 
 async function loadAudioFile(file) {
@@ -411,15 +513,16 @@ async function loadAudioFile(file) {
   downloadReadout.textContent = "loading";
   playButton.textContent = "Play";
   isPlaying = false;
+  playbackMode = null;
+  stopNativeAudio(true);
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   try {
-    await ensureAudio();
+    await ensureAudioContext();
     const data = await file.arrayBuffer();
     buffer = await decodeAudioFile(data);
     buildWaveform(buffer);
-    const left = new Float32Array(buffer.getChannelData(0));
-    const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
-    node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
+    workletBufferLoaded = false;
+    sendBufferToWorklet();
     const longFileNote = buffer.duration > largeFileSeconds ? " - long file" : "";
     fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s${longFileNote}`;
     clearDownload();
@@ -500,6 +603,7 @@ downloadButton.addEventListener("click", async () => {
 });
 
 resetButton.addEventListener("click", () => {
+  forceStopAudio();
   curves.stretch = defaultCurves.stretch();
   curves.pitch = defaultCurves.pitch();
   curves.pan = defaultCurves.pan();
@@ -512,6 +616,7 @@ resetButton.addEventListener("click", () => {
 });
 
 clearCurveButton.addEventListener("click", () => {
+  forceStopAudio();
   curves[activeCurve] = defaultCurves[activeCurve]();
   editedCurves[activeCurve] = false;
   selectedPoint = null;
@@ -586,10 +691,10 @@ canvas.addEventListener("pointerup", (event) => {
 });
 
 canvas.addEventListener("dblclick", (event) => {
-  if (!buffer || !node) return;
+  if (!buffer) return;
   const p = pointerToPoint(event);
   playheadSeconds = p.x * buffer.duration;
-  node.port.postMessage({ type: "seek", seconds: playheadSeconds, token: playbackToken });
+  node?.port.postMessage({ type: "seek", seconds: playheadSeconds, token: playbackToken });
   draw();
 });
 
