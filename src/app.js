@@ -1,4 +1,4 @@
-import { renderOffline } from "./offline-render.js?v=20260821-15";
+import { renderOffline } from "./offline-render.js?v=20260821-16";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -51,7 +51,6 @@ let downloadUrl = null;
 let renderAbortController = null;
 let isPlaying = false;
 let playbackToken = 0;
-let dragDepth = 0;
 
 const curves = {
   stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
@@ -195,10 +194,6 @@ function toggleAudio() {
 
 function getSettings() {
   return { ...transformSettings };
-}
-
-function isAudioFile(file) {
-  return file?.type?.startsWith("audio/") || /\.(aif|aiff|flac|m4a|mp3|ogg|wav)$/i.test(file?.name || "");
 }
 
 function valueAt(curve, x) {
@@ -366,7 +361,7 @@ async function setupAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-15");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-16");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -398,10 +393,6 @@ async function setupAudio() {
   }
 async function loadAudioFile(file) {
   if (!file) return;
-  if (!isAudioFile(file)) {
-    fileStatus.textContent = "Please drop an audio file.";
-    return;
-  }
   if (renderAbortController) {
     renderAbortController.abort();
     renderAbortController = null;
@@ -593,30 +584,6 @@ canvas.addEventListener("dblclick", (event) => {
 });
 
 window.addEventListener("resize", resizeCanvas);
-
-window.addEventListener("dragenter", (event) => {
-  event.preventDefault();
-  dragDepth += 1;
-  document.body.classList.add("draggingAudio");
-});
-
-window.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  event.dataTransfer.dropEffect = "copy";
-});
-
-window.addEventListener("dragleave", (event) => {
-  event.preventDefault();
-  dragDepth = Math.max(0, dragDepth - 1);
-  if (dragDepth === 0) document.body.classList.remove("draggingAudio");
-});
-
-window.addEventListener("drop", async (event) => {
-  event.preventDefault();
-  dragDepth = 0;
-  document.body.classList.remove("draggingAudio");
-  await loadAudioFile(event.dataTransfer.files?.[0]);
-});
 
 window.addEventListener("keydown", (event) => {
   const target = event.target;

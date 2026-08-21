@@ -28,27 +28,6 @@ body {
   background: var(--bg);
 }
 
-body::after {
-  content: "Drop audio file";
-  position: fixed;
-  inset: 12px;
-  z-index: 10;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed rgba(109, 224, 192, 0.78);
-  border-radius: 10px;
-  background: rgba(16, 21, 25, 0.72);
-  color: #c9fff0;
-  font-size: 22px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-body.draggingAudio::after {
-  display: flex;
-}
-
 button,
 input {
   font: inherit;
