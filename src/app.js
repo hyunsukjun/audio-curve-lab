@@ -54,6 +54,7 @@ let renderOffline = null;
 let canvasCssWidth = 1;
 let canvasCssHeight = 1;
 let canvasBaseWidth = 0;
+const canvasMinimumWidth = 1800;
 const canvasBaseHeight = 620;
 
 const curves = {
@@ -82,8 +83,7 @@ const curveLabels = {
 
 function resizeCanvas() {
   const frameRect = canvas.parentElement.getBoundingClientRect();
-  const screenWidth = window.screen?.availWidth || 0;
-  const targetWidth = Math.max(frameRect.width, screenWidth - 24, canvasBaseWidth, 1000);
+  const targetWidth = Math.max(frameRect.width, canvasBaseWidth, canvasMinimumWidth);
   canvasBaseWidth = targetWidth;
   canvas.style.width = `${Math.round(canvasBaseWidth)}px`;
   canvas.style.height = `${canvasBaseHeight}px`;
@@ -213,7 +213,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-30");
+    const module = await import("./offline-render.js?v=20260821-31");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -401,7 +401,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-30");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-31");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
