@@ -1,5 +1,3 @@
-import { renderOffline } from "./offline-render.js?v=20260821-17";
-
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
 const playButton = document.getElementById("playButton");
@@ -51,6 +49,7 @@ let downloadUrl = null;
 let renderAbortController = null;
 let isPlaying = false;
 let playbackToken = 0;
+let renderOffline = null;
 
 const curves = {
   stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
@@ -194,6 +193,14 @@ function toggleAudio() {
 
 function getSettings() {
   return { ...transformSettings };
+}
+
+async function getOfflineRenderer() {
+  if (!renderOffline) {
+    const module = await import("./offline-render.js?v=20260821-18");
+    renderOffline = module.renderOffline;
+  }
+  return renderOffline;
 }
 
 function valueAt(curve, x) {
@@ -361,7 +368,7 @@ async function setupAudio() {
       throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
     }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-17");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-18");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -457,7 +464,8 @@ downloadButton.addEventListener("click", async () => {
   clearDownload();
 
   try {
-    const rendered = await renderOffline({
+    const render = await getOfflineRenderer();
+    const rendered = await render({
       audioBuffer: buffer,
       curves,
       settings: getSettings(),
