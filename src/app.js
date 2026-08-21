@@ -51,6 +51,8 @@ let renderAbortController = null;
 let isPlaying = false;
 let playbackToken = 0;
 let renderOffline = null;
+let canvasCssWidth = 1;
+let canvasCssHeight = 1;
 
 const curves = {
   stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
@@ -79,8 +81,10 @@ const curveLabels = {
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const scale = window.devicePixelRatio || 1;
-  const nextWidth = Math.max(1, Math.floor(rect.width * scale));
-  const nextHeight = Math.max(1, Math.floor(rect.height * scale));
+  canvasCssWidth = Math.max(1, rect.width);
+  canvasCssHeight = Math.max(1, rect.height);
+  const nextWidth = Math.max(1, Math.floor(canvasCssWidth * scale));
+  const nextHeight = Math.max(1, Math.floor(canvasCssHeight * scale));
   if (canvas.width !== nextWidth) canvas.width = nextWidth;
   if (canvas.height !== nextHeight) canvas.height = nextHeight;
   draw();
@@ -201,7 +205,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-26");
+    const module = await import("./offline-render.js?v=20260821-27");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -241,8 +245,8 @@ function valueAt(curve, x) {
 }
 
 function drawCurve(curve, color, width, fillPoints) {
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = canvasCssWidth;
+  const h = canvasCssHeight;
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
@@ -260,11 +264,11 @@ function drawCurve(curve, color, width, fillPoints) {
   if (fillPoints) {
     for (const point of curve) {
       ctx.beginPath();
-      ctx.arc(point.x * w, (1 - point.y) * h, 6 * (window.devicePixelRatio || 1), 0, Math.PI * 2);
+      ctx.arc(point.x * w, (1 - point.y) * h, 6, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
       ctx.strokeStyle = "#111316";
-      ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
   }
@@ -272,19 +276,20 @@ function drawCurve(curve, color, width, fillPoints) {
 }
 
 function drawCurves() {
-  const scale = window.devicePixelRatio || 1;
   const curveOrder = ["stretch", "pitch", "pan"];
   for (const name of curveOrder) {
     if (name === activeCurve) continue;
     if (!editedCurves[name]) continue;
-    drawCurve(curves[name], curveColors[name], 1.8 * scale, false);
+    drawCurve(curves[name], curveColors[name], 1.8, false);
   }
-  drawCurve(curves[activeCurve], curveColors[activeCurve], 3 * scale, true);
+  drawCurve(curves[activeCurve], curveColors[activeCurve], 3, true);
 }
 
 function draw() {
-  const w = canvas.width;
-  const h = canvas.height;
+  const scale = window.devicePixelRatio || 1;
+  const w = canvasCssWidth;
+  const h = canvasCssHeight;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = "#bdc8aa";
   ctx.fillRect(0, 0, w, h);
@@ -325,7 +330,7 @@ function draw() {
   if (buffer) {
     const x = (playheadSeconds / buffer.duration) * w;
     ctx.strokeStyle = "#d7bc52";
-    ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
@@ -388,7 +393,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-26");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-27");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
