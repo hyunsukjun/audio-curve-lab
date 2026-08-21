@@ -36,7 +36,8 @@ input {
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto;
+  align-content: start;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -141,6 +142,7 @@ button:disabled {
   padding: 12px;
   display: grid;
   grid-template-rows: auto auto auto;
+  align-content: start;
   gap: 8px;
 }
 
