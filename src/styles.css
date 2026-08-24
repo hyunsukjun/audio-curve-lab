@@ -170,12 +170,29 @@ button:disabled {
 }
 
 .legend {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modeButtons,
+.curveLegend,
+.curveActions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 12px;
+}
+
+.curveLegend {
+  min-width: 0;
+}
+
+.curveActions {
+  justify-content: flex-end;
 }
 
 .legend button {
@@ -191,10 +208,6 @@ button:disabled {
   min-width: 86px;
   height: 30px;
   color: #c8d1d3;
-}
-
-#clearCurveButton {
-  margin-left: 4px;
 }
 
 #stretchMode.active {
@@ -275,11 +288,19 @@ button:disabled {
     gap: 10px;
   }
 
+  .legend {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   #timeStatus {
     justify-self: start;
   }
 
   .transport {
     justify-self: start;
+  }
+
+  .curveActions {
+    justify-content: flex-start;
   }
 }

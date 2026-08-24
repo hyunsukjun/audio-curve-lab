@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Audio Curve Lab</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260824-03">
+    <link rel="stylesheet" href="src/styles.css?v=20260824-04">
   </head>
   <body>
     <main class="app">
@@ -28,14 +28,20 @@
 
       <section class="editor">
         <div class="legend">
-          <button id="stretchMode" class="active curveMode" type="button">Speed</button>
-          <button id="pitchMode" class="curveMode" type="button">Pitch</button>
-          <button id="panMode" class="curveMode" type="button">Pan</button>
-          <button id="clearCurveButton" type="button">Clear Current</button>
-          <button id="resetButton" type="button">Reset All</button>
-          <span><b class="stretchSwatch"></b>speed 0.125x-4x</span>
-          <span><b class="pitchSwatch"></b>pitch -2400/+2400 cents</span>
-          <span><b class="panSwatch"></b>pan L/R</span>
+          <div class="modeButtons">
+            <button id="stretchMode" class="active curveMode" type="button">Speed</button>
+            <button id="pitchMode" class="curveMode" type="button">Pitch</button>
+            <button id="panMode" class="curveMode" type="button">Pan</button>
+          </div>
+          <div class="curveLegend">
+            <span><b class="stretchSwatch"></b>speed 0.125x-4x</span>
+            <span><b class="pitchSwatch"></b>pitch -2400/+2400 cents</span>
+            <span><b class="panSwatch"></b>pan L/R</span>
+          </div>
+          <div class="curveActions">
+            <button id="clearCurveButton" type="button">Clear Current</button>
+            <button id="resetButton" type="button">Reset All</button>
+          </div>
         </div>
 
         <div class="panel">
@@ -78,6 +84,6 @@
       </section>
     </main>
 
-    <script src="src/app.js?v=20260824-03" type="module"></script>
+    <script src="src/app.js?v=20260824-04" type="module"></script>
   </body>
 </html>
