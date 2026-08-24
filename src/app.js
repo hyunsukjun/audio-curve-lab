@@ -42,6 +42,7 @@ let buffer;
 let waveform = [];
 let activeCurve = "stretch";
 let selectedPoint = null;
+let hoverPoint = null;
 let dragging = false;
 let playheadSeconds = 0;
 let currentSpeed = 1;
@@ -113,6 +114,33 @@ function formatClock(seconds) {
 function formatPan(value) {
   if (Math.abs(value) < 0.02) return "center";
   return value < 0 ? `L ${Math.round(Math.abs(value) * 100)}` : `R ${Math.round(value * 100)}`;
+}
+
+function speedFromNorm(y) {
+  const minSpeed = 0.125;
+  const maxSpeed = 4;
+  const clamped = Math.max(0, Math.min(1, y));
+  if (clamped < 0.5) {
+    return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
+  }
+  return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
+}
+
+function centsFromNorm(y) {
+  return -2400 + (Math.max(0, Math.min(1, y)) * 4800);
+}
+
+function panFromNorm(y) {
+  return Math.max(-1, Math.min(1, (Math.max(0, Math.min(1, y)) - 0.5) * 2));
+}
+
+function formatPointValue(curveName, point) {
+  if (curveName === "stretch") return `${speedFromNorm(point.y).toFixed(2)}x`;
+  if (curveName === "pitch") {
+    const cents = Math.round(centsFromNorm(point.y));
+    return `${cents > 0 ? "+" : ""}${cents} cents`;
+  }
+  return formatPan(panFromNorm(point.y));
 }
 
 function sortCurve(curve) {
@@ -221,7 +249,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260824-04");
+    const module = await import("./offline-render.js?v=20260825-01");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -301,6 +329,60 @@ function drawCurves() {
   drawCurve(curves[activeCurve], curveColors[activeCurve], 3, true);
 }
 
+function roundedRectPath(x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
+function getTooltipPoint() {
+  if (dragging && selectedPoint != null) {
+    return { curveName: activeCurve, point: curves[activeCurve][selectedPoint] };
+  }
+  if (hoverPoint?.curveName === activeCurve) {
+    return { curveName: activeCurve, point: curves[activeCurve][hoverPoint.pointIndex] };
+  }
+  return null;
+}
+
+function drawPointTooltip(curveName, point) {
+  if (!point) return;
+  const w = canvasCssWidth;
+  const h = canvasCssHeight;
+  const text = formatPointValue(curveName, point);
+  const px = point.x * w;
+  const py = (1 - point.y) * h;
+  const paddingX = 8;
+  const boxHeight = 26;
+
+  ctx.save();
+  ctx.font = "650 13px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  const boxWidth = Math.ceil(ctx.measureText(text).width + (paddingX * 2));
+  const boxX = Math.max(8, Math.min(w - boxWidth - 8, px - (boxWidth / 2)));
+  let boxY = py - 36;
+  if (boxY < 8) boxY = py + 14;
+
+  roundedRectPath(boxX, boxY, boxWidth, boxHeight, 5);
+  ctx.fillStyle = "rgba(31, 36, 38, 0.93)";
+  ctx.fill();
+  ctx.strokeStyle = curveColors[curveName];
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.fillStyle = "#edf3f2";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, boxX + (boxWidth / 2), boxY + (boxHeight / 2) + 0.5);
+  ctx.restore();
+}
+
 function draw() {
   const scale = window.devicePixelRatio || 1;
   const w = canvasCssWidth;
@@ -352,6 +434,9 @@ function draw() {
     ctx.lineTo(x, h);
     ctx.stroke();
   }
+
+  const tooltip = getTooltipPoint();
+  if (tooltip) drawPointTooltip(tooltip.curveName, tooltip.point);
 
   playheadReadout.textContent = formatTime(playheadSeconds);
   timeStatus.textContent = buffer ? `${formatClock(playheadSeconds)} / ${formatClock(buffer.duration)}` : "00:00.00 / 00:00.00";
@@ -410,7 +495,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-04");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260825-01");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -549,6 +634,8 @@ resetButton.addEventListener("click", () => {
   editedCurves.stretch = false;
   editedCurves.pitch = false;
   editedCurves.pan = false;
+  selectedPoint = null;
+  hoverPoint = null;
   markDownloadStale();
   sendCurves();
   draw();
@@ -559,6 +646,7 @@ clearCurveButton.addEventListener("click", () => {
   curves[activeCurve] = defaultCurves[activeCurve]();
   editedCurves[activeCurve] = false;
   selectedPoint = null;
+  hoverPoint = null;
   markDownloadStale();
   sendCurves();
   draw();
@@ -566,6 +654,8 @@ clearCurveButton.addEventListener("click", () => {
 
 function setActiveCurve(name) {
   activeCurve = name;
+  selectedPoint = null;
+  hoverPoint = null;
   stretchMode.classList.toggle("active", name === "stretch");
   pitchMode.classList.toggle("active", name === "pitch");
   panMode.classList.toggle("active", name === "pan");
@@ -593,16 +683,42 @@ function pointerToPoint(event) {
   return { x, y };
 }
 
+function findPointNearPointer(point) {
+  const curve = curves[activeCurve];
+  const xRadius = 10 / canvasCssWidth;
+  const yRadius = 10 / canvasCssHeight;
+  let bestIndex = -1;
+  let bestDistance = Infinity;
+  for (let i = 0; i < curve.length; i += 1) {
+    const dx = (curve[i].x - point.x) / xRadius;
+    const dy = (curve[i].y - point.y) / yRadius;
+    const distance = Math.sqrt((dx * dx) + (dy * dy));
+    if (distance <= 1 && distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+  return bestIndex;
+}
+
+function setHoverPoint(pointIndex) {
+  const nextHover = pointIndex >= 0 ? { curveName: activeCurve, pointIndex } : null;
+  const changed = hoverPoint?.curveName !== nextHover?.curveName || hoverPoint?.pointIndex !== nextHover?.pointIndex;
+  hoverPoint = nextHover;
+  canvas.style.cursor = hoverPoint ? "pointer" : "crosshair";
+  if (changed) draw();
+}
+
 canvas.addEventListener("pointerdown", (event) => {
   const p = pointerToPoint(event);
   const curve = curves[activeCurve];
-  const hitRadius = 0.025;
-  selectedPoint = curve.findIndex((point) => Math.abs(point.x - p.x) < hitRadius && Math.abs(point.y - p.y) < hitRadius);
+  selectedPoint = findPointNearPointer(p);
   if (selectedPoint < 0) {
     curve.push(p);
     sortCurve(curve);
     selectedPoint = curve.indexOf(p);
   }
+  hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
   editedCurves[activeCurve] = true;
   dragging = true;
   canvas.setPointerCapture(event.pointerId);
@@ -611,8 +727,11 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 canvas.addEventListener("pointermove", (event) => {
-  if (!dragging || selectedPoint == null) return;
   const p = pointerToPoint(event);
+  if (!dragging || selectedPoint == null) {
+    setHoverPoint(findPointNearPointer(p));
+    return;
+  }
   const curve = curves[activeCurve];
   const point = curve[selectedPoint];
   point.x = p.x;
@@ -620,13 +739,23 @@ canvas.addEventListener("pointermove", (event) => {
   editedCurves[activeCurve] = true;
   sortCurve(curve);
   selectedPoint = curve.indexOf(point);
+  hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
   sendCurves();
   draw();
 });
 
 canvas.addEventListener("pointerup", (event) => {
   dragging = false;
+  if (selectedPoint != null) hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
   canvas.releasePointerCapture(event.pointerId);
+  draw();
+});
+
+canvas.addEventListener("pointerleave", () => {
+  if (dragging) return;
+  hoverPoint = null;
+  canvas.style.cursor = "crosshair";
+  draw();
 });
 
 canvas.addEventListener("dblclick", (event) => {

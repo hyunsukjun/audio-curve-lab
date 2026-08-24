@@ -167,6 +167,7 @@ button:disabled {
   background: #bfc9bd;
   border: 1px solid #52625d;
   border-radius: 6px;
+  cursor: crosshair;
 }
 
 .legend {
