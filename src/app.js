@@ -1,5 +1,6 @@
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
+const timeStatus = document.getElementById("timeStatus");
 const playButton = document.getElementById("playButton");
 const stopButton = document.getElementById("stopButton");
 const downloadButton = document.getElementById("downloadButton");
@@ -100,6 +101,13 @@ function resizeCanvas() {
 
 function formatTime(seconds) {
   return `${seconds.toFixed(2)} s`;
+}
+
+function formatClock(seconds) {
+  const safeSeconds = Math.max(0, seconds || 0);
+  const minutes = Math.floor(safeSeconds / 60);
+  const remaining = safeSeconds - (minutes * 60);
+  return `${String(minutes).padStart(2, "0")}:${remaining.toFixed(2).padStart(5, "0")}`;
 }
 
 function formatPan(value) {
@@ -213,7 +221,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260821-33");
+    const module = await import("./offline-render.js?v=20260824-01");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -337,15 +345,19 @@ function draw() {
 
   if (buffer) {
     const x = (playheadSeconds / buffer.duration) * w;
-    ctx.strokeStyle = "#d7bc52";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#2f8cff";
+    ctx.lineWidth = 3;
+    ctx.shadowColor = "rgba(47, 140, 255, 0.55)";
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   playheadReadout.textContent = formatTime(playheadSeconds);
+  timeStatus.textContent = buffer ? `${formatClock(playheadSeconds)} / ${formatClock(buffer.duration)}` : "00:00.00 / 00:00.00";
   stretchReadout.textContent = `${currentSpeed.toFixed(2)} x`;
   pitchReadout.textContent = `${Math.round(currentCents)} cents`;
   panReadout.textContent = formatPan(currentPan);
@@ -401,7 +413,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260821-33");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-01");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,

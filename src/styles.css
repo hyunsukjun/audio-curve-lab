@@ -83,6 +83,11 @@ input {
   color: #79b8a8;
 }
 
+#timeStatus {
+  color: #8fc2ff;
+  font-variant-numeric: tabular-nums;
+}
+
 .transport {
   display: flex;
   align-items: center;
