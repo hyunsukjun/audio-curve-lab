@@ -221,7 +221,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260824-02");
+    const module = await import("./offline-render.js?v=20260824-03");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -410,7 +410,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-02");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-03");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -428,7 +428,8 @@ async function setupAudio() {
       } else if (event.data.type === "ended") {
         playButton.textContent = "Play";
         isPlaying = false;
-        if (buffer) playheadSeconds = buffer.duration;
+        playheadSeconds = 0;
+        node?.port.postMessage({ type: "seek", seconds: 0, token: playbackToken });
         draw();
       } else if (event.data.type === "stopped") {
         playButton.textContent = "Play";

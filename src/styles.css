@@ -86,7 +86,7 @@ input {
 #timeStatus {
   justify-self: center;
   color: var(--text);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
