@@ -221,7 +221,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260824-01");
+    const module = await import("./offline-render.js?v=20260824-02");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -345,15 +345,12 @@ function draw() {
 
   if (buffer) {
     const x = (playheadSeconds / buffer.duration) * w;
-    ctx.strokeStyle = "#2f8cff";
-    ctx.lineWidth = 3;
-    ctx.shadowColor = "rgba(47, 140, 255, 0.55)";
-    ctx.shadowBlur = 8;
+    ctx.strokeStyle = "#1f2426";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
     ctx.stroke();
-    ctx.shadowBlur = 0;
   }
 
   playheadReadout.textContent = formatTime(playheadSeconds);
@@ -413,7 +410,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-01");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260824-02");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
