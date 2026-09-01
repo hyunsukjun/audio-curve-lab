@@ -249,7 +249,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260825-01");
+    const module = await import("./offline-render.js?v=20260901-18");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -292,8 +292,11 @@ function drawCurve(curve, color, width, fillPoints) {
   const w = canvasCssWidth;
   const h = canvasCssHeight;
   ctx.save();
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.beginPath();
   for (let i = 0; i <= w; i += 3) {
     const x = i / w;
@@ -324,9 +327,9 @@ function drawCurves() {
   for (const name of curveOrder) {
     if (name === activeCurve) continue;
     if (!editedCurves[name]) continue;
-    drawCurve(curves[name], curveColors[name], 1.8, false);
+    drawCurve(curves[name], curveColors[name], 2.1, false);
   }
-  drawCurve(curves[activeCurve], curveColors[activeCurve], 3, true);
+  drawCurve(curves[activeCurve], curveColors[activeCurve], 4.8, true);
 }
 
 function roundedRectPath(x, y, width, height, radius) {
@@ -495,7 +498,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260825-01");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260901-18");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
