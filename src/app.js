@@ -249,7 +249,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260902-01");
+    const module = await import("./offline-render.js?v=20260902-02");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -292,9 +292,10 @@ function createGeneratedExampleBuffer() {
   const length = sampleRate * durationSeconds;
   const exampleBuffer = createAudioBuffer(1, length, sampleRate);
   const channel = exampleBuffer.getChannelData(0);
-  const beatSeconds = 0.5;
-  const toneSeconds = 0.4;
+  const beatSeconds = 0.25;
+  const toneSeconds = 0.18;
   const fadeSeconds = 0.02;
+  const toneFrequency = 440;
   const toneSampleLength = Math.floor(toneSeconds * sampleRate);
   const fadeSampleLength = Math.max(1, Math.floor(fadeSeconds * sampleRate));
   let seed = 123456789;
@@ -308,15 +309,13 @@ function createGeneratedExampleBuffer() {
     const time = i / sampleRate;
     const beatIndex = Math.floor(time / beatSeconds);
     const beatOffset = i - Math.floor(beatIndex * beatSeconds * sampleRate);
-    const progress = beatIndex / Math.max(1, Math.ceil(durationSeconds / beatSeconds) - 1);
-    const frequency = 440 + (progress * 440);
     let tone = 0;
 
     if (beatOffset < toneSampleLength) {
       const fadeIn = Math.min(1, beatOffset / fadeSampleLength);
       const fadeOut = Math.min(1, (toneSampleLength - beatOffset) / fadeSampleLength);
       const envelope = Math.min(fadeIn, fadeOut);
-      tone = Math.sin((2 * Math.PI * frequency * beatOffset) / sampleRate) * 0.34 * envelope;
+      tone = Math.sin((2 * Math.PI * toneFrequency * beatOffset) / sampleRate) * 0.34 * envelope;
     }
 
     channel[i] = (nextNoise() * 0.045) + tone;
@@ -561,7 +560,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-01");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-02");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
