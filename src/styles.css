@@ -83,6 +83,12 @@ input {
   color: #79b8a8;
 }
 
+.formatNote {
+  margin-top: 2px;
+  color: #829194;
+  font-size: 11px;
+}
+
 #timeStatus {
   justify-self: center;
   color: var(--text);

@@ -249,7 +249,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260901-18");
+    const module = await import("./offline-render.js?v=20260902-01");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -272,6 +272,69 @@ function sendBufferToWorklet() {
   const right = new Float32Array(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
   node.port.postMessage({ type: "buffer", left, right, sampleRate: buffer.sampleRate }, [left.buffer, right.buffer]);
   workletBufferLoaded = true;
+}
+
+function createAudioBuffer(channelCount, length, sampleRate) {
+  if (typeof AudioBuffer !== "undefined") {
+    return new AudioBuffer({ numberOfChannels: channelCount, length, sampleRate });
+  }
+
+  const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineContext) {
+    throw new Error("Web Audio is not available in this browser.");
+  }
+  return new OfflineContext(channelCount, length, sampleRate).createBuffer(channelCount, length, sampleRate);
+}
+
+function createGeneratedExampleBuffer() {
+  const sampleRate = 48000;
+  const durationSeconds = 10;
+  const length = sampleRate * durationSeconds;
+  const exampleBuffer = createAudioBuffer(1, length, sampleRate);
+  const channel = exampleBuffer.getChannelData(0);
+  const beatSeconds = 0.5;
+  const toneSeconds = 0.4;
+  const fadeSeconds = 0.02;
+  const toneSampleLength = Math.floor(toneSeconds * sampleRate);
+  const fadeSampleLength = Math.max(1, Math.floor(fadeSeconds * sampleRate));
+  let seed = 123456789;
+
+  const nextNoise = () => {
+    seed = (1664525 * seed + 1013904223) >>> 0;
+    return (seed / 4294967295) * 2 - 1;
+  };
+
+  for (let i = 0; i < length; i += 1) {
+    const time = i / sampleRate;
+    const beatIndex = Math.floor(time / beatSeconds);
+    const beatOffset = i - Math.floor(beatIndex * beatSeconds * sampleRate);
+    const progress = beatIndex / Math.max(1, Math.ceil(durationSeconds / beatSeconds) - 1);
+    const frequency = 440 + (progress * 440);
+    let tone = 0;
+
+    if (beatOffset < toneSampleLength) {
+      const fadeIn = Math.min(1, beatOffset / fadeSampleLength);
+      const fadeOut = Math.min(1, (toneSampleLength - beatOffset) / fadeSampleLength);
+      const envelope = Math.min(fadeIn, fadeOut);
+      tone = Math.sin((2 * Math.PI * frequency * beatOffset) / sampleRate) * 0.34 * envelope;
+    }
+
+    channel[i] = (nextNoise() * 0.045) + tone;
+  }
+
+  return exampleBuffer;
+}
+
+function loadGeneratedExample() {
+  buffer = createGeneratedExampleBuffer();
+  buildWaveform(buffer);
+  workletBufferLoaded = false;
+  clearDownload();
+  downloadReadout.textContent = "ready";
+  fileStatus.textContent = `Generated example - ${buffer.duration.toFixed(2)} s`;
+  playheadSeconds = 0;
+  setTransportBusy(false);
+  draw();
 }
 
 function valueAt(curve, x) {
@@ -498,7 +561,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260901-18");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-01");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -796,3 +859,4 @@ window.addEventListener("keyup", (event) => {
 });
 
 resizeCanvas();
+loadGeneratedExample();
