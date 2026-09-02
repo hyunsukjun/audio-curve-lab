@@ -249,7 +249,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260902-02");
+    const module = await import("./offline-render.js?v=20260902-03");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -288,16 +288,24 @@ function createAudioBuffer(channelCount, length, sampleRate) {
 
 function createGeneratedExampleBuffer() {
   const sampleRate = 48000;
-  const durationSeconds = 10;
+  const durationSeconds = 8;
   const length = sampleRate * durationSeconds;
-  const exampleBuffer = createAudioBuffer(1, length, sampleRate);
-  const channel = exampleBuffer.getChannelData(0);
-  const beatSeconds = 0.25;
-  const toneSeconds = 0.18;
-  const fadeSeconds = 0.02;
-  const toneFrequency = 440;
-  const toneSampleLength = Math.floor(toneSeconds * sampleRate);
-  const fadeSampleLength = Math.max(1, Math.floor(fadeSeconds * sampleRate));
+  const exampleBuffer = createAudioBuffer(2, length, sampleRate);
+  const left = exampleBuffer.getChannelData(0);
+  const right = exampleBuffer.getChannelData(1);
+  const noiseBurstSeconds = 0.045833;
+  const gapSeconds = 0.020833;
+  const attackSeconds = 0.003;
+  const decaySeconds = 0.014;
+  const sustainLevel = 0.22;
+  const releaseSeconds = 0.018;
+  const gain = 0.32;
+  const noiseFrames = Math.floor(noiseBurstSeconds * sampleRate);
+  const gapFrames = Math.floor(gapSeconds * sampleRate);
+  const cycleFrames = Math.max(1, noiseFrames + gapFrames);
+  const attackFrames = Math.max(1, Math.floor(attackSeconds * sampleRate));
+  const decayFrames = Math.max(1, Math.floor(decaySeconds * sampleRate));
+  const releaseFrames = Math.max(1, Math.floor(releaseSeconds * sampleRate));
   let seed = 123456789;
 
   const nextNoise = () => {
@@ -306,19 +314,24 @@ function createGeneratedExampleBuffer() {
   };
 
   for (let i = 0; i < length; i += 1) {
-    const time = i / sampleRate;
-    const beatIndex = Math.floor(time / beatSeconds);
-    const beatOffset = i - Math.floor(beatIndex * beatSeconds * sampleRate);
-    let tone = 0;
-
-    if (beatOffset < toneSampleLength) {
-      const fadeIn = Math.min(1, beatOffset / fadeSampleLength);
-      const fadeOut = Math.min(1, (toneSampleLength - beatOffset) / fadeSampleLength);
-      const envelope = Math.min(fadeIn, fadeOut);
-      tone = Math.sin((2 * Math.PI * toneFrequency * beatOffset) / sampleRate) * 0.34 * envelope;
+    const cyclePosition = i % cycleFrames;
+    if (cyclePosition >= noiseFrames) {
+      continue;
     }
 
-    channel[i] = (nextNoise() * 0.045) + tone;
+    let envelope = sustainLevel;
+    if (cyclePosition < attackFrames) {
+      envelope = cyclePosition / attackFrames;
+    } else if (cyclePosition < attackFrames + decayFrames) {
+      const decayPosition = (cyclePosition - attackFrames) / decayFrames;
+      envelope = 1 - ((1 - sustainLevel) * decayPosition);
+    }
+
+    const releasePosition = (noiseFrames - cyclePosition) / releaseFrames;
+    envelope *= Math.max(0, Math.min(1, releasePosition));
+    const sample = nextNoise() * gain * envelope;
+    left[i] = sample;
+    right[i] = sample;
   }
 
   return exampleBuffer;
@@ -330,7 +343,7 @@ function loadGeneratedExample() {
   workletBufferLoaded = false;
   clearDownload();
   downloadReadout.textContent = "ready";
-  fileStatus.textContent = `Generated example - ${buffer.duration.toFixed(2)} s`;
+  fileStatus.textContent = `White noise intervals - ${buffer.duration.toFixed(2)} s`;
   playheadSeconds = 0;
   setTransportBusy(false);
   draw();
@@ -560,7 +573,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-02");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-03");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
