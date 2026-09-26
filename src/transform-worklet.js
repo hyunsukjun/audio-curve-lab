@@ -14,7 +14,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260926-04";
+} from "./transform-core.js?v=20260926-05";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {

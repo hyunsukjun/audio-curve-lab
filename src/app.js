@@ -3,9 +3,10 @@ import {
   effectiveSpeedAt,
   estimateOutputDuration,
   panFromNorm,
+  sourcePositionAtProgress,
   speedFromNorm,
   valueAt
-} from "./transform-core.js?v=20260926-04";
+} from "./transform-core.js?v=20260926-05";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -65,6 +66,7 @@ let selectedPoint = null;
 let hoverPoint = null;
 let dragging = false;
 let playheadSeconds = 0;
+let sourcePlayheadSeconds = 0;
 let currentSpeed = 1;
 let currentCents = 0;
 let currentPan = 0;
@@ -247,6 +249,7 @@ function stopAudio() {
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   isPlaying = false;
   playheadSeconds = 0;
+  sourcePlayheadSeconds = 0;
   resetCurrentReadouts();
   playButton.textContent = "Play";
   draw();
@@ -257,6 +260,7 @@ function forceStopAudio() {
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   isPlaying = false;
   playheadSeconds = 0;
+  sourcePlayheadSeconds = 0;
   resetCurrentReadouts();
   playButton.textContent = "Play";
   draw();
@@ -273,7 +277,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260926-04");
+    const module = await import("./offline-render.js?v=20260926-05");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -369,6 +373,7 @@ function loadGeneratedExample() {
   downloadReadout.textContent = "ready";
   fileStatus.textContent = `White noise intervals - ${buffer.duration.toFixed(2)} s`;
   playheadSeconds = 0;
+  sourcePlayheadSeconds = 0;
   resetCurrentReadouts();
   setTransportBusy(false);
   draw();
@@ -575,8 +580,8 @@ function draw() {
   drawCurves();
 
   if (buffer) {
-    const duration = getPlaybackDuration();
-    const x = left + (((duration > 0 ? playheadSeconds / duration : 0)) * w);
+    const sourceDuration = buffer.duration;
+    const x = left + (((sourceDuration > 0 ? sourcePlayheadSeconds / sourceDuration : 0)) * w);
     ctx.strokeStyle = "#1f2426";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -588,7 +593,7 @@ function draw() {
   const tooltip = getTooltipPoint();
   if (tooltip) drawPointTooltip(tooltip.curveName, tooltip.point);
 
-  playheadReadout.textContent = formatTime(playheadSeconds);
+  playheadReadout.textContent = formatTime(sourcePlayheadSeconds);
   timeStatus.textContent = buffer
     ? `${formatClock(playheadSeconds)} / ${formatClock(getPlaybackDuration())}`
     : "00:00.00 / 00:00.00";
@@ -647,7 +652,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-04");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-05");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -658,6 +663,7 @@ async function setupAudio() {
       if (!isCurrentPlaybackMessage(event.data)) return;
       if (event.data.type === "position") {
         playheadSeconds = event.data.seconds;
+        sourcePlayheadSeconds = event.data.sourceSeconds ?? event.data.seconds;
         currentSpeed = event.data.speed ?? event.data.stretch;
         currentCents = event.data.cents;
         currentPan = event.data.pan;
@@ -666,6 +672,7 @@ async function setupAudio() {
         playButton.textContent = "Play";
         isPlaying = false;
         playheadSeconds = 0;
+        sourcePlayheadSeconds = 0;
         resetCurrentReadouts();
         node?.port.postMessage({ type: "seek", seconds: 0, token: playbackToken });
         draw();
@@ -673,6 +680,7 @@ async function setupAudio() {
         playButton.textContent = "Play";
         isPlaying = false;
         playheadSeconds = 0;
+        sourcePlayheadSeconds = 0;
         resetCurrentReadouts();
         draw();
       }
@@ -706,6 +714,7 @@ async function loadAudioFile(file) {
     clearDownload();
     downloadReadout.textContent = buffer.duration > largeFileSeconds ? "export capped" : "ready";
     playheadSeconds = 0;
+    sourcePlayheadSeconds = 0;
     resetCurrentReadouts();
     draw();
   } catch (error) {
@@ -1014,6 +1023,12 @@ canvas.addEventListener("dblclick", (event) => {
   if (!buffer) return;
   const p = pointerToPoint(event);
   playheadSeconds = p.x * getPlaybackDuration();
+  sourcePlayheadSeconds = sourcePositionAtProgress(
+    buffer.duration,
+    curves.stretch,
+    transformSettings.globalDirection,
+    p.x
+  );
   node?.port.postMessage({ type: "seek", progress: p.x, token: playbackToken });
   draw();
 });
