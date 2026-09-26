@@ -1,3 +1,10 @@
+import {
+  centsFromNorm,
+  panFromNorm,
+  speedFromNorm,
+  valueAt
+} from "./transform-core.js?v=20260926-02";
+
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
@@ -122,24 +129,6 @@ function formatPan(value) {
   return value < 0 ? `L ${Math.round(Math.abs(value) * 100)}` : `R ${Math.round(value * 100)}`;
 }
 
-function speedFromNorm(y) {
-  const minSpeed = 0.125;
-  const maxSpeed = 4;
-  const clamped = Math.max(0, Math.min(1, y));
-  if (clamped < 0.5) {
-    return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
-  }
-  return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
-}
-
-function centsFromNorm(y) {
-  return -2400 + (Math.max(0, Math.min(1, y)) * 4800);
-}
-
-function panFromNorm(y) {
-  return Math.max(-1, Math.min(1, (Math.max(0, Math.min(1, y)) - 0.5) * 2));
-}
-
 function formatPointValue(curveName, point) {
   if (curveName === "stretch") return `${speedFromNorm(point.y).toFixed(2)}x`;
   if (curveName === "pitch") {
@@ -255,7 +244,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260902-03");
+    const module = await import("./offline-render.js?v=20260926-02");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -353,20 +342,6 @@ function loadGeneratedExample() {
   playheadSeconds = 0;
   setTransportBusy(false);
   draw();
-}
-
-function valueAt(curve, x) {
-  if (x <= curve[0].x) return curve[0].y;
-  for (let i = 1; i < curve.length; i += 1) {
-    const a = curve[i - 1];
-    const b = curve[i];
-    if (x <= b.x) {
-      const t = (x - a.x) / Math.max(1e-6, b.x - a.x);
-      const eased = t * t * (3 - (2 * t));
-      return a.y + ((b.y - a.y) * eased);
-    }
-  }
-  return curve[curve.length - 1].y;
 }
 
 function drawCurve(curve, color, width, fillPoints) {
@@ -579,7 +554,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260902-03");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-02");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,

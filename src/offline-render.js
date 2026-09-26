@@ -1,53 +1,16 @@
-function valueAt(curve, x) {
-  if (!curve || curve.length === 0) return 0;
-  if (x <= curve[0].x) return curve[0].y;
-  for (let i = 1; i < curve.length; i += 1) {
-    const a = curve[i - 1];
-    const b = curve[i];
-    if (x <= b.x) {
-      const t = (x - a.x) / Math.max(1e-6, b.x - a.x);
-      const eased = t * t * (3 - (2 * t));
-      return a.y + ((b.y - a.y) * eased);
-    }
-  }
-  return curve[curve.length - 1].y;
-}
-
-function readCubic(buffer, pos) {
-  if (!buffer || pos < 0 || pos >= buffer.length - 3) return 0;
-  const i0 = Math.floor(pos);
-  const frac = pos - i0;
-  const xm1 = buffer[Math.max(0, i0 - 1)];
-  const x0 = buffer[i0];
-  const x1 = buffer[i0 + 1];
-  const x2 = buffer[Math.min(buffer.length - 1, i0 + 2)];
-  const a = (-0.5 * xm1) + (1.5 * x0) - (1.5 * x1) + (0.5 * x2);
-  const b = xm1 - (2.5 * x0) + (2 * x1) - (0.5 * x2);
-  const c = (-0.5 * xm1) + (0.5 * x1);
-  return (((a * frac) + b) * frac + c) * frac + x0;
-}
-
-function speedFromNorm(y) {
-  const minSpeed = 0.125;
-  const maxSpeed = 4;
-  const clamped = Math.max(0, Math.min(1, y));
-  if (clamped < 0.5) {
-    return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
-  }
-  return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
-}
-
-function centsFromNorm(y) {
-  return -2400 + (Math.max(0, Math.min(1, y)) * 4800);
-}
-
-function panFromNorm(y) {
-  return Math.max(-1, Math.min(1, (Math.max(0, Math.min(1, y)) - 0.5) * 2));
-}
-
-function envelope(phase) {
-  return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
-}
+import {
+  TRANSFORM_CONSTANTS,
+  centsFromNorm,
+  createSeededRandom,
+  grainEnvelope,
+  grainStart,
+  panFromNorm,
+  readCubic,
+  smoothingForBlock,
+  speedFromNorm,
+  transformIsNeutral,
+  valueAt
+} from "./transform-core.js?v=20260926-02";
 
 function estimateDuration(sourceDuration, speedCurve) {
   let sum = 0;
@@ -102,15 +65,60 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   const outLength = Math.max(1, Math.ceil(outputDuration * sourceRate));
   const outL = new Float32Array(outLength);
   const outR = new Float32Array(outLength);
-
-  const grainSamples = Math.max(128, Math.round((settings.grainSizeMs / 1000) * sourceRate));
-  const density = Math.max(2, settings.density);
-  const hop = Math.max(24, Math.round(grainSamples / density));
-  const randomSamples = settings.randomness * grainSamples * 0.75;
-  const gain = settings.outputGain;
-  let sourceTime = 0;
+  const directMode = transformIsNeutral(curves.stretch, curves.pitch);
   let lastProgress = 0;
   let lastYield = performance.now();
+
+  if (directMode) {
+    let smoothGain = 0;
+    let smoothPan = panFromNorm(valueAt(curves.pan, 0));
+    for (let i = 0; i < outLength; i += 1) {
+      if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
+      const norm = left.length > 1 ? Math.min(1, i / (left.length - 1)) : 0;
+      const pan = panFromNorm(valueAt(curves.pan, norm));
+      smoothGain += (settings.outputGain - smoothGain) * TRANSFORM_CONSTANTS.gainSmoothing;
+      smoothPan += (pan - smoothPan) * TRANSFORM_CONSTANTS.panSmoothing;
+      const panAngle = (smoothPan + 1) * Math.PI * 0.25;
+      const leftPan = Math.cos(panAngle) * 1.41421356237;
+      const rightPan = Math.sin(panAngle) * 1.41421356237;
+      outL[i] = Math.tanh((left[i] || 0) * smoothGain * leftPan);
+      outR[i] = Math.tanh((right[i] || 0) * smoothGain * rightPan);
+
+      const progress = i / outLength;
+      const now = performance.now();
+      if (progress - lastProgress > 0.01 || now - lastYield > 60) {
+        lastProgress = progress;
+        onProgress?.(progress);
+        lastYield = now;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    onProgress?.(1);
+    return {
+      left: outL,
+      right: outR,
+      sampleRate: sourceRate,
+      duration: outLength / sourceRate,
+      blob: encodeWav(outL, outR, sourceRate),
+      truncated: requestedDuration > maxDuration
+    };
+  }
+
+  const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((settings.grainSizeMs / 1000) * sourceRate));
+  const density = Math.max(2, settings.density);
+  const hop = Math.max(TRANSFORM_CONSTANTS.minHopSamples, Math.round(grainSamples / density));
+  const randomSamples = settings.randomness * grainSamples * TRANSFORM_CONSTANTS.jitterFactor;
+  const speedSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.speedSmoothing, hop);
+  const rateSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.rateSmoothing, hop);
+  const gainSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.gainSmoothing, hop);
+  const panSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.panSmoothing, hop);
+  const nextRandom = createSeededRandom();
+  let sourceTime = 0;
+  let smoothSpeed = speedFromNorm(valueAt(curves.stretch, 0));
+  let smoothRate = Math.pow(2, centsFromNorm(valueAt(curves.pitch, 0)) / 1200);
+  let smoothGain = 0;
+  let smoothPan = panFromNorm(valueAt(curves.pan, 0));
 
   for (let outPos = 0; outPos < outLength && sourceTime < sourceDuration; outPos += hop) {
     if (signal?.aborted) {
@@ -122,24 +130,29 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     const cents = centsFromNorm(valueAt(curves.pitch, norm));
     const pan = panFromNorm(valueAt(curves.pan, norm));
     const rate = Math.pow(2, cents / 1200);
+    smoothSpeed += (speed - smoothSpeed) * speedSmoothing;
+    smoothRate += (rate - smoothRate) * rateSmoothing;
+    smoothGain += (settings.outputGain - smoothGain) * gainSmoothing;
+    smoothPan += (pan - smoothPan) * panSmoothing;
     const center = sourceTime * sourceRate;
-    const jitter = (Math.random() - 0.5) * randomSamples;
-    const startSource = center + jitter - (((grainSamples - 1) * rate) * 0.5);
-    const panAngle = (pan + 1) * Math.PI * 0.25;
+    const jitter = (nextRandom() - 0.5) * randomSamples;
+    const startSource = grainStart(center, grainSamples, smoothRate, left.length, jitter);
+    const panAngle = (smoothPan + 1) * Math.PI * 0.25;
     const leftPan = Math.cos(panAngle) * 1.41421356237;
     const rightPan = Math.sin(panAngle) * 1.41421356237;
+    const grainScale = smoothGain / Math.sqrt(Math.max(1, density * 0.8));
 
     for (let i = 0; i < grainSamples; i += 1) {
       const write = outPos + i;
       if (write >= outLength) break;
       const phase = i / grainSamples;
-      const env = envelope(phase);
-      const read = startSource + (i * rate);
-      outL[write] += readCubic(left, read) * env * leftPan;
-      outR[write] += readCubic(right, read) * env * rightPan;
+      const env = grainEnvelope(phase);
+      const read = startSource + (i * smoothRate);
+      outL[write] += readCubic(left, read) * env * leftPan * grainScale;
+      outR[write] += readCubic(right, read) * env * rightPan * grainScale;
     }
 
-    sourceTime += (hop / sourceRate) * speed;
+    sourceTime += (hop / sourceRate) * smoothSpeed;
     const progress = outPos / outLength;
     const now = performance.now();
     if (progress - lastProgress > 0.01 || now - lastYield > 60) {
@@ -154,7 +167,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   for (let i = 0; i < outLength; i += 1) {
     peak = Math.max(peak, Math.abs(outL[i]), Math.abs(outR[i]));
   }
-  const normalise = peak > 0 ? Math.min(1.0, 0.92 / peak) * gain : 1;
+  const normalise = peak > 0 ? Math.min(1.0, 0.92 / peak) : 1;
   for (let i = 0; i < outLength; i += 1) {
     outL[i] = Math.tanh(outL[i] * normalise);
     outR[i] = Math.tanh(outR[i] * normalise);

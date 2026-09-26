@@ -1,3 +1,16 @@
+import {
+  TRANSFORM_CONSTANTS,
+  centsFromNorm,
+  createSeededRandom,
+  grainEnvelope,
+  grainStart,
+  panFromNorm,
+  readCubic,
+  speedFromNorm,
+  transformIsNeutral,
+  valueAt
+} from "./transform-core.js?v=20260926-02";
+
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -17,6 +30,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.smoothRate = 1;
     this.smoothGain = 0;
     this.smoothPan = 0;
+    this.nextRandom = createSeededRandom();
+    this.directMode = true;
     this.stretchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.pitchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.panCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
@@ -40,10 +55,12 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.grainClock = 0;
+        this.nextRandom = createSeededRandom();
       } else if (data.type === "curves") {
         this.stretchCurve = data.stretchCurve;
         this.pitchCurve = data.pitchCurve;
         this.panCurve = data.panCurve || this.panCurve;
+        this.directMode = transformIsNeutral(this.stretchCurve, this.pitchCurve);
       } else if (data.type === "settings") {
         Object.assign(this.settings, data.settings);
       } else if (data.type === "play") {
@@ -56,6 +73,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.grains = [];
         this.nextGrain = 0;
         this.grainClock = 0;
+        this.nextRandom = createSeededRandom();
+        this.resetControlState();
       } else if (data.type === "stop") {
         this.token = data.token ?? this.token;
         this.settings.playing = false;
@@ -76,65 +95,26 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.grains = [];
         this.nextGrain = 0;
         this.grainClock = 0;
+        this.nextRandom = createSeededRandom();
+        this.resetControlState();
       }
     };
   }
 
-  valueAt(curve, x) {
-    if (curve.length === 0) return 0;
-    if (x <= curve[0].x) return curve[0].y;
-    for (let i = 1; i < curve.length; i += 1) {
-      const a = curve[i - 1];
-      const b = curve[i];
-      if (x <= b.x) {
-        const t = (x - a.x) / Math.max(1e-6, b.x - a.x);
-        const eased = t * t * (3 - (2 * t));
-        return a.y + ((b.y - a.y) * eased);
-      }
-    }
-    return curve[curve.length - 1].y;
-  }
-
-  read(buffer, pos) {
-    if (!buffer || buffer.length === 0) return 0;
-    if (pos < 0 || pos >= buffer.length - 3) return 0;
-    const i0 = Math.floor(pos);
-    const frac = pos - i0;
-    const xm1 = buffer[Math.max(0, i0 - 1)];
-    const x0 = buffer[i0];
-    const x1 = buffer[i0 + 1];
-    const x2 = buffer[Math.min(buffer.length - 1, i0 + 2)];
-    const a = (-0.5 * xm1) + (1.5 * x0) - (1.5 * x1) + (0.5 * x2);
-    const b = xm1 - (2.5 * x0) + (2 * x1) - (0.5 * x2);
-    const c = (-0.5 * xm1) + (0.5 * x1);
-    return (((a * frac) + b) * frac + c) * frac + x0;
-  }
-
-  envelope(phase) {
-    return Math.sin(Math.PI * Math.max(0, Math.min(1, phase)));
-  }
-
-  speedFromNorm(y) {
-    const minSpeed = 0.125;
-    const maxSpeed = 4;
-    const clamped = Math.max(0, Math.min(1, y));
-    if (clamped < 0.5) {
-      return minSpeed + ((clamped / 0.5) * (1 - minSpeed));
-    }
-    return 1 + (((clamped - 0.5) / 0.5) * (maxSpeed - 1));
-  }
-
-  isNeutral(speedNorm, pitchNorm, panNorm) {
-    return Math.abs(speedNorm - 0.5) < 0.0001
-      && Math.abs(pitchNorm - 0.5) < 0.0001
-      && Math.abs(panNorm - 0.5) < 0.0001;
+  resetControlState() {
+    if (!this.left?.length) return;
+    const norm = Math.min(1, this.sourceFrame / Math.max(1, this.left.length - 1));
+    const cents = centsFromNorm(valueAt(this.pitchCurve, norm));
+    this.smoothSpeed = speedFromNorm(valueAt(this.stretchCurve, norm));
+    this.smoothRate = Math.pow(2, cents / 1200);
+    this.smoothPan = panFromNorm(valueAt(this.panCurve, norm));
+    this.smoothGain = 0;
   }
 
   spawnGrain(grainSamples, rate, sourceFrame, randomSamples) {
-    const jitter = (Math.random() - 0.5) * randomSamples;
-    const centeredStart = sourceFrame + jitter - (((grainSamples - 1) * rate) * 0.5);
+    const jitter = (this.nextRandom() - 0.5) * randomSamples;
     this.grains.push({
-      pos: centeredStart,
+      pos: grainStart(sourceFrame, grainSamples, rate, this.left.length, jitter),
       age: 0,
       length: grainSamples,
       rate
@@ -153,28 +133,28 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
 
       if (this.left && this.settings.playing) {
         const norm = this.left.length > 1 ? Math.min(1, this.sourceFrame / (this.left.length - 1)) : 0;
-        const speedNorm = this.valueAt(this.stretchCurve, norm);
-        const pitchNorm = this.valueAt(this.pitchCurve, norm);
-        const panNorm = this.valueAt(this.panCurve, norm);
-        const speed = this.speedFromNorm(speedNorm);
-        const cents = -2400 + (pitchNorm * 4800);
-        const pan = Math.max(-1, Math.min(1, (panNorm - 0.5) * 2));
+        const speedNorm = valueAt(this.stretchCurve, norm);
+        const pitchNorm = valueAt(this.pitchCurve, norm);
+        const panNorm = valueAt(this.panCurve, norm);
+        const speed = speedFromNorm(speedNorm);
+        const cents = centsFromNorm(pitchNorm);
+        const pan = panFromNorm(panNorm);
         const rate = Math.pow(2, cents / 1200);
-        this.smoothSpeed += (speed - this.smoothSpeed) * 0.0008;
-        this.smoothRate += (rate - this.smoothRate) * 0.0008;
-        this.smoothGain += (this.settings.outputGain - this.smoothGain) * 0.0015;
-        this.smoothPan += (pan - this.smoothPan) * 0.0015;
+        this.smoothSpeed += (speed - this.smoothSpeed) * TRANSFORM_CONSTANTS.speedSmoothing;
+        this.smoothRate += (rate - this.smoothRate) * TRANSFORM_CONSTANTS.rateSmoothing;
+        this.smoothGain += (this.settings.outputGain - this.smoothGain) * TRANSFORM_CONSTANTS.gainSmoothing;
+        this.smoothPan += (pan - this.smoothPan) * TRANSFORM_CONSTANTS.panSmoothing;
 
-        if (this.isNeutral(speedNorm, pitchNorm, panNorm)) {
-          l = this.read(this.left, this.sourceFrame) * this.smoothGain;
-          r = this.read(this.right, this.sourceFrame) * this.smoothGain;
+        if (this.directMode) {
+          l = readCubic(this.left, this.sourceFrame) * this.smoothGain;
+          r = readCubic(this.right, this.sourceFrame) * this.smoothGain;
           this.grains = [];
           this.nextGrain = 0;
         } else {
-        const grainSamples = Math.max(64, Math.round((this.settings.grainSizeMs / 1000) * sampleRate));
+        const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((this.settings.grainSizeMs / 1000) * sampleRate));
         const density = Math.max(2, this.settings.density);
-        const interval = Math.max(16, Math.round(grainSamples / density));
-        const randomSamples = this.settings.randomness * grainSamples * 1.5;
+        const interval = Math.max(TRANSFORM_CONSTANTS.minHopSamples, Math.round(grainSamples / density));
+        const randomSamples = this.settings.randomness * grainSamples * TRANSFORM_CONSTANTS.jitterFactor;
 
         while (this.nextGrain <= 0) {
           this.spawnGrain(grainSamples, this.smoothRate * (this.sampleRateSource / sampleRate), this.sourceFrame, randomSamples);
@@ -189,9 +169,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
             this.grains.splice(g, 1);
             continue;
           }
-          const env = this.envelope(phase);
-          l += this.read(this.left, grain.pos) * env;
-          r += this.read(this.right, grain.pos) * env;
+          const env = grainEnvelope(phase);
+          l += readCubic(this.left, grain.pos) * env;
+          r += readCubic(this.right, grain.pos) * env;
           grain.pos += grain.rate;
           grain.age += 1;
         }

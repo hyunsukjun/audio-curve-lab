@@ -2,7 +2,7 @@
 
 Draw time, pitch, and space onto sound.
 
-Audio Curve Lab is a browser-based classroom tool for electronic music and sound composition. Students can load an audio file, draw time-stretch, pitch, and pan curves over the waveform, then export the result as a WAV file.
+Audio Curve Lab is a browser-based classroom tool for electronic music and sound composition. Students can load an audio file, draw speed, pitch, and pan curves over the waveform, then export the result as a WAV file.
 
 The audio file is processed locally in the student's browser. It is not uploaded to a server.
 
@@ -10,7 +10,7 @@ The audio file is processed locally in the student's browser. It is not uploaded
 
 1. Open the website.
 2. Click `Open Audio` and choose a short audio file.
-3. Select `Time Stretch`, `Pitch`, or `Pan`.
+3. Select `Speed`, `Pitch`, or `Pan`.
 4. Draw points directly on the waveform.
 5. Use `Play` for a quick check.
 6. Use `Download WAV` to export the transformed sound.
@@ -21,7 +21,7 @@ The audio file is processed locally in the student's browser. It is not uploaded
 
 Audio Curve Lab helps students treat sound as flexible compositional material:
 
-- Time can be stretched, compressed, or shaped as a curve.
+- Speed can be slowed down, accelerated, or shaped as a curve.
 - Pitch can move gradually through glissandi or larger register shifts.
 - Pan can become a composed spatial motion.
 - The result is a concrete WAV file students can reuse in their pieces.
@@ -32,8 +32,23 @@ The tool is especially useful before introducing more technical systems such as 
 
 - Realtime `Play`: Web Audio API / AudioWorklet transform engine.
 - `Download WAV`: browser-based offline transform export.
+- Realtime and offline processing share `src/transform-core.js` for curve mapping,
+  interpolation, grain placement, smoothing constants, and deterministic jitter.
+- Neutral Speed/Pitch uses the direct signal path in both engines so an unchanged
+  sound is not unnecessarily rebuilt from grains.
 
 This version is not yet a high-end time-stretch engine. It is a classroom workflow prototype. The current internal algorithm is intentionally hidden from the main interface so the tool can later support different engines, including granular synthesis, Csound, Rubber Band, a phase-vocoder renderer, or a server-side rendering pipeline.
+
+## Regression Check
+
+Run the dependency-free transform check after changing curve mapping or audio processing:
+
+```sh
+node tests/transform-parity.mjs
+```
+
+It verifies neutral-path preservation, deterministic transformed renders, finite
+samples, full-scale bounds, and the supported parameter extremes.
 
 ## Browser Compatibility
 
