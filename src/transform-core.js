@@ -1,6 +1,8 @@
 export const TRANSFORM_CONSTANTS = Object.freeze({
-  minSpeed: 0.125,
-  maxSpeed: 4,
+  minSpeed: -2,
+  maxSpeed: 2,
+  neutralSpeedNorm: 0.75,
+  freezeThreshold: 0.02,
   minGrainSamples: 128,
   minHopSamples: 24,
   jitterFactor: 0.75,
@@ -31,12 +33,8 @@ export function valueAt(curve, x) {
 }
 
 export function speedFromNorm(y) {
-  const clamped = clamp(y, 0, 1);
-  if (clamped < 0.5) {
-    return TRANSFORM_CONSTANTS.minSpeed
-      + ((clamped / 0.5) * (1 - TRANSFORM_CONSTANTS.minSpeed));
-  }
-  return 1 + (((clamped - 0.5) / 0.5) * (TRANSFORM_CONSTANTS.maxSpeed - 1));
+  return TRANSFORM_CONSTANTS.minSpeed
+    + (clamp(y, 0, 1) * (TRANSFORM_CONSTANTS.maxSpeed - TRANSFORM_CONSTANTS.minSpeed));
 }
 
 export function centsFromNorm(y) {
@@ -75,13 +73,67 @@ export function curveIsNeutral(curve, neutralValue = 0.5, tolerance = 0.0001) {
 }
 
 export function transformIsNeutral(stretchCurve, pitchCurve) {
-  return curveIsNeutral(stretchCurve) && curveIsNeutral(pitchCurve);
+  return curveIsNeutral(stretchCurve, TRANSFORM_CONSTANTS.neutralSpeedNorm)
+    && curveIsNeutral(pitchCurve);
+}
+
+export function speedDirection(speed, fallback = 1) {
+  if (speed > TRANSFORM_CONSTANTS.freezeThreshold) return 1;
+  if (speed < -TRANSFORM_CONSTANTS.freezeThreshold) return -1;
+  return fallback < 0 ? -1 : 1;
+}
+
+export function effectiveSpeedAt(speedCurve, progress, globalDirection = 1) {
+  return speedFromNorm(valueAt(speedCurve, clamp(progress, 0, 1))) * (globalDirection < 0 ? -1 : 1);
+}
+
+export function initialPlaybackDirection(speedCurve, globalDirection = 1) {
+  const steps = 256;
+  for (let i = 0; i <= steps; i += 1) {
+    const speed = effectiveSpeedAt(speedCurve, i / steps, globalDirection);
+    if (Math.abs(speed) > TRANSFORM_CONSTANTS.freezeThreshold) return speed < 0 ? -1 : 1;
+  }
+  return globalDirection < 0 ? -1 : 1;
+}
+
+export function estimateOutputDuration(sourceDuration, speedCurve, steps = 1024) {
+  let distance = 0;
+  for (let i = 0; i < steps; i += 1) {
+    const speed = speedFromNorm(valueAt(speedCurve, (i + 0.5) / steps));
+    if (Math.abs(speed) > TRANSFORM_CONSTANTS.freezeThreshold) distance += Math.abs(speed);
+  }
+  const averageSpeed = distance / steps;
+  return averageSpeed > 1e-6 ? sourceDuration / averageSpeed : sourceDuration;
+}
+
+export function sourcePositionAtProgress(sourceDuration, speedCurve, globalDirection, progress, steps = 1024) {
+  const safeProgress = clamp(progress, 0, 1);
+  const outputDuration = estimateOutputDuration(sourceDuration, speedCurve, steps);
+  const initialDirection = initialPlaybackDirection(speedCurve, globalDirection);
+  let sourceSeconds = initialDirection < 0 ? sourceDuration : 0;
+  const completedSteps = Math.max(1, Math.ceil(steps * safeProgress));
+  const stepSize = safeProgress / completedSteps;
+  for (let i = 0; i < completedSteps; i += 1) {
+    const curveProgress = (i + 0.5) * stepSize;
+    const speed = effectiveSpeedAt(speedCurve, curveProgress, globalDirection);
+    sourceSeconds = clamp(sourceSeconds + (speed * outputDuration * stepSize), 0, sourceDuration);
+  }
+  return sourceSeconds;
+}
+
+export function transformCanUseDirect(stretchCurve, pitchCurve) {
+  if (!curveIsNeutral(pitchCurve)) return false;
+  if (!stretchCurve?.length) return false;
+  const firstSpeed = speedFromNorm(stretchCurve[0].y);
+  if (Math.abs(Math.abs(firstSpeed) - 1) > 0.0001) return false;
+  return stretchCurve.every((point) => Math.abs(speedFromNorm(point.y) - firstSpeed) < 0.0001);
 }
 
 export function grainStart(center, grainSamples, rate, bufferLength, jitter = 0) {
   const span = (grainSamples - 1) * rate;
-  const maxStart = Math.max(0, bufferLength - 3 - span);
-  return clamp(center + jitter - (span * 0.5), 0, maxStart);
+  const minStart = Math.max(0, -span);
+  const maxStart = Math.max(minStart, Math.min(bufferLength - 3, bufferLength - 3 - span));
+  return clamp(center + jitter - (span * 0.5), minStart, maxStart);
 }
 
 export function smoothingForBlock(perSampleAmount, blockSize) {

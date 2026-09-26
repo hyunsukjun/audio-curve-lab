@@ -1,15 +1,18 @@
 import {
   centsFromNorm,
+  effectiveSpeedAt,
+  estimateOutputDuration,
   panFromNorm,
   speedFromNorm,
   valueAt
-} from "./transform-core.js?v=20260926-03";
+} from "./transform-core.js?v=20260926-04";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
 const playButton = document.getElementById("playButton");
 const stopButton = document.getElementById("stopButton");
+const directionButton = document.getElementById("directionButton");
 const downloadButton = document.getElementById("downloadButton");
 const clearCurveButton = document.getElementById("clearCurveButton");
 const resetButton = document.getElementById("resetButton");
@@ -27,6 +30,9 @@ const modeReadout = document.getElementById("modeReadout");
 const pointsReadout = document.getElementById("pointsReadout");
 const penTool = document.getElementById("penTool");
 const eraserTool = document.getElementById("eraserTool");
+const resetDialog = document.getElementById("resetDialog");
+const cancelResetButton = document.getElementById("cancelResetButton");
+const confirmResetButton = document.getElementById("confirmResetButton");
 const eraseModifier = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgentData?.platform || "")
   ? "metaKey"
   : "ctrlKey";
@@ -35,7 +41,8 @@ const transformSettings = {
   grainSizeMs: 140,
   density: 5.5,
   randomness: 0.02,
-  outputGain: 0.95
+  outputGain: 0.95,
+  globalDirection: 1
 };
 
 const largeFileSeconds = 180;
@@ -71,15 +78,17 @@ let canvasCssHeight = 1;
 let canvasBaseWidth = 0;
 const canvasMinimumWidth = 1800;
 const canvasBaseHeight = 620;
+const parameterScaleWidth = 54;
+const plotRightPadding = 8;
 
 const curves = {
-  stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
+  stretch: [{ x: 0, y: 0.75 }, { x: 1, y: 0.75 }],
   pitch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pan: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
 };
 
 const defaultCurves = {
-  stretch: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
+  stretch: () => [{ x: 0, y: 0.75 }, { x: 1, y: 0.75 }],
   pitch: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
   pan: () => [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }]
 };
@@ -127,6 +136,17 @@ function formatClock(seconds) {
 function formatPan(value) {
   if (Math.abs(value) < 0.02) return "center";
   return value < 0 ? `L ${Math.round(Math.abs(value) * 100)}` : `R ${Math.round(value * 100)}`;
+}
+
+function getPlaybackDuration() {
+  if (!buffer) return 0;
+  return Math.min(largeFileSeconds, estimateOutputDuration(buffer.duration, curves.stretch));
+}
+
+function resetCurrentReadouts() {
+  currentSpeed = effectiveSpeedAt(curves.stretch, 0, transformSettings.globalDirection);
+  currentCents = centsFromNorm(valueAt(curves.pitch, 0));
+  currentPan = panFromNorm(valueAt(curves.pan, 0));
 }
 
 function formatPointValue(curveName, point) {
@@ -179,6 +199,7 @@ function clearDownload() {
 function setTransportBusy(isBusy) {
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
+  directionButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
 }
@@ -186,6 +207,7 @@ function setTransportBusy(isBusy) {
 function setRenderBusy(isBusy) {
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
+  directionButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
   downloadButton.disabled = !buffer;
 }
@@ -205,7 +227,12 @@ async function playAudio() {
   try {
     await ensureAudio();
     if (isPlaying) return;
-    node.port.postMessage({ type: "seek", seconds: playheadSeconds, token: playbackToken });
+    const duration = getPlaybackDuration();
+    node.port.postMessage({
+      type: "seek",
+      progress: duration > 0 ? playheadSeconds / duration : 0,
+      token: playbackToken
+    });
     node.port.postMessage({ type: "play", token: nextPlaybackToken() });
     isPlaying = true;
     playButton.textContent = "Playing";
@@ -220,6 +247,7 @@ function stopAudio() {
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   isPlaying = false;
   playheadSeconds = 0;
+  resetCurrentReadouts();
   playButton.textContent = "Play";
   draw();
 }
@@ -229,6 +257,7 @@ function forceStopAudio() {
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   isPlaying = false;
   playheadSeconds = 0;
+  resetCurrentReadouts();
   playButton.textContent = "Play";
   draw();
 }
@@ -244,7 +273,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260926-03");
+    const module = await import("./offline-render.js?v=20260926-04");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -340,13 +369,74 @@ function loadGeneratedExample() {
   downloadReadout.textContent = "ready";
   fileStatus.textContent = `White noise intervals - ${buffer.duration.toFixed(2)} s`;
   playheadSeconds = 0;
+  resetCurrentReadouts();
   setTransportBusy(false);
   draw();
 }
 
+function getPlotBounds() {
+  return {
+    left: parameterScaleWidth,
+    width: Math.max(1, canvasCssWidth - parameterScaleWidth - plotRightPadding),
+    height: canvasCssHeight
+  };
+}
+
+function getParameterTicks() {
+  if (activeCurve === "pitch") {
+    return [
+      { y: 1, label: "+2400" },
+      { y: 0.75, label: "+1200" },
+      { y: 0.5, label: "0" },
+      { y: 0.25, label: "-1200" },
+      { y: 0, label: "-2400" }
+    ];
+  }
+  if (activeCurve === "pan") {
+    return [{ y: 1, label: "R" }, { y: 0.5, label: "C" }, { y: 0, label: "L" }];
+  }
+  return [
+    { y: 1, label: "+2.0x" },
+    { y: 0.75, label: "+1.0x" },
+    { y: 0.5, label: "0.0x", emphasis: true },
+    { y: 0.25, label: "-1.0x" },
+    { y: 0, label: "-2.0x" }
+  ];
+}
+
+function drawParameterScale() {
+  const { left, width, height } = getPlotBounds();
+  ctx.save();
+  ctx.font = "600 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(42, 50, 45, 0.78)";
+  ctx.strokeStyle = "rgba(55, 65, 55, 0.32)";
+  ctx.lineWidth = 1;
+  for (const tick of getParameterTicks()) {
+    const y = (1 - tick.y) * height;
+    const textY = Math.max(9, Math.min(height - 7, y + 4));
+    ctx.font = tick.emphasis
+      ? "750 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      : "600 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    ctx.fillStyle = tick.emphasis ? "rgba(26, 33, 29, 0.95)" : "rgba(42, 50, 45, 0.78)";
+    ctx.strokeStyle = tick.emphasis ? "rgba(34, 42, 37, 0.72)" : "rgba(55, 65, 55, 0.32)";
+    ctx.lineWidth = tick.emphasis ? 1.6 : 1;
+    ctx.fillText(tick.label, left - 9, textY);
+    ctx.beginPath();
+    ctx.moveTo(left - 5, y);
+    ctx.lineTo(left + width, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(55, 65, 55, 0.5)";
+  ctx.beginPath();
+  ctx.moveTo(left, 0);
+  ctx.lineTo(left, height);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawCurve(curve, color, width, fillPoints) {
-  const w = canvasCssWidth;
-  const h = canvasCssHeight;
+  const { left, width: w, height: h } = getPlotBounds();
   ctx.save();
   ctx.globalAlpha = 1;
   ctx.strokeStyle = color;
@@ -357,7 +447,7 @@ function drawCurve(curve, color, width, fillPoints) {
   for (let i = 0; i <= w; i += 3) {
     const x = i / w;
     const y = valueAt(curve, x);
-    const px = x * w;
+    const px = left + (x * w);
     const py = (1 - y) * h;
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
@@ -367,7 +457,7 @@ function drawCurve(curve, color, width, fillPoints) {
   if (fillPoints) {
     for (const point of curve) {
       ctx.beginPath();
-      ctx.arc(point.x * w, (1 - point.y) * h, 6, 0, Math.PI * 2);
+      ctx.arc(left + (point.x * w), (1 - point.y) * h, 6, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
       ctx.strokeStyle = "#111316";
@@ -414,10 +504,9 @@ function getTooltipPoint() {
 
 function drawPointTooltip(curveName, point) {
   if (!point) return;
-  const w = canvasCssWidth;
-  const h = canvasCssHeight;
+  const { left, width: w, height: h } = getPlotBounds();
   const text = formatPointValue(curveName, point);
-  const px = point.x * w;
+  const px = left + (point.x * w);
   const py = (1 - point.y) * h;
   const paddingX = 8;
   const boxHeight = 26;
@@ -425,7 +514,7 @@ function drawPointTooltip(curveName, point) {
   ctx.save();
   ctx.font = "650 13px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const boxWidth = Math.ceil(ctx.measureText(text).width + (paddingX * 2));
-  const boxX = Math.max(8, Math.min(w - boxWidth - 8, px - (boxWidth / 2)));
+  const boxX = Math.max(left + 8, Math.min(left + w - boxWidth - 8, px - (boxWidth / 2)));
   let boxY = py - 36;
   if (boxY < 8) boxY = py + 14;
 
@@ -444,17 +533,17 @@ function drawPointTooltip(curveName, point) {
 
 function draw() {
   const scale = window.devicePixelRatio || 1;
-  const w = canvasCssWidth;
-  const h = canvasCssHeight;
+  const canvasWidth = canvasCssWidth;
+  const { left, width: w, height: h } = getPlotBounds();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(0, 0, canvasWidth, h);
   ctx.fillStyle = "#bdc8aa";
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(0, 0, canvasWidth, h);
 
   ctx.strokeStyle = "rgba(55, 65, 55, 0.36)";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 10; i += 1) {
-    const x = (i / 10) * w;
+    const x = left + ((i / 10) * w);
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
@@ -463,8 +552,8 @@ function draw() {
   for (let i = 1; i < 4; i += 1) {
     const y = (i / 4) * h;
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + w, y);
     ctx.stroke();
   }
 
@@ -477,15 +566,17 @@ function draw() {
     const step = Math.max(1, Math.floor(waveform.length / w));
     for (let x = 0; x < w; x += 1) {
       const sample = waveform[Math.min(waveform.length - 1, x * step)] || 0;
-      ctx.fillRect(x, midTop - (sample * ampTop), 1, Math.max(1, sample * ampTop * 2));
-      ctx.fillRect(x, midBottom - (sample * ampBottom), 1, Math.max(1, sample * ampBottom * 2));
+      ctx.fillRect(left + x, midTop - (sample * ampTop), 1, Math.max(1, sample * ampTop * 2));
+      ctx.fillRect(left + x, midBottom - (sample * ampBottom), 1, Math.max(1, sample * ampBottom * 2));
     }
   }
 
+  drawParameterScale();
   drawCurves();
 
   if (buffer) {
-    const x = (playheadSeconds / buffer.duration) * w;
+    const duration = getPlaybackDuration();
+    const x = left + (((duration > 0 ? playheadSeconds / duration : 0)) * w);
     ctx.strokeStyle = "#1f2426";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -498,7 +589,9 @@ function draw() {
   if (tooltip) drawPointTooltip(tooltip.curveName, tooltip.point);
 
   playheadReadout.textContent = formatTime(playheadSeconds);
-  timeStatus.textContent = buffer ? `${formatClock(playheadSeconds)} / ${formatClock(buffer.duration)}` : "00:00.00 / 00:00.00";
+  timeStatus.textContent = buffer
+    ? `${formatClock(playheadSeconds)} / ${formatClock(getPlaybackDuration())}`
+    : "00:00.00 / 00:00.00";
   stretchReadout.textContent = `${currentSpeed.toFixed(2)} x`;
   pitchReadout.textContent = `${Math.round(currentCents)} cents`;
   panReadout.textContent = formatPan(currentPan);
@@ -554,7 +647,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-03");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-04");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -573,12 +666,14 @@ async function setupAudio() {
         playButton.textContent = "Play";
         isPlaying = false;
         playheadSeconds = 0;
+        resetCurrentReadouts();
         node?.port.postMessage({ type: "seek", seconds: 0, token: playbackToken });
         draw();
       } else if (event.data.type === "stopped") {
         playButton.textContent = "Play";
         isPlaying = false;
         playheadSeconds = 0;
+        resetCurrentReadouts();
         draw();
       }
     };
@@ -611,6 +706,7 @@ async function loadAudioFile(file) {
     clearDownload();
     downloadReadout.textContent = buffer.duration > largeFileSeconds ? "export capped" : "ready";
     playheadSeconds = 0;
+    resetCurrentReadouts();
     draw();
   } catch (error) {
     console.error(error);
@@ -630,6 +726,24 @@ fileInput.addEventListener("change", async () => {
 playButton.addEventListener("click", playAudio);
 
 stopButton.addEventListener("click", stopAudio);
+
+function updateDirectionButton() {
+  const isReverse = transformSettings.globalDirection < 0;
+  directionButton.textContent = isReverse ? "Reverse" : "Forward";
+  directionButton.classList.toggle("reverse", isReverse);
+  directionButton.setAttribute("aria-pressed", String(isReverse));
+  directionButton.title = isReverse
+    ? "Global direction: Reverse. Negative Speed curve regions play forward."
+    : "Global direction: Forward. Negative Speed curve regions play in reverse.";
+}
+
+directionButton.addEventListener("click", () => {
+  transformSettings.globalDirection *= -1;
+  updateDirectionButton();
+  if (!isPlaying) resetCurrentReadouts();
+  sendSettings();
+  draw();
+});
 
 downloadButton.addEventListener("click", async () => {
   if (!buffer) return;
@@ -685,7 +799,12 @@ downloadButton.addEventListener("click", async () => {
   }
 });
 
-resetButton.addEventListener("click", () => {
+function closeResetDialog() {
+  resetDialog.hidden = true;
+  resetButton.focus();
+}
+
+function applyResetAll() {
   forceStopAudio();
   curves.stretch = defaultCurves.stretch();
   curves.pitch = defaultCurves.pitch();
@@ -693,11 +812,37 @@ resetButton.addEventListener("click", () => {
   editedCurves.stretch = false;
   editedCurves.pitch = false;
   editedCurves.pan = false;
+  transformSettings.globalDirection = 1;
+  updateDirectionButton();
+  resetCurrentReadouts();
   selectedPoint = null;
   hoverPoint = null;
   markDownloadStale();
+  sendSettings();
   sendCurves();
   draw();
+}
+
+resetButton.addEventListener("click", () => {
+  resetDialog.hidden = false;
+  cancelResetButton.focus();
+});
+
+cancelResetButton.addEventListener("click", closeResetDialog);
+
+confirmResetButton.addEventListener("click", () => {
+  closeResetDialog();
+  applyResetAll();
+});
+
+resetDialog.addEventListener("click", (event) => {
+  if (event.target === resetDialog) closeResetDialog();
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || resetDialog.hidden) return;
+  event.preventDefault();
+  closeResetDialog();
 });
 
 clearCurveButton.addEventListener("click", () => {
@@ -706,6 +851,7 @@ clearCurveButton.addEventListener("click", () => {
   editedCurves[activeCurve] = false;
   selectedPoint = null;
   hoverPoint = null;
+  resetCurrentReadouts();
   markDownloadStale();
   sendCurves();
   draw();
@@ -737,14 +883,16 @@ sendSettings();
 
 function pointerToPoint(event) {
   const rect = canvas.getBoundingClientRect();
-  const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  const { left, width } = getPlotBounds();
+  const canvasX = event.clientX - rect.left;
+  const x = Math.max(0, Math.min(1, (canvasX - left) / width));
   const y = Math.max(0, Math.min(1, 1 - ((event.clientY - rect.top) / rect.height)));
   return { x, y };
 }
 
 function findPointNearPointer(point) {
   const curve = curves[activeCurve];
-  const xRadius = 10 / canvasCssWidth;
+  const xRadius = 10 / getPlotBounds().width;
   const yRadius = 10 / canvasCssHeight;
   let bestIndex = -1;
   let bestDistance = Infinity;
@@ -865,8 +1013,8 @@ window.addEventListener("blur", () => updateToolCursor());
 canvas.addEventListener("dblclick", (event) => {
   if (!buffer) return;
   const p = pointerToPoint(event);
-  playheadSeconds = p.x * buffer.duration;
-  node?.port.postMessage({ type: "seek", seconds: playheadSeconds, token: playbackToken });
+  playheadSeconds = p.x * getPlaybackDuration();
+  node?.port.postMessage({ type: "seek", progress: p.x, token: playbackToken });
   draw();
 });
 
@@ -897,4 +1045,5 @@ window.addEventListener("keyup", (event) => {
 });
 
 resizeCanvas();
+updateDirectionButton();
 loadGeneratedExample();

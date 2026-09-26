@@ -2,15 +2,19 @@ import {
   TRANSFORM_CONSTANTS,
   centsFromNorm,
   createSeededRandom,
+  effectiveSpeedAt,
+  estimateOutputDuration,
   grainEnvelope,
   grainMixScale,
   grainStart,
+  initialPlaybackDirection,
   panFromNorm,
   readCubic,
-  speedFromNorm,
-  transformIsNeutral,
+  sourcePositionAtProgress,
+  speedDirection,
+  transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260926-03";
+} from "./transform-core.js?v=20260926-04";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -20,7 +24,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.sampleRateSource = sampleRate;
     this.duration = 0;
     this.sourceFrame = 0;
-    this.outputTime = 0;
+    this.outputFrame = 0;
+    this.outputDuration = 0;
     this.nextGrain = 0;
     this.grains = [];
     this.grainClock = 0;
@@ -31,9 +36,10 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.smoothRate = 1;
     this.smoothGain = 0;
     this.smoothPan = 0;
+    this.lastReadDirection = 1;
     this.nextRandom = createSeededRandom();
     this.directMode = true;
-    this.stretchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
+    this.stretchCurve = [{ x: 0, y: 0.75 }, { x: 1, y: 0.75 }];
     this.pitchCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.panCurve = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
     this.settings = {
@@ -41,6 +47,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       density: 5.5,
       randomness: 0.02,
       outputGain: 0.95,
+      globalDirection: 1,
       playing: false
     };
 
@@ -51,8 +58,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.right = data.right || data.left;
         this.sampleRateSource = data.sampleRate;
         this.duration = this.left.length / this.sampleRateSource;
-        this.sourceFrame = 0;
-        this.outputTime = 0;
+        this.outputFrame = 0;
+        this.updateOutputDuration();
+        this.sourceFrame = this.initialSourceFrame();
         this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.grainClock = 0;
@@ -61,13 +69,18 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.stretchCurve = data.stretchCurve;
         this.pitchCurve = data.pitchCurve;
         this.panCurve = data.panCurve || this.panCurve;
-        this.directMode = transformIsNeutral(this.stretchCurve, this.pitchCurve);
+        this.directMode = transformCanUseDirect(this.stretchCurve, this.pitchCurve);
+        this.updateOutputDuration();
       } else if (data.type === "settings") {
         Object.assign(this.settings, data.settings);
+        this.updateOutputDuration();
       } else if (data.type === "play") {
         this.token = data.token ?? this.token;
-        if (this.sourceFrame >= this.left.length - 3) {
-          this.sourceFrame = 0;
+        if (this.outputFrame >= this.outputDurationFrames()) {
+          this.outputFrame = 0;
+        }
+        if (this.outputFrame === 0) {
+          this.sourceFrame = this.initialSourceFrame();
         }
         this.settings.playing = true;
         this.positionFramesUntilUpdate = 0;
@@ -83,15 +96,22 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.nextGrain = 0;
         this.grainClock = 0;
         if (data.reset) {
-          this.sourceFrame = 0;
-          this.outputTime = 0;
+          this.outputFrame = 0;
+          this.sourceFrame = this.initialSourceFrame();
         }
         this.positionFramesUntilUpdate = 0;
-        this.port.postMessage({ type: "stopped", seconds: this.sourceFrame / this.sampleRateSource, token: this.token });
+        this.port.postMessage({ type: "stopped", seconds: 0, token: this.token });
       } else if (data.type === "seek") {
         this.token = data.token ?? this.token;
-        this.sourceFrame = Math.max(0, Math.min(this.left.length - 3, (data.seconds || 0) * this.sampleRateSource));
-        this.outputTime = this.sourceFrame / this.sampleRateSource;
+        const fallbackProgress = this.outputDuration > 0 ? (data.seconds || 0) / this.outputDuration : 0;
+        const progress = Math.max(0, Math.min(1, data.progress ?? fallbackProgress));
+        this.outputFrame = progress * this.outputDurationFrames();
+        this.sourceFrame = sourcePositionAtProgress(
+          this.duration,
+          this.stretchCurve,
+          this.settings.globalDirection,
+          progress
+        ) * this.sampleRateSource;
         this.positionFramesUntilUpdate = 0;
         this.grains = [];
         this.nextGrain = 0;
@@ -102,11 +122,26 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     };
   }
 
+  updateOutputDuration() {
+    this.outputDuration = Math.min(180, estimateOutputDuration(this.duration || 0, this.stretchCurve));
+  }
+
+  outputDurationFrames() {
+    return Math.max(1, this.outputDuration * sampleRate);
+  }
+
+  initialSourceFrame() {
+    if (!this.left?.length) return 0;
+    const direction = initialPlaybackDirection(this.stretchCurve, this.settings.globalDirection);
+    this.lastReadDirection = direction;
+    return direction < 0 ? this.left.length - 3 : 0;
+  }
+
   resetControlState() {
     if (!this.left?.length) return;
-    const norm = Math.min(1, this.sourceFrame / Math.max(1, this.left.length - 1));
+    const norm = Math.min(1, this.outputFrame / this.outputDurationFrames());
     const cents = centsFromNorm(valueAt(this.pitchCurve, norm));
-    this.smoothSpeed = speedFromNorm(valueAt(this.stretchCurve, norm));
+    this.smoothSpeed = effectiveSpeedAt(this.stretchCurve, norm, this.settings.globalDirection);
     this.smoothRate = Math.pow(2, cents / 1200);
     this.smoothPan = panFromNorm(valueAt(this.panCurve, norm));
     this.smoothGain = 0;
@@ -133,11 +168,10 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       let r = 0;
 
       if (this.left && this.settings.playing) {
-        const norm = this.left.length > 1 ? Math.min(1, this.sourceFrame / (this.left.length - 1)) : 0;
-        const speedNorm = valueAt(this.stretchCurve, norm);
+        const norm = Math.min(1, this.outputFrame / this.outputDurationFrames());
         const pitchNorm = valueAt(this.pitchCurve, norm);
         const panNorm = valueAt(this.panCurve, norm);
-        const speed = speedFromNorm(speedNorm);
+        const speed = effectiveSpeedAt(this.stretchCurve, norm, this.settings.globalDirection);
         const cents = centsFromNorm(pitchNorm);
         const pan = panFromNorm(panNorm);
         const rate = Math.pow(2, cents / 1200);
@@ -158,7 +192,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const randomSamples = this.settings.randomness * grainSamples * TRANSFORM_CONSTANTS.jitterFactor;
 
         while (this.nextGrain <= 0) {
-          this.spawnGrain(grainSamples, this.smoothRate * (this.sampleRateSource / sampleRate), this.sourceFrame, randomSamples);
+          this.lastReadDirection = speedDirection(this.smoothSpeed, this.lastReadDirection);
+          const grainRate = this.smoothRate * this.lastReadDirection * (this.sampleRateSource / sampleRate);
+          this.spawnGrain(grainSamples, grainRate, this.sourceFrame, randomSamples);
           this.nextGrain += interval;
         }
         this.nextGrain -= 1;
@@ -186,9 +222,13 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const rightPan = Math.sin(panAngle);
         l *= leftPan * 1.41421356237;
         r *= rightPan * 1.41421356237;
-        this.sourceFrame += Math.max(0.03125, this.smoothSpeed) * (this.sampleRateSource / sampleRate);
-        if (this.sourceFrame >= this.left.length - 3) {
-          this.sourceFrame = this.left.length - 3;
+        this.sourceFrame = Math.max(
+          0,
+          Math.min(this.left.length - 3, this.sourceFrame + (this.smoothSpeed * (this.sampleRateSource / sampleRate)))
+        );
+        this.outputFrame += 1;
+        if (this.outputFrame >= this.outputDurationFrames()) {
+          this.outputFrame = this.outputDurationFrames();
           this.settings.playing = false;
           this.port.postMessage({ type: "ended", token: this.token });
         }
@@ -196,7 +236,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         if (this.positionFramesUntilUpdate <= 0) {
           this.port.postMessage({
             type: "position",
-            seconds: this.sourceFrame / this.sampleRateSource,
+            seconds: this.outputFrame / sampleRate,
+            sourceSeconds: this.sourceFrame / this.sampleRateSource,
+            duration: this.outputDuration,
             speed,
             cents,
             pan: this.smoothPan,

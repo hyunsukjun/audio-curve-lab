@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 
 import {
   centsFromNorm,
+  estimateOutputDuration,
   grainEnvelope,
   grainMixScale,
+  grainStart,
   panFromNorm,
+  sourcePositionAtProgress,
   speedFromNorm
 } from "../src/transform-core.js";
 import { renderOffline } from "../src/offline-render.js";
@@ -30,12 +33,14 @@ const audioBuffer = {
   }
 };
 
+const neutralSpeed = [{ x: 0, y: 0.75 }, { x: 1, y: 0.75 }];
 const neutral = [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }];
 const settings = {
   grainSizeMs: 140,
   density: 5.5,
   randomness: 0.02,
-  outputGain: 0.95
+  outputGain: 0.95,
+  globalDirection: 1
 };
 
 function assertFiniteAndBounded(rendered, label) {
@@ -48,9 +53,11 @@ function assertFiniteAndBounded(rendered, label) {
   assert.ok(peak <= 1, `${label}: peak exceeds digital full scale`);
 }
 
-assert.equal(speedFromNorm(0), 0.125);
-assert.equal(speedFromNorm(0.5), 1);
-assert.equal(speedFromNorm(1), 4);
+assert.equal(speedFromNorm(0), -2);
+assert.equal(speedFromNorm(0.25), -1);
+assert.equal(speedFromNorm(0.5), 0);
+assert.equal(speedFromNorm(0.75), 1);
+assert.equal(speedFromNorm(1), 2);
 assert.equal(centsFromNorm(0), -2400);
 assert.equal(centsFromNorm(0.5), 0);
 assert.equal(centsFromNorm(1), 2400);
@@ -60,21 +67,48 @@ assert.equal(panFromNorm(1), 1);
 assert.equal(grainEnvelope(0), 0);
 assert.ok(Math.abs(grainEnvelope(1)) < 1e-12);
 assert.equal(grainMixScale(0.95, 5.5), 0.95 / Math.sqrt(5.5 * 0.8));
+assert.equal(estimateOutputDuration(8, neutralSpeed), 8);
+assert.equal(estimateOutputDuration(8, [{ x: 0, y: 0.625 }, { x: 1, y: 0.625 }]), 16);
+assert.ok(Math.abs(sourcePositionAtProgress(8, neutralSpeed, 1, 0.5) - 4) < 0.02);
+assert.ok(Math.abs(sourcePositionAtProgress(8, neutralSpeed, -1, 0.5) - 4) < 0.02);
+const reverseGrainStart = grainStart(6000, 256, -1, length, 0);
+assert.ok(reverseGrainStart >= 255 && reverseGrainStart < length - 3);
 
 const neutralRender = await renderOffline({
   audioBuffer,
-  curves: { stretch: neutral, pitch: neutral, pan: neutral },
+  curves: { stretch: neutralSpeed, pitch: neutral, pan: neutral },
   settings
 });
 
 let smoothGain = 0;
 for (let i = 0; i < neutralRender.left.length; i += 1) {
   smoothGain += (settings.outputGain - smoothGain) * 0.0015;
-  const expected = Math.fround(Math.tanh(left[i] * smoothGain));
+  const expectedSource = i < left.length - 3 ? left[i] : 0;
+  const expected = Math.fround(Math.tanh(expectedSource * smoothGain));
   assert.ok(Math.abs(neutralRender.left[i] - expected) < 1e-7, "neutral render changed the direct signal path");
   assert.equal(neutralRender.left[i], neutralRender.right[i]);
 }
 assertFiniteAndBounded(neutralRender, "neutral");
+
+const reverseRender = await renderOffline({
+  audioBuffer,
+  curves: { stretch: neutralSpeed, pitch: neutral, pan: neutral },
+  settings: { ...settings, globalDirection: -1 }
+});
+assertFiniteAndBounded(reverseRender, "reverse");
+assert.ok(Math.abs(reverseRender.left[100]) > 0, "reverse render did not read from the end of the source");
+
+const freezeRender = await renderOffline({
+  audioBuffer,
+  curves: {
+    stretch: [{ x: 0, y: 0.5 }, { x: 1, y: 0.5 }],
+    pitch: neutral,
+    pan: neutral
+  },
+  settings
+});
+assertFiniteAndBounded(freezeRender, "freeze");
+assert.ok(freezeRender.left.some((sample) => Math.abs(sample) > 1e-5), "freeze render is silent");
 
 const transformedCurves = {
   stretch: [{ x: 0, y: 0.2 }, { x: 0.45, y: 0.8 }, { x: 1, y: 0.35 }],

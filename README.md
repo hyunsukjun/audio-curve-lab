@@ -14,14 +14,15 @@ The audio file is processed locally in the student's browser. It is not uploaded
 4. Draw points directly on the waveform.
 5. Use `Play` for a quick check.
 6. Use `Download WAV` to export the transformed sound.
-7. Use `Clear Curve` to reset only the selected curve, or `Reset All` to reset every curve.
+7. Use `Clear Current` to reset only the selected curve, or `Reset All` to reset every curve after confirmation.
 8. Import the WAV into a DAW, Max, or another composition environment.
 
 ## Why This Is Useful
 
 Audio Curve Lab helps students treat sound as flexible compositional material:
 
-- Speed can be slowed down, accelerated, or shaped as a curve.
+- Speed can move from `-2x` to `+2x`; negative values reverse the source and a sustained `0x` region freezes it.
+- `Forward / Reverse` applies a global direction multiplier while preserving the relative Speed curve.
 - Pitch can move gradually through glissandi or larger register shifts.
 - Pan can become a composed spatial motion.
 - The result is a concrete WAV file students can reuse in their pieces.
@@ -33,9 +34,12 @@ The tool is especially useful before introducing more technical systems such as 
 - Realtime `Play`: Web Audio API / AudioWorklet transform engine.
 - `Download WAV`: browser-based offline transform export.
 - Realtime and offline processing share `src/transform-core.js` for curve mapping,
-  interpolation, grain placement, smoothing constants, and deterministic jitter.
+  interpolation, signed source-position mapping, output duration, grain placement,
+  smoothing constants, and deterministic jitter.
 - Neutral Speed/Pitch uses the direct signal path in both engines so an unchanged
   sound is not unnecessarily rebuilt from grains.
+- Freeze keeps the source position still while overlapping windowed grains continue,
+  avoiding a single-sample loop and a separate freeze-duration parameter.
 
 This version is not yet a high-end time-stretch engine. It is a classroom workflow prototype. The current internal algorithm is intentionally hidden from the main interface so the tool can later support different engines, including granular synthesis, Csound, Rubber Band, a phase-vocoder renderer, or a server-side rendering pipeline.
 
@@ -79,7 +83,8 @@ Do not use `file://` for regular testing. Browser audio features are more reliab
 
 ## Current Stage
 
-This project is currently in local classroom-prototype development. The next work should focus on interaction, curve editing, sound quality, and export behavior before any public GitHub Pages deployment.
+This project is a public classroom prototype. Continue to prioritize interaction,
+sound quality, Preview/WAV parity, and browser regression checks over feature breadth.
 
 ## Recommended Student Notes
 
