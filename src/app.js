@@ -18,6 +18,11 @@ const panReadout = document.getElementById("panReadout");
 const downloadReadout = document.getElementById("downloadReadout");
 const modeReadout = document.getElementById("modeReadout");
 const pointsReadout = document.getElementById("pointsReadout");
+const penTool = document.getElementById("penTool");
+const eraserTool = document.getElementById("eraserTool");
+const eraseModifier = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgentData?.platform || "")
+  ? "metaKey"
+  : "ctrlKey";
 
 const transformSettings = {
   grainSizeMs: 140,
@@ -41,6 +46,7 @@ let workletBufferLoaded = false;
 let buffer;
 let waveform = [];
 let activeCurve = "stretch";
+let selectedTool = "pen";
 let selectedPoint = null;
 let hoverPoint = null;
 let dragging = false;
@@ -779,18 +785,56 @@ function findPointNearPointer(point) {
   return bestIndex;
 }
 
-function setHoverPoint(pointIndex) {
+function isErasing(event) {
+  return selectedTool === "eraser" || Boolean(event?.[eraseModifier]);
+}
+
+function updateToolCursor(event) {
+  const erasing = isErasing(event);
+  canvas.classList.toggle("eraseMode", erasing);
+  canvas.style.cursor = erasing ? "" : hoverPoint ? "pointer" : "crosshair";
+}
+
+function setTool(tool) {
+  selectedTool = tool;
+  penTool.classList.toggle("active", tool === "pen");
+  eraserTool.classList.toggle("active", tool === "eraser");
+  penTool.setAttribute("aria-pressed", String(tool === "pen"));
+  eraserTool.setAttribute("aria-pressed", String(tool === "eraser"));
+  selectedPoint = null;
+  updateToolCursor();
+  draw();
+}
+
+function setHoverPoint(pointIndex, event) {
   const nextHover = pointIndex >= 0 ? { curveName: activeCurve, pointIndex } : null;
   const changed = hoverPoint?.curveName !== nextHover?.curveName || hoverPoint?.pointIndex !== nextHover?.pointIndex;
   hoverPoint = nextHover;
-  canvas.style.cursor = hoverPoint ? "pointer" : "crosshair";
+  updateToolCursor(event);
   if (changed) draw();
 }
 
+penTool.addEventListener("click", () => setTool("pen"));
+eraserTool.addEventListener("click", () => setTool("eraser"));
+
 canvas.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
   const p = pointerToPoint(event);
   const curve = curves[activeCurve];
   selectedPoint = findPointNearPointer(p);
+  if (isErasing(event)) {
+    event.preventDefault();
+    if (selectedPoint > 0 && selectedPoint < curve.length - 1) {
+      curve.splice(selectedPoint, 1);
+      editedCurves[activeCurve] = true;
+      sendCurves();
+    }
+    selectedPoint = null;
+    hoverPoint = null;
+    updateToolCursor(event);
+    draw();
+    return;
+  }
   if (selectedPoint < 0) {
     curve.push(p);
     sortCurve(curve);
@@ -807,7 +851,7 @@ canvas.addEventListener("pointerdown", (event) => {
 canvas.addEventListener("pointermove", (event) => {
   const p = pointerToPoint(event);
   if (!dragging || selectedPoint == null) {
-    setHoverPoint(findPointNearPointer(p));
+    setHoverPoint(findPointNearPointer(p), event);
     return;
   }
   const curve = curves[activeCurve];
@@ -825,16 +869,23 @@ canvas.addEventListener("pointermove", (event) => {
 canvas.addEventListener("pointerup", (event) => {
   dragging = false;
   if (selectedPoint != null) hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
-  canvas.releasePointerCapture(event.pointerId);
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  updateToolCursor(event);
   draw();
 });
 
 canvas.addEventListener("pointerleave", () => {
   if (dragging) return;
   hoverPoint = null;
-  canvas.style.cursor = "crosshair";
+  updateToolCursor();
   draw();
 });
+
+canvas.addEventListener("pointerenter", updateToolCursor);
+
+window.addEventListener("keydown", updateToolCursor);
+window.addEventListener("keyup", updateToolCursor);
+window.addEventListener("blur", () => updateToolCursor());
 
 canvas.addEventListener("dblclick", (event) => {
   if (!buffer) return;
