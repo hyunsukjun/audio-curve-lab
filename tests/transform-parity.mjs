@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 
 import {
   centsFromNorm,
+  grainEnvelope,
+  grainMixScale,
   panFromNorm,
   speedFromNorm
 } from "../src/transform-core.js";
@@ -55,6 +57,9 @@ assert.equal(centsFromNorm(1), 2400);
 assert.equal(panFromNorm(0), -1);
 assert.equal(panFromNorm(0.5), 0);
 assert.equal(panFromNorm(1), 1);
+assert.equal(grainEnvelope(0), 0);
+assert.ok(Math.abs(grainEnvelope(1)) < 1e-12);
+assert.equal(grainMixScale(0.95, 5.5), 0.95 / Math.sqrt(5.5 * 0.8));
 
 const neutralRender = await renderOffline({
   audioBuffer,

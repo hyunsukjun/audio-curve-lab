@@ -3,6 +3,7 @@ import {
   centsFromNorm,
   createSeededRandom,
   grainEnvelope,
+  grainMixScale,
   grainStart,
   panFromNorm,
   readCubic,
@@ -10,7 +11,7 @@ import {
   speedFromNorm,
   transformIsNeutral,
   valueAt
-} from "./transform-core.js?v=20260926-02";
+} from "./transform-core.js?v=20260926-03";
 
 function estimateDuration(sourceDuration, speedCurve) {
   let sum = 0;
@@ -140,12 +141,12 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     const panAngle = (smoothPan + 1) * Math.PI * 0.25;
     const leftPan = Math.cos(panAngle) * 1.41421356237;
     const rightPan = Math.sin(panAngle) * 1.41421356237;
-    const grainScale = smoothGain / Math.sqrt(Math.max(1, density * 0.8));
+    const grainScale = grainMixScale(smoothGain, density);
 
     for (let i = 0; i < grainSamples; i += 1) {
       const write = outPos + i;
       if (write >= outLength) break;
-      const phase = i / grainSamples;
+      const phase = i / Math.max(1, grainSamples - 1);
       const env = grainEnvelope(phase);
       const read = startSource + (i * smoothRate);
       outL[write] += readCubic(left, read) * env * leftPan * grainScale;

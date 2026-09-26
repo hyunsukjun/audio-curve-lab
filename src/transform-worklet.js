@@ -3,13 +3,14 @@ import {
   centsFromNorm,
   createSeededRandom,
   grainEnvelope,
+  grainMixScale,
   grainStart,
   panFromNorm,
   readCubic,
   speedFromNorm,
   transformIsNeutral,
   valueAt
-} from "./transform-core.js?v=20260926-02";
+} from "./transform-core.js?v=20260926-03";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -164,11 +165,11 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
 
         for (let g = this.grains.length - 1; g >= 0; g -= 1) {
           const grain = this.grains[g];
-          const phase = grain.age / grain.length;
-          if (phase >= 1) {
+          if (grain.age >= grain.length) {
             this.grains.splice(g, 1);
             continue;
           }
+          const phase = grain.age / Math.max(1, grain.length - 1);
           const env = grainEnvelope(phase);
           l += readCubic(this.left, grain.pos) * env;
           r += readCubic(this.right, grain.pos) * env;
@@ -176,7 +177,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           grain.age += 1;
         }
 
-        const scale = this.smoothGain / Math.sqrt(Math.max(1, this.grains.length * 0.8));
+        const scale = grainMixScale(this.smoothGain, density);
         l *= scale;
         r *= scale;
         }

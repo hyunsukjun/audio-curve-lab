@@ -51,6 +51,10 @@ export function grainEnvelope(phase) {
   return Math.sin(Math.PI * clamp(phase, 0, 1));
 }
 
+export function grainMixScale(gain, density) {
+  return gain / Math.sqrt(Math.max(1, density * 0.8));
+}
+
 export function readCubic(buffer, pos) {
   if (!buffer || buffer.length === 0 || pos < 0 || pos >= buffer.length - 3) return 0;
   const i0 = Math.floor(pos);
