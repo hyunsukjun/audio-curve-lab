@@ -4,16 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Audio Curve Lab</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260926-05">
+    <link rel="stylesheet" href="src/styles.css?v=20260928-02">
   </head>
   <body>
     <main class="app">
       <header class="topbar">
         <div class="brand">
-          <h1>Audio Curve Lab</h1>
-          <p class="tagline">Draw time, pitch, and space onto sound.</p>
-          <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
-          <p class="formatNote">Recommended: WAV, MP3. Some formats may vary by browser.</p>
+          <svg class="brandMark" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M5 24h5m28 0h5M10 19v10m5-17v24m6-30v36m6-29v22m6-17v12m5-7v2"/>
+          </svg>
+          <div class="brandCopy">
+            <h1><span>Audio </span><span class="brandAccent">Curve Lab</span></h1>
+            <p class="tagline">Draw time, pitch, and space onto sound.</p>
+            <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
+            <p class="formatNote">Recommended: WAV, MP3. Some formats may vary by browser.</p>
+          </div>
         </div>
         <div id="timeStatus">00:00.00 / 00:00.00</div>
         <div class="transport">
@@ -23,7 +28,6 @@
           </label>
           <button id="playButton" type="button" disabled>Play</button>
           <button id="stopButton" type="button" disabled>Stop</button>
-          <button id="directionButton" type="button" aria-pressed="false" disabled>Forward</button>
           <button id="downloadButton" type="button" disabled>Download WAV</button>
         </div>
       </header>
@@ -105,6 +109,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20260926-05" type="module"></script>
+    <script src="src/app.js?v=20260928-02" type="module"></script>
   </body>
 </html>

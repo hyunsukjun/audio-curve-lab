@@ -13,7 +13,6 @@ const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
 const playButton = document.getElementById("playButton");
 const stopButton = document.getElementById("stopButton");
-const directionButton = document.getElementById("directionButton");
 const downloadButton = document.getElementById("downloadButton");
 const clearCurveButton = document.getElementById("clearCurveButton");
 const resetButton = document.getElementById("resetButton");
@@ -201,7 +200,6 @@ function clearDownload() {
 function setTransportBusy(isBusy) {
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
-  directionButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
 }
@@ -209,7 +207,6 @@ function setTransportBusy(isBusy) {
 function setRenderBusy(isBusy) {
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
-  directionButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
   downloadButton.disabled = !buffer;
 }
@@ -412,19 +409,19 @@ function getParameterTicks() {
 function drawParameterScale() {
   const { left, width, height } = getPlotBounds();
   ctx.save();
-  ctx.font = "600 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.font = "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(42, 50, 45, 0.78)";
-  ctx.strokeStyle = "rgba(55, 65, 55, 0.32)";
+  ctx.fillStyle = "rgba(170, 188, 204, 0.78)";
+  ctx.strokeStyle = "rgba(72, 111, 143, 0.28)";
   ctx.lineWidth = 1;
   for (const tick of getParameterTicks()) {
     const y = (1 - tick.y) * height;
     const textY = Math.max(9, Math.min(height - 7, y + 4));
     ctx.font = tick.emphasis
-      ? "750 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-      : "600 11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-    ctx.fillStyle = tick.emphasis ? "rgba(26, 33, 29, 0.95)" : "rgba(42, 50, 45, 0.78)";
-    ctx.strokeStyle = tick.emphasis ? "rgba(34, 42, 37, 0.72)" : "rgba(55, 65, 55, 0.32)";
+      ? "750 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      : "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    ctx.fillStyle = tick.emphasis ? "rgba(232, 240, 246, 0.96)" : "rgba(170, 188, 204, 0.78)";
+    ctx.strokeStyle = tick.emphasis ? "rgba(95, 141, 177, 0.6)" : "rgba(72, 111, 143, 0.28)";
     ctx.lineWidth = tick.emphasis ? 1.6 : 1;
     ctx.fillText(tick.label, left - 9, textY);
     ctx.beginPath();
@@ -432,7 +429,7 @@ function drawParameterScale() {
     ctx.lineTo(left + width, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "rgba(55, 65, 55, 0.5)";
+  ctx.strokeStyle = "rgba(104, 145, 178, 0.62)";
   ctx.beginPath();
   ctx.moveTo(left, 0);
   ctx.lineTo(left, height);
@@ -465,7 +462,7 @@ function drawCurve(curve, color, width, fillPoints) {
       ctx.arc(left + (point.x * w), (1 - point.y) * h, 6, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
-      ctx.strokeStyle = "#111316";
+      ctx.strokeStyle = "#06111c";
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -517,19 +514,19 @@ function drawPointTooltip(curveName, point) {
   const boxHeight = 26;
 
   ctx.save();
-  ctx.font = "650 13px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.font = "650 13px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const boxWidth = Math.ceil(ctx.measureText(text).width + (paddingX * 2));
   const boxX = Math.max(left + 8, Math.min(left + w - boxWidth - 8, px - (boxWidth / 2)));
   let boxY = py - 36;
   if (boxY < 8) boxY = py + 14;
 
   roundedRectPath(boxX, boxY, boxWidth, boxHeight, 5);
-  ctx.fillStyle = "rgba(31, 36, 38, 0.93)";
+  ctx.fillStyle = "rgba(7, 17, 28, 0.96)";
   ctx.fill();
   ctx.strokeStyle = curveColors[curveName];
   ctx.lineWidth = 1.2;
   ctx.stroke();
-  ctx.fillStyle = "#edf3f2";
+  ctx.fillStyle = "#e8f0f6";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, boxX + (boxWidth / 2), boxY + (boxHeight / 2) + 0.5);
@@ -542,11 +539,29 @@ function draw() {
   const { left, width: w, height: h } = getPlotBounds();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.clearRect(0, 0, canvasWidth, h);
-  ctx.fillStyle = "#bdc8aa";
+  ctx.fillStyle = "#0c1f31";
   ctx.fillRect(0, 0, canvasWidth, h);
 
-  ctx.strokeStyle = "rgba(55, 65, 55, 0.36)";
+  ctx.strokeStyle = "rgba(63, 101, 132, 0.12)";
   ctx.lineWidth = 1;
+  for (let i = 0; i <= 40; i += 1) {
+    if (i % 4 === 0) continue;
+    const x = left + ((i / 40) * w);
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 8; i += 1) {
+    if (i % 2 === 0) continue;
+    const y = (i / 8) * h;
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + w, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(79, 121, 155, 0.28)";
   for (let i = 0; i <= 10; i += 1) {
     const x = left + ((i / 10) * w);
     ctx.beginPath();
@@ -563,7 +578,7 @@ function draw() {
   }
 
   if (waveform.length > 0) {
-    ctx.fillStyle = "rgba(108, 101, 72, 0.38)";
+    ctx.fillStyle = "rgba(128, 158, 186, 0.48)";
     const midTop = h * 0.32;
     const midBottom = h * 0.70;
     const ampTop = h * 0.24;
@@ -582,8 +597,8 @@ function draw() {
   if (buffer) {
     const sourceDuration = buffer.duration;
     const x = left + (((sourceDuration > 0 ? sourcePlayheadSeconds / sourceDuration : 0)) * w);
-    ctx.strokeStyle = "#1f2426";
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(226, 236, 244, 0.86)";
+    ctx.lineWidth = 1.25;
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
@@ -736,24 +751,6 @@ playButton.addEventListener("click", playAudio);
 
 stopButton.addEventListener("click", stopAudio);
 
-function updateDirectionButton() {
-  const isReverse = transformSettings.globalDirection < 0;
-  directionButton.textContent = isReverse ? "Reverse" : "Forward";
-  directionButton.classList.toggle("reverse", isReverse);
-  directionButton.setAttribute("aria-pressed", String(isReverse));
-  directionButton.title = isReverse
-    ? "Global direction: Reverse. Negative Speed curve regions play forward."
-    : "Global direction: Forward. Negative Speed curve regions play in reverse.";
-}
-
-directionButton.addEventListener("click", () => {
-  transformSettings.globalDirection *= -1;
-  updateDirectionButton();
-  if (!isPlaying) resetCurrentReadouts();
-  sendSettings();
-  draw();
-});
-
 downloadButton.addEventListener("click", async () => {
   if (!buffer) return;
   if (renderAbortController) {
@@ -822,7 +819,6 @@ function applyResetAll() {
   editedCurves.pitch = false;
   editedCurves.pan = false;
   transformSettings.globalDirection = 1;
-  updateDirectionButton();
   resetCurrentReadouts();
   selectedPoint = null;
   hoverPoint = null;
@@ -1060,5 +1056,4 @@ window.addEventListener("keyup", (event) => {
 });
 
 resizeCanvas();
-updateDirectionButton();
 loadGeneratedExample();
