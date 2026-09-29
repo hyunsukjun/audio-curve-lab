@@ -6,7 +6,7 @@ import {
   sourcePositionAtProgress,
   speedFromNorm,
   valueAt
-} from "./transform-core.js?v=20260926-05";
+} from "./transform-core.js?v=20260929-02";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
@@ -274,7 +274,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20260926-05");
+    const module = await import("./offline-render.js?v=20260929-02");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -667,7 +667,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260926-05");
+    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260929-02");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,

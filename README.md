@@ -22,7 +22,6 @@ The audio file is processed locally in the student's browser. It is not uploaded
 Audio Curve Lab helps students treat sound as flexible compositional material:
 
 - Speed can move from `-2x` to `+2x`; negative values reverse the source and a sustained `0x` region freezes it.
-- `Forward / Reverse` applies a global direction multiplier while preserving the relative Speed curve.
 - Pitch can move gradually through glissandi or larger register shifts.
 - Pan can become a composed spatial motion.
 - The result is a concrete WAV file students can reuse in their pieces.
@@ -33,6 +32,7 @@ The tool is especially useful before introducing more technical systems such as 
 
 - Realtime `Play`: Web Audio API / AudioWorklet transform engine.
 - `Download WAV`: browser-based offline transform export.
+- WAV export: stereo 24-bit PCM at the loaded source sample rate. The generated default sample exports at 48 kHz.
 - Realtime and offline processing share `src/transform-core.js` for curve mapping,
   interpolation, signed source-position mapping, output duration, grain placement,
   smoothing constants, and deterministic jitter.
@@ -58,7 +58,7 @@ samples, full-scale bounds, and the supported parameter extremes.
 
 Recommended: Chrome, Edge, or Safari on a laptop or desktop browser.
 
-The app uses standard browser audio features: Web Audio API, AudioWorklet, Canvas, and local file decoding. These are stable browser technologies, but audio-file decoding can vary slightly by browser and operating system. WAV, AIFF, MP3, and M4A are the safest formats to use in class.
+The app uses standard browser audio features: Web Audio API, AudioWorklet, Canvas, and local file decoding. These are stable browser technologies, but audio-file decoding can vary slightly by browser and operating system. WAV and MP3 are recommended; M4A, AIFF, and other formats may vary by browser and operating system.
 
 For long-term maintenance, test the site once or twice a semester in the browsers used by students.
 
@@ -69,7 +69,6 @@ This is a static website. It can be hosted directly with GitHub Pages from the r
 ## Run Locally
 
 ```sh
-cd /Users/hyunsukjun/Documents/Codex/2026-08-20/referenced-chatgpt-conversation-this-is-an/AudioCurveLab
 python3 -m http.server 5174
 ```
 

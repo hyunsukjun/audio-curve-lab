@@ -5,6 +5,7 @@ import {
   estimateOutputDuration,
   grainEnvelope,
   grainMixScale,
+  grainOverlapCorrection,
   grainStart,
   panFromNorm,
   sourcePositionAtProgress,
@@ -53,6 +54,19 @@ function assertFiniteAndBounded(rendered, label) {
   assert.ok(peak <= 1, `${label}: peak exceeds digital full scale`);
 }
 
+async function assert24BitStereoWav(rendered, label) {
+  const wav = new DataView(await rendered.blob.arrayBuffer());
+  const dataBytes = rendered.left.length * 2 * 3;
+  assert.equal(wav.getUint16(20, true), 1, `${label}: WAV is not PCM`);
+  assert.equal(wav.getUint16(22, true), 2, `${label}: WAV is not stereo`);
+  assert.equal(wav.getUint32(24, true), rendered.sampleRate, `${label}: WAV sample rate changed`);
+  assert.equal(wav.getUint32(28, true), rendered.sampleRate * 6, `${label}: WAV byte rate is invalid`);
+  assert.equal(wav.getUint16(32, true), 6, `${label}: WAV block alignment is invalid`);
+  assert.equal(wav.getUint16(34, true), 24, `${label}: WAV is not 24-bit PCM`);
+  assert.equal(wav.getUint32(40, true), dataBytes, `${label}: WAV data size is invalid`);
+  assert.equal(rendered.blob.size, 44 + dataBytes, `${label}: WAV file size is invalid`);
+}
+
 assert.equal(speedFromNorm(0), -2);
 assert.equal(speedFromNorm(0.25), -1);
 assert.equal(speedFromNorm(0.5), 0);
@@ -67,6 +81,10 @@ assert.equal(panFromNorm(1), 1);
 assert.equal(grainEnvelope(0), 0);
 assert.ok(Math.abs(grainEnvelope(1)) < 1e-12);
 assert.equal(grainMixScale(0.95, 5.5), 0.95 / Math.sqrt(5.5 * 0.8));
+assert.equal(grainOverlapCorrection(0, 5.5), 0);
+assert.ok(Math.abs(grainOverlapCorrection(5.5 * (2 / Math.PI), 5.5) - 1) < 1e-12);
+assert.equal(grainOverlapCorrection(0.001, 5.5), 2);
+assert.equal(grainOverlapCorrection(100, 5.5), 0.5);
 assert.equal(estimateOutputDuration(8, neutralSpeed), 8);
 assert.equal(estimateOutputDuration(8, [{ x: 0, y: 0.625 }, { x: 1, y: 0.625 }]), 16);
 assert.ok(Math.abs(sourcePositionAtProgress(8, neutralSpeed, 1, 0.5) - 4) < 0.02);
@@ -89,6 +107,7 @@ for (let i = 0; i < neutralRender.left.length; i += 1) {
   assert.equal(neutralRender.left[i], neutralRender.right[i]);
 }
 assertFiniteAndBounded(neutralRender, "neutral");
+await assert24BitStereoWav(neutralRender, "neutral");
 
 const reverseRender = await renderOffline({
   audioBuffer,

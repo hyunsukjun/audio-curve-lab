@@ -6,6 +6,7 @@ import {
   estimateOutputDuration,
   grainEnvelope,
   grainMixScale,
+  grainOverlapCorrection,
   grainStart,
   initialPlaybackDirection,
   panFromNorm,
@@ -14,7 +15,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260926-05";
+} from "./transform-core.js?v=20260929-02";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -166,6 +167,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < outL.length; i += 1) {
       let l = 0;
       let r = 0;
+      let grainEnvelopeSum = 0;
 
       if (this.left && this.settings.playing) {
         const norm = Math.min(1, this.outputFrame / this.outputDurationFrames());
@@ -209,11 +211,13 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           const env = grainEnvelope(phase);
           l += readCubic(this.left, grain.pos) * env;
           r += readCubic(this.right, grain.pos) * env;
+          grainEnvelopeSum += env;
           grain.pos += grain.rate;
           grain.age += 1;
         }
 
-        const scale = grainMixScale(this.smoothGain, density);
+        const scale = grainMixScale(this.smoothGain, density)
+          * grainOverlapCorrection(grainEnvelopeSum, density);
         l *= scale;
         r *= scale;
         }

@@ -6,6 +6,7 @@ import {
   estimateOutputDuration,
   grainEnvelope,
   grainMixScale,
+  grainOverlapCorrection,
   grainStart,
   initialPlaybackDirection,
   panFromNorm,
@@ -14,14 +15,25 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260926-05";
+} from "./transform-core.js?v=20260929-02";
 
 function encodeWav(left, right, sampleRate) {
   const length = left.length;
-  const bytes = 44 + (length * 4);
+  const channelCount = 2;
+  const bytesPerSample = 3;
+  const blockAlign = channelCount * bytesPerSample;
+  const dataBytes = length * blockAlign;
+  const bytes = 44 + dataBytes;
   const view = new DataView(new ArrayBuffer(bytes));
   const writeString = (offset, string) => {
     for (let i = 0; i < string.length; i += 1) view.setUint8(offset + i, string.charCodeAt(i));
+  };
+  const writeInt24 = (offset, value) => {
+    const clamped = Math.max(-1, Math.min(1, value));
+    const sample = Math.round(clamped < 0 ? clamped * 8388608 : clamped * 8388607);
+    view.setUint8(offset, sample & 0xff);
+    view.setUint8(offset + 1, (sample >> 8) & 0xff);
+    view.setUint8(offset + 2, (sample >> 16) & 0xff);
   };
 
   writeString(0, "RIFF");
@@ -30,21 +42,19 @@ function encodeWav(left, right, sampleRate) {
   writeString(12, "fmt ");
   view.setUint32(16, 16, true);
   view.setUint16(20, 1, true);
-  view.setUint16(22, 2, true);
+  view.setUint16(22, channelCount, true);
   view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 4, true);
-  view.setUint16(32, 4, true);
-  view.setUint16(34, 16, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 24, true);
   writeString(36, "data");
-  view.setUint32(40, length * 4, true);
+  view.setUint32(40, dataBytes, true);
 
   let offset = 44;
   for (let i = 0; i < length; i += 1) {
-    const l = Math.max(-1, Math.min(1, left[i]));
-    const r = Math.max(-1, Math.min(1, right[i]));
-    view.setInt16(offset, l < 0 ? l * 32768 : l * 32767, true);
-    view.setInt16(offset + 2, r < 0 ? r * 32768 : r * 32767, true);
-    offset += 4;
+    writeInt24(offset, left[i]);
+    writeInt24(offset + bytesPerSample, right[i]);
+    offset += blockAlign;
   }
   return new Blob([view], { type: "audio/wav" });
 }
@@ -108,6 +118,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((settings.grainSizeMs / 1000) * sourceRate));
   const density = Math.max(2, settings.density);
   const hop = Math.max(TRANSFORM_CONSTANTS.minHopSamples, Math.round(grainSamples / density));
+  const overlapEnvelope = new Float32Array(outLength);
   const randomSamples = settings.randomness * grainSamples * TRANSFORM_CONSTANTS.jitterFactor;
   const speedSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.speedSmoothing, hop);
   const rateSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.rateSmoothing, hop);
@@ -154,6 +165,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
       const read = startSource + (i * grainRate);
       outL[write] += readCubic(left, read) * env * leftPan * grainScale;
       outR[write] += readCubic(right, read) * env * rightPan * grainScale;
+      overlapEnvelope[write] += env;
     }
 
     sourceFrame = Math.max(0, Math.min(left.length - 3, sourceFrame + (hop * smoothSpeed)));
@@ -169,6 +181,9 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
 
   let peak = 0;
   for (let i = 0; i < outLength; i += 1) {
+    const overlapCorrection = grainOverlapCorrection(overlapEnvelope[i], density);
+    outL[i] *= overlapCorrection;
+    outR[i] *= overlapCorrection;
     peak = Math.max(peak, Math.abs(outL[i]), Math.abs(outR[i]));
   }
   const normalise = peak > 0 ? Math.min(1.0, 0.92 / peak) : 1;

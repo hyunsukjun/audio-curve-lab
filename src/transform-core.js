@@ -10,6 +10,8 @@ export const TRANSFORM_CONSTANTS = Object.freeze({
   rateSmoothing: 0.0008,
   gainSmoothing: 0.0015,
   panSmoothing: 0.0015,
+  overlapCorrectionMin: 0.5,
+  overlapCorrectionMax: 2,
   randomSeed: 0x4f1bbcdc
 });
 
@@ -51,6 +53,16 @@ export function grainEnvelope(phase) {
 
 export function grainMixScale(gain, density) {
   return gain / Math.sqrt(Math.max(1, density * 0.8));
+}
+
+export function grainOverlapCorrection(envelopeSum, density) {
+  if (envelopeSum <= 1e-6) return 0;
+  const expectedEnvelopeSum = Math.max(1, density) * (2 / Math.PI);
+  return clamp(
+    expectedEnvelopeSum / envelopeSum,
+    TRANSFORM_CONSTANTS.overlapCorrectionMin,
+    TRANSFORM_CONSTANTS.overlapCorrectionMax
+  );
 }
 
 export function readCubic(buffer, pos) {
