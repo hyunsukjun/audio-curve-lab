@@ -12,7 +12,8 @@ future native platform. No framework (Swift, JUCE, C++, or other) is selected he
 - Normalized sorted curve points and smoothstep interpolation.
 - Parameter ranges/defaults/mappings and scale labels.
 - Signed Speed, direction retention, Freeze threshold, and duration/source-position math.
-- Direct-path eligibility and granular behavior/constants.
+- Direct-path eligibility, waveform-aligned grain starts, Freeze-only jitter, and
+  the two overlap-gain rules.
 - Pen/Eraser gesture meanings, modifier erase, endpoint deletion protection.
 - Default sample recipe and deterministic seeds.
 - Blue identity and semantic parameter design tokens.
@@ -77,7 +78,8 @@ This schema is a migration proposal, not an implemented storage format.
 sample-by-sample grains, 96-grain cap, and message-based position updates.  
 **Platform-independent behavior:** Responsive transformed monitoring, signed source
 travel, Freeze, stable transport lifecycle, live curve updates.  
-**Reusable data/algorithm:** Core math, windows, cubic reader, seeded jitter, constants.  
+**Reusable data/algorithm:** Core math, bounded L/R grain-alignment search, windows,
+cubic reader, Freeze-only seeded jitter, overlap-gain rules, and constants.
 **Web-specific dependency:** AudioContext lifecycle, AudioWorklet global scope, message
 port, browser sample rate.  
 **Replacement needed:** Native realtime audio callback, lock-free/control-state exchange,
@@ -85,13 +87,26 @@ device lifecycle, and transport clock.
 **Risk / priority:** Highest priority; high risk because realtime safety and sound quality
 cannot be inferred from offline tests.
 
+### Playback And Output Metering
+
+**Current web behavior:** Bottom Transport owns Play/Stop, output time/duration, seek,
+and compact stereo Peak/RMS/Peak Hold/Clip monitoring. Measurement observes the final
+realtime output through channel-indexed analyzer data.
+**Platform-independent behavior:** Monitoring does not alter sound; Clip reset changes
+only the latch; transport and current time outrank secondary labels responsively.
+**Replacement needed:** Native audio-thread-safe Peak/RMS accumulation, lock-free meter
+data transfer, native display timing, and device/channel-layout lifecycle handling.
+**Risk / priority:** Medium/high. `STANDALONE ASSET`: signal-flow position, arbitrary
+channel data model, Clip semantics, and tested meter ballistics after approval.
+
 ### Offline Render And WAV
 
 **Current web implementation:** Main-thread asynchronous renderer, Float32 buffers,
 Blob download, 24-bit PCM encoder.  
 **Platform-independent behavior:** Deterministic render, cancellation, progress, stereo
 WAV at source rate, 180-second cap, current normalization/limiting behavior.  
-**Reusable data/algorithm:** Offline grain schedule, mappings, seed, encoder contract.  
+**Reusable data/algorithm:** Offline grain schedule, shared alignment and gain helpers,
+Freeze seed, mappings, and encoder contract.
 **Web-specific dependency:** Blob, DOM download, `performance.now`, timer yielding.  
 **Replacement needed:** Background render job, native file save panel, WAV library or
 equivalent encoder.  

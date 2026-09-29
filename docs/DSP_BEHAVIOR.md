@@ -19,11 +19,12 @@ Source buffer
   -> Speed source-position advance and direction
   -> direct reader OR overlapping grain reader
   -> Pitch grain playback ratio
-  -> grain window/mix compensation
+  -> waveform-aligned grain starts and overlap-level compensation
   -> equal-power Pan
   -> gain smoothing
   -> tanh output limiting
-  -> Preview output or offline WAV encoding
+  -> Preview master output -> Peak/RMS meter branch -> audio destination
+  OR offline WAV encoding
 ```
 
 ## Curve Evaluation And Mapping
@@ -59,17 +60,26 @@ Current internal settings are:
 - jitter span factor: 0.75;
 - deterministic random seed: `0x4f1bbcdc`.
 
-Each grain uses a sine window `sin(pi * phase)`. Gain compensation is
-`gain / sqrt(max(1, density * 0.8))`. Source samples use cubic interpolation. The reason
-for the exact grain, density, random, and gain values is `TO BE DOCUMENTED`; they are
-current behavior, not yet a formally approved listening profile.
+Each grain uses a sine window `sin(pi * phase)`. Source samples use cubic interpolation.
+For non-Freeze grains, a shared Preview/Render helper searches within 10 ms of the
+nominal source start for the waveform that best matches the preceding grain's current
+L/R waveform. It evaluates short normalized correlations, penalizes large offsets,
+and includes the previous grain's fractional source position as a candidate. This is
+a bounded waveform-alignment step, not a full WSOLA or phase-vocoder engine. The
+independent source-position clock still follows the Speed curve.
 
-Preview and Render also measure the actual sum of active sine-window envelopes. The
-expected sum for evenly distributed grains is `density * 2/pi`. The existing mix scale
-is multiplied by `expected / actual`, clamped to `0.5..2.0`. This preserves the previous
-steady-state level while reducing gain variation when the overlap is temporarily sparse
-or dense. A zero envelope sum remains silent; the correction limit prevents tiny edge
-weights from being amplified without bound.
+Ordinary transformed grains do not use random source-position jitter. Their active
+sine-window sum sets the coherent mix gain as `smoothedGain / max(0.5, envelopeSum)`.
+This brings small transformations close to the direct reader's steady-state level
+when grains align. Render applies equivalent output-gain smoothing during its final
+sample pass. The exact grain size and density remain provisional listening values.
+
+Freeze grains retain seeded jitter and their former `gain / sqrt(max(1, density * 0.8))`
+mix scale. For them, the expected sine-envelope sum `density * 2/pi` is divided by the
+actual sum and clamped to `0.5..2.0`. Across a Freeze boundary, the active envelope
+proportions blend the two gain rules, avoiding an immediate gain switch. A zero
+envelope sum remains silent; the lower bound prevents tiny weights from being amplified
+without limit.
 
 ## Signed Speed, Reverse, And Freeze
 
@@ -113,6 +123,11 @@ does not use whole-file normalization because the future peak is unavailable.
 Consequently, loudness and transient shape can differ between transformed Preview and
 Render. This is a known parity limitation, not an exact-match claim.
 
+The waveform-alignment search improves gentle changes on tested sine and noise inputs,
+but cannot guarantee transparent processing for transient-rich polyphonic material,
+rapid curve changes, extreme Speed/Pitch, or high-frequency pitch-up aliasing. These
+need additional listening fixtures and, if required, a band-limited resampler.
+
 ## Sample Rate And Timing
 
 - Default sample: 48 kHz.
@@ -133,6 +148,21 @@ playing.
 Browser AudioContext suspension, device changes, sleep/wake, and process throttling are
 platform lifecycle risks and require real-device testing.
 
+## Realtime Output Metering
+
+The realtime worklet output connects to a unity-gain final-output node. That same final
+signal reaches the audio destination and a channel splitter in `src/output-meter.js`.
+One standard `AnalyserNode` per channel provides time-domain samples; the analyzer
+calculates linear Peak, RMS, and a `peak >= 0.999` Clip flag. Metering does not feed back
+into, normalize, or otherwise change the audio signal.
+
+The measurement result is an array indexed by channel, not a permanent L/R-only object.
+The current UI displays two channels. Display smoothing, Peak Hold, and Clip latching are
+UI behavior rather than module DSP.
+
+Initial unapproved display values are recorded in `finetuning-log.md`. They require
+practical listening/visual evaluation before becoming a shared Curve Lab specification.
+
 ## Offline Render Engine
 
 `src/offline-render.js` schedules complete grains in hop-sized steps into stereo float
@@ -149,8 +179,8 @@ Shared:
 - signed Speed and Freeze threshold;
 - direct-path eligibility;
 - cubic source reading;
-- grain envelope, mix scale, bounds, and deterministic random sequence;
-- bounded actual-overlap level correction;
+- grain envelope, bounded waveform alignment, bounds, and Freeze-only seeded jitter;
+- coherent overlap compensation outside Freeze and bounded Freeze overlap correction;
 - smoothing constants and equal-power Pan intent;
 - duration estimation and 180-second cap.
 

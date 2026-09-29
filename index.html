@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Audio Curve Lab</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260928-02">
+    <link rel="stylesheet" href="src/styles.css?v=20260929-06">
   </head>
   <body>
     <main class="app">
@@ -20,14 +20,11 @@
             <p class="formatNote">Recommended: WAV, MP3. Some formats may vary by browser.</p>
           </div>
         </div>
-        <div id="timeStatus">00:00.00 / 00:00.00</div>
         <div class="transport">
           <label class="fileButton">
             Open Audio
             <input id="fileInput" type="file" accept="audio/*">
           </label>
-          <button id="playButton" type="button" disabled>Play</button>
-          <button id="stopButton" type="button" disabled>Stop</button>
           <button id="downloadButton" type="button" disabled>Download WAV</button>
         </div>
       </header>
@@ -72,10 +69,6 @@
             <strong>Audio Transform</strong>
           </div>
           <div class="readout">
-            <span>Playhead</span>
-            <strong id="playheadReadout">0.00 s</strong>
-          </div>
-          <div class="readout">
             <span>Speed</span>
             <strong id="stretchReadout">1.00 x</strong>
           </div>
@@ -96,6 +89,42 @@
           <canvas id="waveCanvas" width="1400" height="620"></canvas>
         </div>
       </section>
+
+      <footer class="playbackBar" aria-label="Playback and output monitoring">
+        <div class="bottomTransport" aria-label="Transport controls">
+          <button id="playButton" type="button" disabled>Play</button>
+          <button id="stopButton" type="button" disabled>Stop</button>
+        </div>
+        <output id="timeStatus" aria-label="Current playback time and duration">00:00.00 / 00:00.00</output>
+        <label class="scrubberGroup" for="playbackScrubber">
+          <span>Position</span>
+          <input id="playbackScrubber" type="range" min="0" max="1" step="0.0001" value="0" disabled>
+        </label>
+        <section class="outputMeter" aria-label="Stereo output level meter">
+          <div class="meterTitle">OUT</div>
+          <div class="meterChannels">
+            <div class="meterRow" data-meter-channel="0">
+              <span class="meterChannelLabel">L</span>
+              <div class="meterTrack" aria-hidden="true">
+                <div class="meterRms"></div>
+                <div class="meterPeak"></div>
+                <div class="meterHold"></div>
+              </div>
+              <span class="meterValue">-∞</span>
+            </div>
+            <div class="meterRow" data-meter-channel="1">
+              <span class="meterChannelLabel">R</span>
+              <div class="meterTrack" aria-hidden="true">
+                <div class="meterRms"></div>
+                <div class="meterPeak"></div>
+                <div class="meterHold"></div>
+              </div>
+              <span class="meterValue">-∞</span>
+            </div>
+          </div>
+          <button id="meterClipButton" class="meterClip" type="button" aria-pressed="false" title="Clip indicator. Click to reset.">CLIP</button>
+        </section>
+      </footer>
     </main>
 
     <div id="resetDialog" class="dialogBackdrop" hidden>
@@ -109,6 +138,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20260929-02" type="module"></script>
+    <script src="src/app.js?v=20260930-01" type="module"></script>
   </body>
 </html>

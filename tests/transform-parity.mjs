@@ -151,4 +151,89 @@ const extremeRender = await renderOffline({
 });
 assertFiniteAndBounded(extremeRender, "extreme");
 
+const qualityLength = sampleRate;
+const qualitySignal = new Float32Array(qualityLength);
+for (let i = 0; i < qualityLength; i += 1) {
+  qualitySignal[i] = 0.3 * Math.sin((2 * Math.PI * 440 * i) / sampleRate);
+}
+const qualityBuffer = {
+  sampleRate,
+  duration: 1,
+  numberOfChannels: 1,
+  getChannelData() { return qualitySignal; }
+};
+
+function toneMetrics(signal, frequency) {
+  const start = Math.round(0.2 * sampleRate);
+  const end = Math.min(signal.length, Math.round(0.8 * sampleRate));
+  let energy = 0;
+  let sine = 0;
+  let cosine = 0;
+  for (let i = start; i < end; i += 1) {
+    const value = signal[i];
+    const phase = (2 * Math.PI * frequency * i) / sampleRate;
+    energy += value * value;
+    sine += value * Math.sin(phase);
+    cosine += value * Math.cos(phase);
+  }
+  const count = end - start;
+  return {
+    rms: Math.sqrt(energy / count),
+    toneFraction: (2 * ((sine * sine) + (cosine * cosine))) / (count * energy)
+  };
+}
+
+globalThis.sampleRate = sampleRate;
+globalThis.AudioWorkletProcessor = class {
+  constructor() { this.port = { onmessage: null, postMessage() {} }; }
+};
+let WorkletProcessor;
+globalThis.registerProcessor = (_name, processor) => { WorkletProcessor = processor; };
+await import("../src/transform-worklet.js");
+
+function previewSignal(curves) {
+  const processor = new WorkletProcessor();
+  processor.port.onmessage({ data: { type: "buffer", left: qualitySignal, right: qualitySignal, sampleRate } });
+  processor.port.onmessage({ data: {
+    type: "curves",
+    stretchCurve: curves.stretch,
+    pitchCurve: curves.pitch,
+    panCurve: curves.pan
+  } });
+  processor.port.onmessage({ data: { type: "settings", settings } });
+  processor.port.onmessage({ data: { type: "play", token: 1 } });
+  const output = new Float32Array(Math.ceil(processor.outputDurationFrames()));
+  for (let offset = 0; offset < output.length; offset += 128) {
+    const block = [new Float32Array(128), new Float32Array(128)];
+    processor.process([], [block]);
+    output.set(block[0].subarray(0, Math.min(128, output.length - offset)), offset);
+  }
+  return output;
+}
+
+const gentleCases = [
+  { name: "speed +1%", speed: 1.01, cents: 0, frequency: 440 },
+  { name: "pitch +20 cents", speed: 1, cents: 20, frequency: 440 * Math.pow(2, 20 / 1200) }
+];
+const directQualityRender = await renderOffline({
+  audioBuffer: qualityBuffer,
+  curves: { stretch: neutralSpeed, pitch: neutral, pan: neutral },
+  settings
+});
+const directReference = toneMetrics(directQualityRender.left, 440).rms;
+for (const testCase of gentleCases) {
+  const curves = {
+    stretch: [{ x: 0, y: (testCase.speed + 2) / 4 }, { x: 1, y: (testCase.speed + 2) / 4 }],
+    pitch: [{ x: 0, y: (testCase.cents + 2400) / 4800 }, { x: 1, y: (testCase.cents + 2400) / 4800 }],
+    pan: neutral
+  };
+  const offline = await renderOffline({ audioBuffer: qualityBuffer, curves, settings });
+  const rendered = toneMetrics(offline.left, testCase.frequency);
+  const preview = toneMetrics(previewSignal(curves), testCase.frequency);
+  assert.ok(rendered.toneFraction > 0.85, `${testCase.name}: Render has strong grain modulation`);
+  assert.ok(preview.toneFraction > 0.85, `${testCase.name}: Preview has strong grain modulation`);
+  assert.ok(Math.abs(preview.rms - rendered.rms) < 0.02, `${testCase.name}: Preview/Render level mismatch`);
+  assert.ok(rendered.rms > directReference * 0.8, `${testCase.name}: Render level fell too far below direct playback`);
+}
+
 console.log("transform parity checks passed");

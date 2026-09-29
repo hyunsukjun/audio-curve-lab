@@ -100,7 +100,7 @@ audible transformation quality are otherwise unchanged.
 
 ## D-011: Documentation Is Part Of Completion
 
-**Date:** 2026-09-29  
+**Date:** 2026-09-29
 **Decision:** Feature, parameter, interaction, DSP, design, decision, and migration
 documents must change with their corresponding product behavior.  
 **Reason:** Preserve accumulated musical and technical knowledge independently of the
@@ -109,7 +109,7 @@ web implementation.
 
 ## D-012: Bounded Actual-Overlap Level Correction
 
-**Date:** 2026-09-29  
+**Date:** 2026-09-29
 **Decision:** Measure the active sine-window envelope sum in Preview and Render and
 correct it toward the theoretical steady-state sum. Limit correction to `0.5..2.0`.  
 **Reason:** Reduce level movement when grain overlap is temporarily sparse or dense
@@ -118,3 +118,33 @@ scale.
 **Trade-off:** Transformed boundaries and transition regions may sound slightly more
 even. The limit intentionally retains some fade behavior and avoids extreme amplification.  
 **Affects:** Granular Preview, granular Render, Preview/Render parity, output level.
+
+## D-013: Bottom Playback And Final-Output Metering
+
+**Date:** 2026-09-29
+**Decision:** Keep file/export control at the top, sound and Curve editing in the center,
+and the authoritative playback time, scrubber, and compact output meter at the bottom.
+Measure a branch of the same final realtime signal sent to the audio destination.
+**Reason:** Playback status should not compete with the primary editor, and monitoring
+should describe processed output without coupling UI drawing to module DSP.
+**Trade-off:** The Web meter samples `AnalyserNode` windows on animation frames and is a
+monitoring instrument, not a sample-accurate loudness or mastering measurement system.
+**Reusable For:** `COMMON CANDIDATE` for Curve Labs after practical evaluation.
+**Standalone Consideration:** `STANDALONE ASSET`; preserve the signal-flow position,
+channel-array model, and interaction meaning, then retune native meter ballistics.
+
+## D-014: Waveform-Aligned Gentle Transform
+
+**Date:** 2026-09-30
+**Decision:** For transformed non-Freeze playback, remove random grain-position jitter,
+align each new grain to the preceding waveform within a bounded 10 ms source search,
+and normalize by the active window sum. Preview and Render use the same alignment and
+gain helpers. Freeze retains seeded jitter and its previous overlap rule.
+**Reason:** The exact `1x`/`0-cent` direct path sounded substantially clearer than
+slightly edited curves. In a 440 Hz fixture, the old transformed path retained only
+about 8% of energy at the intended frequency for `1.01x`, and about 11% for `+20 cents`;
+the aligned path retained nearly 100% and about 98%, respectively. These are narrow
+signal measurements, not a complete listening verdict.
+**Trade-off:** Extra source reads at each grain start and a possible 10 ms local shift;
+extreme transforms and pitch-up aliasing remain. The source-position clock is unchanged.
+**Affects:** Realtime Preview, offline WAV Render, Freeze boundaries, native DSP port.

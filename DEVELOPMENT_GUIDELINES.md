@@ -14,9 +14,10 @@ changes later.
 
 | Layer | Current file | Responsibility |
 | --- | --- | --- |
-| Product UI/state | `index.html`, `src/styles.css`, `src/app.js` | Controls, curve state, Canvas drawing, file lifecycle, transport, status |
+| Product UI/state | `index.html`, `src/styles.css`, `src/app.js` | Controls, curve state, Canvas drawing, file lifecycle, transport, monitoring UI |
 | Shared processing model | `src/transform-core.js` | Mapping, interpolation, duration/source-position math, shared DSP constants |
 | Realtime Preview | `src/transform-worklet.js` | AudioWorklet playback and position reporting |
+| Output measurement | `src/output-meter.js` | Final-output channel splitting and Peak/RMS measurement |
 | Offline Render | `src/offline-render.js` | Deterministic offline processing and 24-bit stereo PCM WAV encoding |
 | Regression model | `tests/transform-parity.mjs` | Mapping, extremes, determinism, direct-path and finite-output checks |
 
@@ -106,6 +107,18 @@ The current breakpoints are 1180 px and 860 px. Keep controls readable and nonov
 and preserve the Canvas-first hierarchy. Use `prefers-reduced-motion` for decorative
 animation. Test at least a narrow laptop width and a wide desktop width.
 
+## Playback And Monitoring Hierarchy
+
+- Top is file/output control, center is sound plus Curve editing, and bottom is
+  playback plus monitoring.
+- Playback state has one authoritative time display in the Bottom Transport. Timeline
+  marks inside the editor remain editing coordinates and are not duplicates.
+- The Bottom Transport preserves controls, current time, essential seeking, meter, then
+  secondary labels in that responsive priority.
+- Output measurement is downstream of module processing and must not change the sound.
+- Meter data is channel-indexed even when the current UI shows only stereo L/R.
+- Module-specific DSP does not belong in meter drawing code.
+
 ## Performance And Stability
 
 - Avoid per-frame allocation in realtime audio paths.
@@ -149,6 +162,11 @@ Documentation is part of completion. Record the meaning and reason for a value w
 known. Preserve significant previous/current tuning values and listening decisions.
 Mark unavailable rationale as `UNKNOWN`, and update it after a real decision or
 listening test.
+
+Use `finetuning-log.md` for compact experiment/observation/decision records. Promote a
+finding into this guide or a product specification only when repeated practical use
+shows that it is stable and broadly useful. Distinguish Audio-specific behavior from a
+common Curve Lab candidate and a future `STANDALONE ASSET`.
 
 ## Standalone Considerations
 

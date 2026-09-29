@@ -1,6 +1,8 @@
 import {
   TRANSFORM_CONSTANTS,
+  alignedGrainStart,
   centsFromNorm,
+  coherentGrainScale,
   createSeededRandom,
   effectiveSpeedAt,
   estimateOutputDuration,
@@ -15,7 +17,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260929-02";
+} from "./transform-core.js?v=20260930-01";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -148,13 +150,19 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.smoothGain = 0;
   }
 
-  spawnGrain(grainSamples, rate, sourceFrame, randomSamples) {
-    const jitter = (this.nextRandom() - 0.5) * randomSamples;
+  spawnGrain(grainSamples, rate, sourceFrame, randomSamples, freeze) {
+    const jitter = freeze ? (this.nextRandom() - 0.5) * randomSamples : 0;
+    const nominal = grainStart(sourceFrame, grainSamples, rate, this.left.length, jitter);
+    const previous = this.grains[this.grains.length - 1];
+    const start = !freeze && previous && !previous.freeze
+      ? alignedGrainStart(this.left, this.right, nominal, rate, grainSamples, previous.pos, previous.rate, Math.round(this.sampleRateSource * 0.01))
+      : nominal;
     this.grains.push({
-      pos: grainStart(sourceFrame, grainSamples, rate, this.left.length, jitter),
+      pos: start,
       age: 0,
       length: grainSamples,
-      rate
+      rate,
+      freeze
     });
     if (this.grains.length > 96) this.grains.splice(0, this.grains.length - 96);
   }
@@ -168,6 +176,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
       let l = 0;
       let r = 0;
       let grainEnvelopeSum = 0;
+      let freezeEnvelopeSum = 0;
 
       if (this.left && this.settings.playing) {
         const norm = Math.min(1, this.outputFrame / this.outputDurationFrames());
@@ -196,7 +205,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         while (this.nextGrain <= 0) {
           this.lastReadDirection = speedDirection(this.smoothSpeed, this.lastReadDirection);
           const grainRate = this.smoothRate * this.lastReadDirection * (this.sampleRateSource / sampleRate);
-          this.spawnGrain(grainSamples, grainRate, this.sourceFrame, randomSamples);
+          const freeze = Math.abs(this.smoothSpeed) <= TRANSFORM_CONSTANTS.freezeThreshold;
+          this.spawnGrain(grainSamples, grainRate, this.sourceFrame, randomSamples, freeze);
           this.nextGrain += interval;
         }
         this.nextGrain -= 1;
@@ -209,15 +219,18 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           }
           const phase = grain.age / Math.max(1, grain.length - 1);
           const env = grainEnvelope(phase);
-          l += readCubic(this.left, grain.pos) * env;
-          r += readCubic(this.right, grain.pos) * env;
+          const grainScale = grain.freeze ? grainMixScale(this.smoothGain, density) : 1;
+          l += readCubic(this.left, grain.pos) * env * grainScale;
+          r += readCubic(this.right, grain.pos) * env * grainScale;
           grainEnvelopeSum += env;
+          if (grain.freeze) freezeEnvelopeSum += env;
           grain.pos += grain.rate;
           grain.age += 1;
         }
 
-        const scale = grainMixScale(this.smoothGain, density)
-          * grainOverlapCorrection(grainEnvelopeSum, density);
+        const freezePart = grainEnvelopeSum > 1e-6 ? freezeEnvelopeSum / grainEnvelopeSum : 0;
+        const scale = ((1 - freezePart) * coherentGrainScale(this.smoothGain, grainEnvelopeSum))
+          + (freezePart * grainOverlapCorrection(grainEnvelopeSum, density));
         l *= scale;
         r *= scale;
         }

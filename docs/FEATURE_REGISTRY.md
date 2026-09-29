@@ -82,9 +82,9 @@ values move backward, and a sustained region around `0x` holds the source positi
 **Input / output:** Normalized `stretch` curve controls source-frame advance and output
 duration estimation.
 
-**Processing:** Signed speed mapping, direction retention near zero, windowed overlapping
-grains for transformed playback, and a direct path for constant `+1x`/`-1x` with neutral
-pitch.
+**Processing:** Signed speed mapping, direction retention near zero, waveform-aligned
+overlapping grains for non-Freeze transforms, and a direct path for constant `+1x`/`-1x`
+with neutral pitch. Freeze keeps its seeded granular texture.
 
 **Edge cases:** `abs(speed) <= 0.02` is the Freeze threshold. All-zero duration estimate
 falls back to source duration. Output is capped at 180 seconds. Extreme/repeated direction
@@ -93,7 +93,8 @@ changes may expose granular artifacts and require listening tests.
 **Dependencies:** Pitch curve determines direct versus granular path.
 
 **Tests:** Mapping, direction, duration, source position, reverse start, Freeze finite
-output, extremes, and determinism are automated.
+output, extremes, determinism, and small Speed-change tone stability in Preview/Render
+are automated. Real-source listening remains necessary.
 
 ## ACL-AUD-002: Pitch Curve
 
@@ -105,13 +106,15 @@ output, extremes, and determinism are automated.
 **User behavior:** Draw pitch from `-2400` to `+2400` cents. Center is `0 cents`.
 
 **Processing:** Normalized value maps linearly to cents; playback ratio is
-`2^(cents/1200)`. Non-neutral pitch selects the granular path.
+`2^(cents/1200)`. Non-neutral pitch selects the granular path with waveform-aligned
+grain starts outside Freeze.
 
 **Edge cases:** Extreme pitch combined with extreme/reversing Speed can increase
 artifacts. Approved musical sweet spots are `UNKNOWN`.
 
-**Tests:** Mapping, finite/bounded extremes, and deterministic transformed output are
-automated. Listening parity is manual.
+**Tests:** Mapping, finite/bounded extremes, deterministic transformed output, and
+small Pitch-change tone stability in Preview/Render are automated. Listening parity
+is manual.
 
 ## ACL-AUD-003: Pan Curve
 
@@ -139,8 +142,9 @@ is `TO BE DOCUMENTED`.
 **Purpose:** Hear the current transform and understand both output progress and source
 position.
 
-**User behavior:** Play or Spacebar starts; Stop or Spacebar stops. Double-clicking the
-Canvas seeks. Natural completion returns the timer/playhead to zero.
+**User behavior:** Play or Spacebar starts; Stop or Spacebar stops. The Bottom Transport
+shows one output-time/duration display and a seek scrubber. Double-clicking the Canvas
+also seeks. Natural completion returns the timer, scrubber, and playhead to zero.
 
 **Processing:** An AudioWorklet receives the source, curves, and settings. Position
 messages update the UI at approximately 30 Hz. Curve edits are sent to an active engine.
@@ -150,6 +154,36 @@ remain lifecycle risks. Stale worklet messages are ignored by playback token.
 
 **Tests:** Transform math is automated. Real transport, sleep/wake, and audio output are
 manual browser tests.
+
+## ACL-COM-006: Bottom Playback And Output Monitoring
+
+**Category:** COMMON CANDIDATE
+**Status:** IMPLEMENTED
+
+**Purpose:** Keep playback state readable without competing with the Curve workspace,
+and show the level that actually leaves the realtime engine.
+
+**User behavior:** The bottom area contains Play/Stop, current output time and duration,
+a seek scrubber, and a compact stereo L/R meter. The meter shows RMS body, Peak extent,
+Peak Hold, and a latched Clip indicator that can be clicked to reset.
+
+**Input / output:** `src/output-meter.js` receives the final realtime Web Audio output,
+splits it by channel, and reports channel-indexed Peak/RMS/Clip data. `src/app.js` owns
+only display smoothing, hold state, reset interaction, and DOM painting.
+
+**Edge cases:** The current output is bounded by `tanh`, so final-output clipping should
+be uncommon. Clip uses a `0.999` full-scale threshold. Meter values describe realtime
+Preview, not the offline WAV currently being rendered.
+
+**Responsive behavior:** Transport and time remain first. Scrubber and meter wrap to
+their own rows as width decreases; secondary labels simplify below 520 px.
+
+**Standalone notes:** Preserve the channel-array data model. Stereo may remain compact;
+Quad/8ch may add an expandable detailed view without changing the measurement contract.
+
+**Tests:** Default-sample Play/Stop, meter response, silence decay, scrub seek, reset,
+and narrow/wide layout were exercised locally. Sustained, transient, low-level, dense,
+and deliberately clipped source listening remains `TO BE DOCUMENTED`.
 
 ## ACL-COM-004: Offline Render And WAV Download
 

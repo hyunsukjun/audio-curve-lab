@@ -10,7 +10,7 @@ The visual priority is:
 
 1. Curve and waveform workspace
 2. Active parameter and editing tool
-3. Transport and export
+3. Playback, monitoring, and export
 4. Status/readouts
 5. Decorative atmosphere
 
@@ -37,6 +37,11 @@ The visual priority is:
 | Pitch parameter | `--cl-pitch` | `#EB6F75` |
 | Pan parameter | `--cl-pan` | `#B887F4` |
 | Destructive action | `--cl-danger` | `#E35D80` |
+| Meter safe range | `--cl-meter-green` | `#20D45B` |
+| Meter caution | `--cl-meter-yellow` | `#F2D31B` |
+| Meter high | `--cl-meter-orange` | `#F28C18` |
+| Meter near full scale | `--cl-meter-red` | `#E44747` |
+| Meter Hold | `--cl-meter-hold` | `#F4F7F9` |
 
 Brand and parameter colors are separate semantic systems. Do not recolor Speed, Pitch,
 or Pan blue merely to match the product identity.
@@ -56,13 +61,31 @@ portable design knowledge.
 
 ## Layout Language
 
-- Common top header: brand left, time centered, transport right.
+- Top header: brand left; file input and export control right.
 - Common toolbar: parameter modes, Pen/Eraser, semantic legend, destructive actions.
-- Thin status strip: current curve, point count, engine, playhead, parameter values,
-  and WAV state.
+- Thin status strip: current curve, point count, engine, parameter values, and WAV state.
 - Dark Canvas workspace: major/minor grid, muted blue-gray waveform, parameter curves,
   points, tooltip, and playhead.
+- Bottom Transport: Play/Stop, one authoritative current-time/duration display, output
+  progress scrubber, and compact final-output meter.
 - The Canvas stays visually dominant and is never placed inside decorative nested cards.
+
+## Playback And Meter Visibility
+
+- Transport and current time take priority over the scrubber, meter, and secondary
+  labels when space becomes limited.
+- Stereo uses two compact L/R rows. Additional future channels require an expandable
+  design rather than making the default footer dominate the Canvas.
+- On desktop layouts, the stereo meter receives roughly one third of the viewport width
+  so level changes remain readable. Narrow layouts move it to a full-width row.
+- RMS is the quieter body, Peak is the brighter extent, and Peak Hold is a thin marker.
+- Meter color follows the conventional level hierarchy: green safe range, yellow
+  caution, orange high level, and red near full scale. Color positions stay fixed to
+  the dB scale rather than stretching to fit the current value.
+- The idle meter track is uniformly dark. Threshold colors appear only inside the
+  active RMS/Peak fill, never as a colored background guide.
+- CLIP remains subdued until latched and resets independently when clicked.
+- Meter movement changes only painted width/position; it must not resize the layout.
 
 ## Curve Editor Visibility
 
@@ -94,7 +117,7 @@ Ambient background motion may be slow and low-opacity (current cycles: approxima
 
 ## Responsive And High-DPI Rules
 
-- Current layout breakpoints: 1180 px and 860 px.
+- Current layout breakpoints: 1180 px, 860 px, and a 520 px label-simplification step.
 - Header and toolbar may wrap; controls must not overlap or truncate key commands.
 - Canvas uses a high-DPI backing store based on device pixel ratio.
 - Canvas musical coordinates remain normalized and independent of CSS size.
@@ -113,4 +136,3 @@ A native implementation may use different widgets and measurements, but must pre
 - high contrast without decorative overload;
 - accessible focus, hover, disabled, and reduced-motion behavior;
 - stable geometry that does not modify musical curve data.
-

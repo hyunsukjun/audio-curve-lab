@@ -18,6 +18,11 @@
   --cl-pitch: #eb6f75;
   --cl-pan: #b887f4;
   --cl-danger: #e35d80;
+  --cl-meter-green: #20d45b;
+  --cl-meter-yellow: #f2d31b;
+  --cl-meter-orange: #f28c18;
+  --cl-meter-red: #e44747;
+  --cl-meter-hold: #f4f7f9;
   --cl-radius-sm: 4px;
   --cl-radius-md: 6px;
   --cl-radius-lg: 8px;
@@ -91,7 +96,7 @@ input {
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   align-content: start;
   min-height: 100vh;
   min-height: 100dvh;
@@ -100,7 +105,7 @@ input {
 .topbar {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(330px, 1fr) auto auto;
+  grid-template-columns: minmax(330px, 1fr) auto;
   align-items: center;
   gap: var(--cl-space-6);
   padding: 18px var(--cl-space-6);
@@ -173,15 +178,6 @@ input {
   color: #60798d;
   font-size: 10.5px;
   line-height: 1.35;
-}
-
-#timeStatus {
-  justify-self: center;
-  color: var(--cl-text);
-  font-size: 17px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .transport {
@@ -395,7 +391,7 @@ button:disabled {
 
 .panel {
   display: grid;
-  grid-template-columns: repeat(8, minmax(104px, 1fr));
+  grid-template-columns: repeat(7, minmax(104px, 1fr));
   gap: 0;
   padding: 10px 12px;
   border: 1px solid var(--cl-border);
@@ -462,6 +458,176 @@ button:disabled {
   cursor: url("eraser-cursor.svg") 5 25, crosshair;
 }
 
+.playbackBar {
+  display: grid;
+  grid-template-columns: auto auto minmax(160px, 1fr) minmax(33vw, 38vw);
+  align-items: center;
+  gap: var(--cl-space-4);
+  min-height: 66px;
+  margin: 0 var(--cl-space-4) var(--cl-space-4);
+  padding: 10px 12px;
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  background: rgba(10, 23, 36, 0.94);
+  box-shadow: 0 12px 30px rgba(1, 7, 13, 0.2);
+}
+
+.bottomTransport {
+  display: flex;
+  align-items: center;
+  gap: var(--cl-space-2);
+}
+
+.bottomTransport button {
+  min-width: 74px;
+}
+
+#timeStatus {
+  min-width: 166px;
+  color: var(--cl-text);
+  font-size: 16px;
+  font-weight: 680;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.scrubberGroup {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr);
+  align-items: center;
+  gap: var(--cl-space-2);
+  min-width: 0;
+  color: var(--cl-text-muted);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+#playbackScrubber {
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--cl-accent);
+  cursor: pointer;
+}
+
+#playbackScrubber:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+#playbackScrubber:focus-visible {
+  outline: 2px solid var(--cl-focus);
+  outline-offset: 2px;
+}
+
+.outputMeter {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1fr) auto;
+  align-items: center;
+  gap: var(--cl-space-2);
+  min-width: 0;
+  padding-left: var(--cl-space-3);
+  border-left: 1px solid rgba(52, 86, 114, 0.58);
+}
+
+.meterTitle {
+  color: var(--cl-text-muted);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.meterChannels {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.meterRow {
+  display: grid;
+  grid-template-columns: 11px minmax(90px, 1fr) 34px;
+  align-items: center;
+  gap: 5px;
+}
+
+.meterChannelLabel,
+.meterValue {
+  color: var(--cl-text-muted);
+  font-size: 9px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.meterValue {
+  text-align: right;
+}
+
+.meterTrack {
+  position: relative;
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid #233d53;
+  border-radius: 2px;
+  background: #050c13;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+}
+
+.meterRms,
+.meterPeak {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    var(--cl-meter-green) 0%,
+    var(--cl-meter-green) 68%,
+    var(--cl-meter-yellow) 80%,
+    var(--cl-meter-orange) 90%,
+    var(--cl-meter-red) 100%
+  );
+}
+
+.meterRms {
+  opacity: 0.72;
+}
+
+.meterPeak {
+  top: 1px;
+  bottom: 1px;
+  opacity: 0.96;
+}
+
+.meterHold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: var(--cl-meter-hold);
+}
+
+.meterClip {
+  min-width: 38px;
+  width: 38px;
+  height: 26px;
+  padding: 0;
+  border-color: #493142;
+  background: #1b1c28;
+  color: #79576a;
+  font-size: 8.5px;
+  font-weight: 760;
+}
+
+.meterClip.clipped {
+  border-color: var(--cl-danger);
+  background: #5a2035;
+  color: #ffd5df;
+}
+
 .dialogBackdrop {
   position: fixed;
   inset: 0;
@@ -515,15 +681,9 @@ button:disabled {
     grid-template-columns: minmax(320px, 1fr) auto;
   }
 
-  #timeStatus {
-    grid-column: 1;
-    grid-row: 2;
-    justify-self: start;
-  }
-
   .transport {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     max-width: 520px;
   }
 
@@ -534,6 +694,18 @@ button:disabled {
   .curveLegend {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .playbackBar {
+    grid-template-columns: auto auto minmax(190px, 1fr);
+  }
+
+  .outputMeter {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: var(--cl-space-2) 0 0;
+    border-top: 1px solid rgba(52, 86, 114, 0.58);
+    border-left: 0;
   }
 }
 
@@ -558,7 +730,6 @@ button:disabled {
     font-size: 22px;
   }
 
-  #timeStatus,
   .transport {
     grid-column: 1;
     grid-row: auto;
@@ -594,6 +765,47 @@ button:disabled {
 
   .readout:nth-child(2n)::after {
     display: none;
+  }
+
+  .playbackBar {
+    grid-template-columns: auto minmax(150px, 1fr);
+    gap: var(--cl-space-3);
+    margin: 0 var(--cl-space-3) var(--cl-space-3);
+  }
+
+  #timeStatus {
+    justify-self: end;
+    min-width: 0;
+    font-size: 14px;
+  }
+
+  .scrubberGroup,
+  .outputMeter {
+    grid-column: 1 / -1;
+  }
+
+  .outputMeter {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .scrubberGroup > span,
+  .meterTitle,
+  .meterValue {
+    display: none;
+  }
+
+  .scrubberGroup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .outputMeter {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .meterRow {
+    grid-template-columns: 11px minmax(70px, 1fr);
   }
 }
 

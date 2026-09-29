@@ -13,6 +13,10 @@ This repository is the Audio Curve Lab product. Its brand color is Blue
 5. Verify the changed behavior and its surrounding regression surface.
 6. Update the product-knowledge documents listed below.
 
+Preserve knowledge, not only code. Record a finetuning result only when it can help
+reproduce behavior, explain a consequential choice, guide another Curve Lab, or inform
+the future standalone application. Do not create a chronological development diary.
+
 If code and documentation disagree, investigate and report the difference. Do not
 silently choose one as authoritative.
 
@@ -62,6 +66,13 @@ prepare for a hypothetical native framework.
 - Product or architectural decision: `docs/DECISIONS.md`
 - Native/plug-in migration impact: `docs/STANDALONE_MIGRATION.md`
 - Visual language or token: `CURVE_LAB_DESIGN_SYSTEM.md`
+- Stable development principles: `DEVELOPMENT_GUIDELINES.md` (the repository's
+  `development-guide.md` equivalent)
+- Meaningful experiments and provisional tuning: `finetuning-log.md`
+
+Promote a finding from `finetuning-log.md` into stable specifications only after it has
+survived practical testing. Mark knowledge as `PROJECT-SPECIFIC`, `COMMON CANDIDATE`,
+or `STANDALONE ASSET` where that distinction matters.
 
 Unknown musical intent or tuning must be marked `UNKNOWN` or `TO BE DOCUMENTED`.
 Never invent a sweet spot, listening result, or historical reason.
@@ -86,4 +97,3 @@ errors. A syntax or unit test is not proof that audio playback is correct.
 
 For documentation-only work, run the transform test and syntax checks to preserve a
 known baseline, then confirm no runtime files changed.
-

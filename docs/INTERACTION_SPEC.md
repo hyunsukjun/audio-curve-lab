@@ -68,21 +68,28 @@ position. The tooltip follows the active parameter's semantic color.
 **Behavior:** Play starts or resumes the current Preview state. Spacebar toggles
 Play/Stop when focus is not in a typing control. Curve edits are sent to the active
 engine.  
-**Feedback:** Time, playhead, source-relative position, Speed, Pitch, and Pan readouts
-advance. Natural completion returns time/playhead to zero.
+**Feedback:** Bottom Transport time/scrubber, source-position playhead, Speed, Pitch,
+Pan, and output meter advance. Natural completion returns time/scrubber/playhead to zero.
 
 ## Stop
 
 **Intent:** End Preview and return to the initial state.  
 **Behavior:** Stop halts sound, clears active grains, resets output/source position, and
-returns the visible timer/playhead to zero.
+returns the visible timer, scrubber, and playhead to zero. The meter then decays toward
+silence according to its display ballistics.
 
 ## Seek
 
 **Intent:** Audition a different output-time position.  
-**Behavior:** Double-clicking the plot maps horizontal position to output progress, then
-derives source position from the signed Speed curve. Active grains/control smoothing
-restart around the new location.
+**Behavior:** Moving the Bottom Transport scrubber or double-clicking the plot maps the
+chosen output progress to source position using the signed Speed curve. Active
+grains/control smoothing restart around the new location.
+
+## Reset Clip Indicator
+
+**Intent:** Acknowledge a previously detected full-scale realtime output peak.
+**Behavior:** The Clip state latches when any displayed channel reaches the threshold.
+Clicking CLIP clears the latch without changing playback, curves, gain, or audio data.
 
 ## Clear Current
 
@@ -122,4 +129,3 @@ curve/setting/source change marks an earlier render stale.
 - Curve-region drawing/freehand stroke: not implemented; interaction is point-based.
 - Preset/state save and restore: not implemented.
 - Confirmed mobile/touch workflow: `UNKNOWN`.
-

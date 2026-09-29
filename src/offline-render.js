@@ -1,6 +1,8 @@
 import {
   TRANSFORM_CONSTANTS,
+  alignedGrainStart,
   centsFromNorm,
+  coherentGrainScale,
   createSeededRandom,
   effectiveSpeedAt,
   estimateOutputDuration,
@@ -15,7 +17,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260929-02";
+} from "./transform-core.js?v=20260930-01";
 
 function encodeWav(left, right, sampleRate) {
   const length = left.length;
@@ -119,6 +121,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   const density = Math.max(2, settings.density);
   const hop = Math.max(TRANSFORM_CONSTANTS.minHopSamples, Math.round(grainSamples / density));
   const overlapEnvelope = new Float32Array(outLength);
+  const freezeEnvelope = new Float32Array(outLength);
   const randomSamples = settings.randomness * grainSamples * TRANSFORM_CONSTANTS.jitterFactor;
   const speedSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.speedSmoothing, hop);
   const rateSmoothing = smoothingForBlock(TRANSFORM_CONSTANTS.rateSmoothing, hop);
@@ -132,6 +135,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   let smoothRate = Math.pow(2, centsFromNorm(valueAt(curves.pitch, 0)) / 1200);
   let smoothGain = 0;
   let smoothPan = panFromNorm(valueAt(curves.pan, 0));
+  let previousGrain = null;
 
   for (let outPos = 0; outPos < outLength; outPos += hop) {
     if (signal?.aborted) {
@@ -148,14 +152,18 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     smoothGain += (settings.outputGain - smoothGain) * gainSmoothing;
     smoothPan += (pan - smoothPan) * panSmoothing;
     const center = sourceFrame;
-    const jitter = (nextRandom() - 0.5) * randomSamples;
     lastReadDirection = speedDirection(smoothSpeed, lastReadDirection);
     const grainRate = smoothRate * lastReadDirection;
-    const startSource = grainStart(center, grainSamples, grainRate, left.length, jitter);
+    const freeze = Math.abs(smoothSpeed) <= TRANSFORM_CONSTANTS.freezeThreshold;
+    const jitter = freeze ? (nextRandom() - 0.5) * randomSamples : 0;
+    const nominal = grainStart(center, grainSamples, grainRate, left.length, jitter);
+    const startSource = !freeze && previousGrain
+      ? alignedGrainStart(left, right, nominal, grainRate, grainSamples, previousGrain.start + (hop * previousGrain.rate), previousGrain.rate, Math.round(sourceRate * 0.01))
+      : nominal;
     const panAngle = (smoothPan + 1) * Math.PI * 0.25;
     const leftPan = Math.cos(panAngle) * 1.41421356237;
     const rightPan = Math.sin(panAngle) * 1.41421356237;
-    const grainScale = grainMixScale(smoothGain, density);
+    const grainScale = freeze ? grainMixScale(smoothGain, density) : 1;
 
     for (let i = 0; i < grainSamples; i += 1) {
       const write = outPos + i;
@@ -166,9 +174,11 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
       outL[write] += readCubic(left, read) * env * leftPan * grainScale;
       outR[write] += readCubic(right, read) * env * rightPan * grainScale;
       overlapEnvelope[write] += env;
+      if (freeze) freezeEnvelope[write] += env;
     }
 
     sourceFrame = Math.max(0, Math.min(left.length - 3, sourceFrame + (hop * smoothSpeed)));
+    previousGrain = freeze ? null : { start: startSource, rate: grainRate };
     const progress = outPos / outLength;
     const now = performance.now();
     if (progress - lastProgress > 0.01 || now - lastYield > 60) {
@@ -180,10 +190,14 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   }
 
   let peak = 0;
+  let postGain = 0;
   for (let i = 0; i < outLength; i += 1) {
-    const overlapCorrection = grainOverlapCorrection(overlapEnvelope[i], density);
-    outL[i] *= overlapCorrection;
-    outR[i] *= overlapCorrection;
+    postGain += (settings.outputGain - postGain) * TRANSFORM_CONSTANTS.gainSmoothing;
+    const freezePart = overlapEnvelope[i] > 1e-6 ? freezeEnvelope[i] / overlapEnvelope[i] : 0;
+    const scale = ((1 - freezePart) * coherentGrainScale(postGain, overlapEnvelope[i]))
+      + (freezePart * grainOverlapCorrection(overlapEnvelope[i], density));
+    outL[i] *= scale;
+    outR[i] *= scale;
     peak = Math.max(peak, Math.abs(outL[i]), Math.abs(outR[i]));
   }
   const normalise = peak > 0 ? Math.min(1.0, 0.92 / peak) : 1;

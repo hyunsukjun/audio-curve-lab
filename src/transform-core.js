@@ -65,6 +65,71 @@ export function grainOverlapCorrection(envelopeSum, density) {
   );
 }
 
+export function alignedGrainStart(left, right, nominal, rate, grainSamples, referencePos, referenceRate, maxOffset) {
+  if (!Number.isFinite(referencePos) || !Number.isFinite(referenceRate)) return nominal;
+  const probeCount = 32;
+  const probeStride = 2;
+  const searchStep = Math.max(1, Math.round(maxOffset / 80));
+  const span = (grainSamples - 1) * rate;
+  const earliest = Math.max(0, Math.ceil(-span), Math.round(nominal - maxOffset));
+  const latest = Math.min(left.length - 3, Math.floor(left.length - 3 - span), Math.round(nominal + maxOffset));
+  if (latest < earliest) return nominal;
+  let best = nominal;
+  let bestScore = -Infinity;
+  const referenceLeft = new Float32Array(probeCount);
+  const referenceRight = new Float32Array(probeCount);
+  let referenceEnergy = 0;
+  for (let i = 0; i < probeCount; i += 1) {
+    const pos = referencePos + (i * probeStride * referenceRate);
+    const l = readCubic(left, pos);
+    const r = readCubic(right, pos);
+    referenceLeft[i] = l;
+    referenceRight[i] = r;
+    referenceEnergy += (l * l) + (r * r);
+  }
+  if (referenceEnergy < 1e-7) return nominal;
+
+  // Match the previous grain's current waveform while penalizing large timing shifts.
+  const scoreAt = (start) => {
+    let correlation = 0;
+    let energy = 0;
+    for (let i = 0; i < probeCount; i += 1) {
+      const pos = start + (i * probeStride * rate);
+      const l = readCubic(left, pos);
+      const r = readCubic(right, pos);
+      correlation += (referenceLeft[i] * l) + (referenceRight[i] * r);
+      energy += (l * l) + (r * r);
+    }
+    if (energy < 1e-7) return -Infinity;
+    return (correlation / Math.sqrt(referenceEnergy * energy)) - (0.08 * Math.abs(start - nominal) / Math.max(1, maxOffset));
+  };
+  if (referencePos >= earliest && referencePos <= latest) {
+    best = referencePos;
+    bestScore = scoreAt(referencePos);
+  }
+  for (let start = earliest; start <= latest; start += searchStep) {
+    const score = scoreAt(start);
+    if (score > bestScore) {
+      bestScore = score;
+      best = start;
+    }
+  }
+  const refineStart = Math.max(earliest, best - searchStep);
+  const refineEnd = Math.min(latest, best + searchStep);
+  for (let start = refineStart; start <= refineEnd; start += 1) {
+    const score = scoreAt(start);
+    if (score > bestScore) {
+      bestScore = score;
+      best = start;
+    }
+  }
+  return bestScore > 0.4 ? best : nominal;
+}
+
+export function coherentGrainScale(gain, envelopeSum) {
+  return gain / Math.max(0.5, envelopeSum);
+}
+
 export function readCubic(buffer, pos) {
   if (!buffer || buffer.length === 0 || pos < 0 || pos >= buffer.length - 3) return 0;
   const i0 = Math.floor(pos);
