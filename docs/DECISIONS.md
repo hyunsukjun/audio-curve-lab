@@ -148,3 +148,66 @@ signal measurements, not a complete listening verdict.
 **Trade-off:** Extra source reads at each grain start and a possible 10 ms local shift;
 extreme transforms and pitch-up aliasing remain. The source-position clock is unchanged.
 **Affects:** Realtime Preview, offline WAV Render, Freeze boundaries, native DSP port.
+
+## D-015: Lightweight Web Skin
+
+**Date:** 2026-10-02
+**Decision:** Preserve the current layout, control geometry, Curve editor, and Deep
+Navy/Charcoal identity while replacing the large animated blurred background with a
+solid backdrop, using opaque surfaces, and removing decorative shadows/transitions.
+Functional waveform, Curve, playhead, and meter feedback remain unchanged.
+**Reason:** Large blurred/animated layers and translucent compositing can burden older
+Intel Macs and low-end GPUs. Make the design legible through typography, spacing,
+and contrast rather than GPU effects.
+**Trade-off:** The background is less atmospheric. No measured performance gain is
+claimed until tested on the affected hardware.
+**Affects:** Web skin only; no DSP, Canvas geometry, interaction, or native sound
+contract changes. `COMMON CANDIDATE` for other Curve Labs after project-specific
+visual and performance checks.
+
+## D-016: Distinguish Speed Curve Time From Source Position
+
+**Date:** 2026-10-02
+**Decision:** In every parameter mode, show a small mint ring at current output-time
+progress on the center line. Keep the existing solid playhead at the source read
+position over the waveform.
+**Reason:** Variable Speed makes those positions diverge; one line cannot honestly
+represent both the curve value being applied and the audio source being read.
+**Trade-off:** The ring no longer communicates the current curve value; it is a
+time-position marker independent of the selected parameter. It must remain visually
+distinct from editable curve nodes.
+The earlier full-height dashed cursor was removed because two vertical lines could
+suggest a single time axis and clutter the editor. The ring is
+display-only and does not change the Bottom Transport, curve data, or audio engine.
+**Affects:** Curve editor feedback and future native timeline design.
+
+## D-017: Separate Seeking From Curve Editing On One Output-Time Axis
+
+**Date:** 2026-10-02
+**Decision:** Put an output-time waveform above the curve editor. Click/drag on the
+waveform seeks; the lower Canvas edits points only. Both cursors share the same
+output-time x coordinate. Remove the Bottom Transport Position slider and show
+source read time as a separate number.
+**Reason:** A shared click surface made seeking ambiguous and the source-position
+line appeared misaligned with output-time curves under variable Speed.
+**Trade-off:** The projected waveform approximates the source peak envelope at
+output times, not the actual rendered waveform. It must be described as a guide;
+full audio rendering on every curve gesture would cost substantially more and could
+make older computers sluggish. Peak projection is recalculated on source or Speed
+changes, not on Pitch/Pan changes. This supersedes D-016's ring/source-line display
+without changing its distinction between source and output clocks.
+**Affects:** Web layout, seek gestures, visual time model, standalone timeline design;
+no DSP, curve data, Preview, or Render changes.
+
+## D-018: Show Input Waveform Channels Separately
+
+**Date:** 2026-10-02
+**Decision:** Draw one lane for mono input and labeled L/R lanes for stereo input;
+project each channel's peak summary through the same output-time Speed map.
+**Reason:** A single left-channel waveform can falsely suggest that a stereo source
+was downmixed or that right-channel events were lost.
+**Trade-off:** Each stereo lane is shorter and peak extraction stores two summaries.
+Inputs beyond two channels still show only the first two, matching the current
+processing boundary. The display describes input channels, not the stereo export.
+**Affects:** Waveform display and future standalone visual contract only; no audio
+engine, curve meaning, or export change.

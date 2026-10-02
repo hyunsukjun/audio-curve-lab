@@ -116,16 +116,42 @@ schedulers differ.
 ### Transport And Playhead
 
 **Current web implementation:** DOM buttons/Spacebar, worklet messages near 30 Hz,
-Canvas playhead, double-click seek.  
+aligned waveform/editor cursors, click/drag waveform seek.
 **Platform-independent behavior:** Play/Stop toggle, reset on natural end, output-time
 display, signed-Speed-aware source seek.  
 **Replacement needed:** Native commands, keyboard handling, timeline display, reliable
 audio-thread clock transfer.  
 **Risk / priority:** High priority; medium risk from clock/UI synchronization.
 
+### Three Time And Display Coordinates
+
+```text
+output time t / estimated output duration D -> upper waveform seek and curve x
+                                     Speed(t) -> source read position s(t)
+source read position s / source duration S -> separate Source time readout
+```
+
+The lower curve and upper waveform share one output-progress x axis. The waveform
+is a projection of 4,000 peak buckets per input channel (up to L/R) using signed Speed and
+the estimated (capped) output duration. It is not rendered output audio or
+sample-accurate edit data; Pitch and granular artifacts are not represented.
+Mono sources have one waveform lane, stereo sources have separate L/R lanes;
+this input display does not describe the channel count of the stereo export.
+The Bottom Transport shows output time/duration. Matching cursors on both views
+show output progress, while Source time is numeric because reverse and Freeze can
+move or hold the source independently. A native design should preserve these
+distinct clocks without implying that source and output x coordinates are identical.
+
+Seek estimates source position by integrating the signed Speed curve over output
+progress in 1,024 steps. Realtime playback also smooths Speed and advances in
+samples, so the estimate is not guaranteed to match the exact audio read frame at
+every rapid transition. The current UI has no explicit latency compensation.
+When porting, test output timer, audible source event, Canvas playhead, and seek
+together rather than treating each display as independent proof of synchronization.
+
 ### Design System
 
-**Current web implementation:** CSS variables, media queries, ambient pseudo-elements.  
+**Current web implementation:** CSS variables, media queries, and solid low-cost surfaces.
 **Platform-independent behavior:** Deep navy/charcoal workspace, Blue identity, semantic
 parameter colors, Canvas-first hierarchy, active/focus/disabled/reduced-motion states.  
 **Reusable data:** `CURVE_LAB_DESIGN_SYSTEM.md` token values and roles.  
@@ -154,5 +180,9 @@ duration, direction, curve response, transients, and output level must be compar
 - Preset/state schema approval and migration rules.
 - Plug-in automation semantics and host timeline relationship, if a plug-in is pursued.
 - Touch/accessibility/numeric-editing requirements.
+- Reference Sound Set results for voice, sustained tone, transients, dense material,
+  broadband noise, and stereo material; use `docs/REFERENCE_SOUND_SET.md`.
+- Measured CPU cost and realtime glitch rate for waveform-aligned grain search on
+  representative devices; no approved performance threshold exists yet.
 
 These items are `TO BE DOCUMENTED`; do not guess them during a port.

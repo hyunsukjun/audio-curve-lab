@@ -44,48 +44,11 @@
 }
 
 body {
-  position: relative;
-  isolation: isolate;
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
   overflow: auto;
-  background:
-    linear-gradient(145deg, rgba(17, 44, 70, 0.34), transparent 48%),
-    linear-gradient(325deg, rgba(25, 32, 59, 0.28), transparent 55%),
-    var(--cl-bg-deep);
-}
-
-body::before,
-body::after {
-  position: fixed;
-  inset: -30%;
-  z-index: -1;
-  pointer-events: none;
-  content: "";
-  opacity: 0.34;
-  filter: blur(90px);
-  will-change: transform;
-}
-
-body::before {
-  background: linear-gradient(120deg, transparent 20%, rgba(21, 74, 112, 0.48) 50%, transparent 78%);
-  animation: cl-ambient-a 96s ease-in-out infinite alternate;
-}
-
-body::after {
-  background: linear-gradient(55deg, transparent 28%, rgba(45, 43, 91, 0.3) 56%, transparent 82%);
-  animation: cl-ambient-b 118s ease-in-out infinite alternate;
-}
-
-@keyframes cl-ambient-a {
-  from { transform: translate3d(-1.5%, -0.75%, 0) scale(1); }
-  to { transform: translate3d(1.5%, 0.75%, 0) scale(1.025); }
-}
-
-@keyframes cl-ambient-b {
-  from { transform: translate3d(1%, -1%, 0) scale(1.02); }
-  to { transform: translate3d(-1%, 1%, 0) scale(1); }
+  background: var(--cl-bg-deep);
 }
 
 button,
@@ -96,7 +59,7 @@ input {
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto auto auto;
   align-content: start;
   min-height: 100vh;
   min-height: 100dvh;
@@ -110,8 +73,7 @@ input {
   gap: var(--cl-space-6);
   padding: 18px var(--cl-space-6);
   border-bottom: 1px solid rgba(52, 86, 114, 0.72);
-  background: rgba(8, 19, 30, 0.78);
-  box-shadow: 0 8px 28px rgba(1, 7, 13, 0.22);
+  background: #08131e;
 }
 
 .brand {
@@ -206,7 +168,6 @@ button,
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 button:hover,
@@ -282,10 +243,9 @@ button:disabled {
   padding: var(--cl-space-2) var(--cl-space-3);
   border: 1px solid var(--cl-border);
   border-radius: var(--cl-radius-lg);
-  background: rgba(13, 27, 41, 0.9);
+  background: var(--cl-surface);
   color: var(--cl-text-muted);
   font-size: 11.5px;
-  box-shadow: 0 10px 28px rgba(1, 7, 13, 0.14);
 }
 
 .modeButtons,
@@ -391,13 +351,12 @@ button:disabled {
 
 .panel {
   display: grid;
-  grid-template-columns: repeat(7, minmax(104px, 1fr));
+  grid-template-columns: repeat(8, minmax(104px, 1fr));
   gap: 0;
   padding: 10px 12px;
   border: 1px solid var(--cl-border);
   border-radius: var(--cl-radius-lg);
-  background: rgba(10, 23, 36, 0.91);
-  box-shadow: 0 8px 24px rgba(1, 7, 13, 0.12);
+  background: #0a1724;
 }
 
 .readout {
@@ -440,11 +399,43 @@ button:disabled {
 
 .canvasFrame {
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--cl-border-strong);
   border-radius: var(--cl-radius-lg);
   background: #0c1f31;
-  box-shadow: 0 16px 38px rgba(1, 7, 13, 0.2);
+}
+
+.outputWaveFrame {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--cl-border-strong);
+  border-radius: var(--cl-radius-lg);
+  background: #0c1f31;
+}
+
+.canvasFrame,
+.outputWaveFrame {
+  scrollbar-color: #426380 #0a1724;
+  scrollbar-width: thin;
+}
+
+#outputWaveCanvas {
+  display: block;
+  height: 150px;
+  background: #0c1f31;
+  cursor: pointer;
+  touch-action: none;
+}
+
+#outputWaveCanvas[aria-disabled="true"] {
+  cursor: default;
+}
+
+#outputWaveCanvas:focus-visible {
+  outline: 2px solid var(--cl-focus);
+  outline-offset: -3px;
 }
 
 #waveCanvas {
@@ -460,7 +451,7 @@ button:disabled {
 
 .playbackBar {
   display: grid;
-  grid-template-columns: auto auto minmax(160px, 1fr) minmax(33vw, 38vw);
+  grid-template-columns: auto auto minmax(33vw, 1fr);
   align-items: center;
   gap: var(--cl-space-4);
   min-height: 66px;
@@ -468,8 +459,7 @@ button:disabled {
   padding: 10px 12px;
   border: 1px solid var(--cl-border);
   border-radius: var(--cl-radius-lg);
-  background: rgba(10, 23, 36, 0.94);
-  box-shadow: 0 12px 30px rgba(1, 7, 13, 0.2);
+  background: #0a1724;
 }
 
 .bottomTransport {
@@ -490,37 +480,6 @@ button:disabled {
   font-variant-numeric: tabular-nums;
   text-align: center;
   white-space: nowrap;
-}
-
-.scrubberGroup {
-  display: grid;
-  grid-template-columns: auto minmax(90px, 1fr);
-  align-items: center;
-  gap: var(--cl-space-2);
-  min-width: 0;
-  color: var(--cl-text-muted);
-  font-size: 10px;
-  font-weight: 650;
-  text-transform: uppercase;
-}
-
-#playbackScrubber {
-  width: 100%;
-  height: 20px;
-  margin: 0;
-  padding: 0;
-  accent-color: var(--cl-accent);
-  cursor: pointer;
-}
-
-#playbackScrubber:disabled {
-  opacity: 0.42;
-  cursor: default;
-}
-
-#playbackScrubber:focus-visible {
-  outline: 2px solid var(--cl-focus);
-  outline-offset: 2px;
 }
 
 .outputMeter {
@@ -571,7 +530,6 @@ button:disabled {
   border: 1px solid #233d53;
   border-radius: 2px;
   background: #050c13;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.015);
 }
 
 .meterRms,
@@ -648,7 +606,6 @@ button:disabled {
   border: 1px solid var(--cl-border-strong);
   border-radius: var(--cl-radius-lg);
   background: #102131;
-  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.42);
 }
 
 .confirmDialog h2 {
@@ -697,7 +654,7 @@ button:disabled {
   }
 
   .playbackBar {
-    grid-template-columns: auto auto minmax(190px, 1fr);
+    grid-template-columns: auto auto;
   }
 
   .outputMeter {
@@ -779,7 +736,6 @@ button:disabled {
     font-size: 14px;
   }
 
-  .scrubberGroup,
   .outputMeter {
     grid-column: 1 / -1;
   }
@@ -790,14 +746,9 @@ button:disabled {
 }
 
 @media (max-width: 520px) {
-  .scrubberGroup > span,
   .meterTitle,
   .meterValue {
     display: none;
-  }
-
-  .scrubberGroup {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .outputMeter {
@@ -806,18 +757,5 @@ button:disabled {
 
   .meterRow {
     grid-template-columns: 11px minmax(70px, 1fr);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::before,
-  body::after {
-    animation: none;
-    transform: none;
-  }
-
-  button,
-  .fileButton {
-    transition: none;
   }
 }

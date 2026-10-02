@@ -29,6 +29,20 @@ until practical listening is complete.
 
 **Reusable For:** `PROJECT-SPECIFIC`; possible `STANDALONE ASSET` after listening.
 
+**Subsequent listening observation (2026-09-30):** The project owner reports that
+small Speed changes now sound substantially more natural when leaving the original
+sound. On a human voice, Pitch changes still produce a short-delay/chorus-like
+texture. In combination with electronic or instrumental material, that texture can
+sound fuller and musically useful. The owner does not currently regard it as a defect
+and chose to keep this version. This is a qualitative observation, not an approved
+transparent-Pitch claim or a preference for all source types.
+
+**Evidence limits:** The voice recording, exact curve/cents, listening setup, and
+Preview-versus-exported-WAV comparison were not recorded. Do not attribute the
+texture to a specific DSP stage or claim that the WAV shares it without a controlled
+comparison. Capture those conditions using `docs/REFERENCE_SOUND_SET.md` before
+promoting this observation to a standalone sonic requirement.
+
 ---
 
 ## 2026-09-29: Bottom Playback And Output Metering

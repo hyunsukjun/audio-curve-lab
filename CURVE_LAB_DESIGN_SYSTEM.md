@@ -63,16 +63,19 @@ portable design knowledge.
 
 - Top header: brand left; file input and export control right.
 - Common toolbar: parameter modes, Pen/Eraser, semantic legend, destructive actions.
-- Thin status strip: current curve, point count, engine, parameter values, and WAV state.
-- Dark Canvas workspace: major/minor grid, muted blue-gray waveform, parameter curves,
-  points, tooltip, and playhead.
-- Bottom Transport: Play/Stop, one authoritative current-time/duration display, output
-  progress scrubber, and compact final-output meter.
+- Thin status strip: current curve, point count, engine, parameter values, source
+  read time, and WAV state.
+- Upper waveform: output-time overview and click/drag seek target. Lower Canvas:
+  major/minor grid, parameter curves, points, tooltip, and aligned output-time cursor.
+- The input waveform has one labeled lane for mono and separate L/R lanes for stereo;
+  displaying stereo as one mono-looking lane misrepresents the loaded source.
+- Bottom Transport: Play/Stop, one authoritative current-time/duration display,
+  and compact final-output meter.
 - The Canvas stays visually dominant and is never placed inside decorative nested cards.
 
 ## Playback And Meter Visibility
 
-- Transport and current time take priority over the scrubber, meter, and secondary
+- Transport and current time take priority over the meter and secondary
   labels when space becomes limited.
 - Stereo uses two compact L/R rows. Additional future channels require an expandable
   design rather than making the default footer dominate the Canvas.
@@ -97,6 +100,9 @@ portable design knowledge.
 - Selection is primarily communicated by line thickness and matching parameter-border
   color, not blur or low opacity.
 - Parameter scale and grid remain quieter than the curves.
+- Matching solid cursors in the waveform and editor identify output-time progress
+  in every parameter mode. Source read time is a separate status value because it
+  can move backward or pause while output time moves forward.
 
 ## Controls And States
 
@@ -111,9 +117,15 @@ portable design knowledge.
 
 ## Motion
 
-Ambient background motion may be slow and low-opacity (current cycles: approximately
-96 s and 118 s). It must ignore pointer input and never reduce curve visibility.
-`prefers-reduced-motion` disables ambient animation and nonessential transitions.
+The Web skin uses solid Deep Navy/Charcoal surfaces rather than animated blurred
+background layers. It has no decorative animation or button color transition; the
+Curve, waveform, playhead, and level meter remain the visual motion that conveys
+musical state. Keep their shape, position, and semantic colors independent of future
+skin changes. A future animation must have a measured benefit, a low-cost fallback,
+and reduced-motion support before being added.
+
+This lightweight skin is a `COMMON CANDIDATE` for sibling Curve Labs, not permission
+to change their layout, editor geometry, DSP, or project-specific brand color.
 
 ## Responsive And High-DPI Rules
 

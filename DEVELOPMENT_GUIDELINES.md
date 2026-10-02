@@ -46,8 +46,9 @@ changing curve semantics.
 ## Canvas Rendering
 
 - The Canvas uses device-pixel-ratio backing resolution for Retina/high-DPI clarity.
-- The current workspace has a minimum logical width of 1800 and is clipped by its
-  frame on narrower windows. This preserves a stable timeline geometry.
+- The current workspace has a minimum logical width of 1800. Narrower windows
+  show a clipped viewport; waveform and editor scroll horizontally together to
+  preserve their shared output-time geometry and access later positions.
 - Parameter scale space is reserved at the left; pointer mapping uses the plot area.
 - Active and inactive curves remain semantically visible; only the active curve shows
   editable points.
@@ -104,8 +105,16 @@ output contract.
 
 Use stable dimensions and explicit breakpoints rather than viewport-scaled typography.
 The current breakpoints are 1180 px and 860 px. Keep controls readable and nonoverlapping,
-and preserve the Canvas-first hierarchy. Use `prefers-reduced-motion` for decorative
-animation. Test at least a narrow laptop width and a wide desktop width.
+and preserve the Canvas-first hierarchy. Avoid decorative animation by default; any
+future motion must support `prefers-reduced-motion`. Test at least a narrow laptop
+width and a wide desktop width.
+
+For the Web skin, prefer layout, typography, contrast, and spacing over GPU-heavy
+effects. Keep large blurred or animated layers, backdrop blur, stacked translucent
+surfaces, unnecessary glow, and layered shadows out of the default design. Preserve
+functional waveform, Curve, playhead, and meter feedback. Skin-only work must not
+change Canvas geometry, audio scheduling, or parameter data. This is a cross-Lab
+design candidate; verify it in each project before adoption.
 
 ## Playback And Monitoring Hierarchy
 
@@ -152,6 +161,10 @@ plan for long-term replacement. A visual redesign alone is not sufficient reason
 5. Verify exported WAV metadata and listen to Preview/Render at representative and
    extreme settings.
 6. Check console errors and responsive Canvas/pointer alignment.
+
+Use `docs/REFERENCE_SOUND_SET.md` to record repeatable listening and performance
+conditions. Its matrix is a proposed test protocol, not a claim that every source
+category or browser has already passed.
 
 Record what was actually verified and what remains untested. Do not equate automated
 finite-sample checks with subjective sound-quality approval.

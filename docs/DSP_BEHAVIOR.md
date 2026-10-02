@@ -68,6 +68,18 @@ and includes the previous grain's fractional source position as a candidate. Thi
 a bounded waveform-alignment step, not a full WSOLA or phase-vocoder engine. The
 independent source-position clock still follows the Speed curve.
 
+The current candidate score uses 32 stereo probe positions separated by two grain
+playback samples (`2 * rate` source frames), normalized correlation, and a timing
+penalty of `0.08 * offset / maxOffset`.
+It tests a coarse grid with step `max(1, round(maxOffset / 80))`, then refines one
+source frame at a time around the best candidate. It keeps an aligned start only when
+the best score exceeds `0.4`; missing reference data, negligible reference/candidate
+energy (`< 1e-7`), or no valid search interval falls back to the nominal start.
+The 10 ms bound limits how far an individual grain can shift from the Speed-driven
+clock. These thresholds are implementation choices, not listening-approved optima.
+Their effect on transient placement, stereo coherence, and CPU cost must be compared
+before changing them in a native engine.
+
 Ordinary transformed grains do not use random source-position jitter. Their active
 sine-window sum sets the coherent mix gain as `smoothedGain / max(0.5, envelopeSum)`.
 This brings small transformations close to the direct reader's steady-state level
@@ -145,6 +157,12 @@ It receives copied source channels, current curves, and settings. Playback token
 stale position/end messages from controlling a newer session. Curves can update while
 playing.
 
+The alignment helper currently allocates two 32-sample probe arrays and a scoring
+closure when a grain begins. No measured CPU budget or cross-device benchmark exists
+for this addition. A native realtime port must avoid assuming that this allocation
+pattern is callback-safe. Use the repeatable measurement procedure in
+`docs/REFERENCE_SOUND_SET.md`; report performance separately from audio quality.
+
 Browser AudioContext suspension, device changes, sleep/wake, and process throttling are
 platform lifecycle risks and require real-device testing.
 
@@ -209,5 +227,8 @@ play/seek/stop lifecycle as appropriate. Natural completion posts an ended state
 - Long Freeze texture and timbral stability need formal listening tests.
 - Preview/Render loudness/transient differences need measured and listening comparison.
 - Current sweet spots, problematic ranges, and monitoring environment are `UNKNOWN`.
+- Owner listening currently accepts a chorus-like character during voice Pitch
+  changes as potentially useful in layered composition. The exact test settings and
+  whether exported WAV sounds the same are unrecorded; see `finetuning-log.md`.
 - WAV output is stereo 24-bit PCM. This improves final quantization precision but does
   not change granular artifacts, interpolation, clipping behavior, or Preview quality.

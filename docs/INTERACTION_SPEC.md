@@ -68,22 +68,28 @@ position. The tooltip follows the active parameter's semantic color.
 **Behavior:** Play starts or resumes the current Preview state. Spacebar toggles
 Play/Stop when focus is not in a typing control. Curve edits are sent to the active
 engine.  
-**Feedback:** Bottom Transport time/scrubber, source-position playhead, Speed, Pitch,
-Pan, and output meter advance. Natural completion returns time/scrubber/playhead to zero.
+**Feedback:** Bottom Transport time, output-time cursors on the upper waveform and
+lower curve editor, Source readout, Speed, Pitch, Pan, and output meter advance.
+The two cursors share one output-time x coordinate. Source read time can move
+backward or freeze independently. Natural completion returns time and cursors to zero.
 
 ## Stop
 
 **Intent:** End Preview and return to the initial state.  
 **Behavior:** Stop halts sound, clears active grains, resets output/source position, and
-returns the visible timer, scrubber, and playhead to zero. The meter then decays toward
+returns the visible timer and playhead to zero. The meter then decays toward
 silence according to its display ballistics.
 
 ## Seek
 
 **Intent:** Audition a different output-time position.  
-**Behavior:** Moving the Bottom Transport scrubber or double-clicking the plot maps the
-chosen output progress to source position using the signed Speed curve. Active
-grains/control smoothing restart around the new location.
+**Behavior:** Clicking or dragging the upper waveform maps the chosen output-time
+position to source position using the signed Speed curve. The lower curve editor
+does not seek. Keyboard focus on the upper waveform supports Left/Right (1 second),
+Shift+Left/Right (0.1 second), Home, and End. Active grains/control smoothing
+restart around the new location.
+On narrow windows, the waveform and curve editor keep their fixed time scale;
+horizontal scrolling either view moves both together to reach later times.
 
 ## Reset Clip Indicator
 

@@ -143,11 +143,19 @@ is `TO BE DOCUMENTED`.
 position.
 
 **User behavior:** Play or Spacebar starts; Stop or Spacebar stops. The Bottom Transport
-shows one output-time/duration display and a seek scrubber. Double-clicking the Canvas
-also seeks. Natural completion returns the timer, scrubber, and playhead to zero.
+shows output time/duration. Clicking or dragging the upper waveform seeks by output
+time; the lower Canvas remains dedicated to curve editing. Natural completion returns
+the timer and playhead to zero.
 
 **Processing:** An AudioWorklet receives the source, curves, and settings. Position
 messages update the UI at approximately 30 Hz. Curve edits are sent to an active engine.
+
+**Display:** A solid cursor crosses both the upper waveform and lower curve editor
+at the same output-time x coordinate. Source read time has a separate numeric
+readout. The upper waveform projects source peaks through the signed Speed curve;
+it is a visual guide, not a rendered-output waveform or sample-accurate audio trace.
+Mono input has one labeled lane; stereo input has separate L/R lanes. The
+waveform indicates input channel count, not the channel count of the WAV export.
 
 **Edge cases:** AudioContext suspension after sleep/wake and long-session browser state
 remain lifecycle risks. Stale worklet messages are ignored by playback token.
@@ -164,7 +172,7 @@ manual browser tests.
 and show the level that actually leaves the realtime engine.
 
 **User behavior:** The bottom area contains Play/Stop, current output time and duration,
-a seek scrubber, and a compact stereo L/R meter. The meter shows RMS body, Peak extent,
+and a compact stereo L/R meter. Seeking happens on the upper waveform. The meter shows RMS body, Peak extent,
 Peak Hold, and a latched Clip indicator that can be clicked to reset.
 
 **Input / output:** `src/output-meter.js` receives the final realtime Web Audio output,
