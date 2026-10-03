@@ -169,7 +169,7 @@ historical reason for each envelope value are `TO BE DOCUMENTED`.
 | Container / encoding | RIFF/WAVE, integer PCM |
 | Channels | Stereo |
 | Bit depth | 24-bit |
-| Sample rate | Loaded source sample rate |
+| Sample rate | Decoded AudioBuffer sample rate; browser decoding may resample an imported file to the AudioContext rate |
 | Default-sample export rate | 48 kHz |
 | Maximum duration | 180 seconds |
 

@@ -146,8 +146,9 @@ need additional listening fixtures and, if required, a band-limited resampler.
 ## Sample Rate And Timing
 
 - Default sample: 48 kHz.
-- User source: decoded sample rate is retained.
-- Offline output: source sample rate.
+- User source: `decodeAudioData` produces an AudioBuffer at the AudioContext rate;
+  this may differ from the imported file's original sample rate.
+- Offline output: decoded AudioBuffer sample rate.
 - Realtime output: AudioContext/AudioWorklet sample rate; grain read rate includes the
   source/output sample-rate ratio.
 - Worklet position updates: approximately 30 Hz.
@@ -188,7 +189,8 @@ practical listening/visual evaluation before becoming a shared Curve Lab specifi
 
 `src/offline-render.js` schedules complete grains in hop-sized steps into stereo float
 buffers. It yields to the UI after roughly 1% progress or 60 ms, supports cancellation,
-uses deterministic jitter, and encodes stereo 24-bit PCM WAV at source sample rate.
+uses deterministic jitter, and encodes stereo 24-bit PCM WAV at the decoded
+AudioBuffer sample rate.
 
 Render filename: `AudioCurveLab-export.wav`.
 

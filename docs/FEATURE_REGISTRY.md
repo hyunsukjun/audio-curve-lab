@@ -214,7 +214,9 @@ and deliberately clipped source listening remains `TO BE DOCUMENTED`.
 progress, and downloads `AudioCurveLab-export.wav`. Pressing the action during an active
 render cancels it.
 
-**Output:** Stereo 24-bit PCM WAV at the source sample rate, maximum 180 seconds.
+**Output:** Stereo 24-bit PCM WAV at the decoded AudioBuffer sample rate, maximum
+180 seconds. `decodeAudioData` may resample imported audio to the browser's
+AudioContext rate, so this need not match the file's original sample rate.
 
 **Processing:** Uses shared mappings/constants with a deterministic offline grain
 schedule. Transformed output is peak-scaled toward 0.92 before `tanh`; neutral direct

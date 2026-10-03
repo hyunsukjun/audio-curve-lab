@@ -89,7 +89,7 @@ Pitch, and Pan colors.
 ## D-010: WAV Output Contract
 
 **Date:** Current baseline documented 2026-09-29  
-**Decision:** Offline export is stereo 24-bit PCM WAV at source sample rate, capped at
+**Decision:** Offline export is stereo 24-bit PCM WAV at the decoded AudioBuffer sample rate, capped at
 180 seconds. The generated default source exports at 48 kHz.  
 **Previous:** Stereo 16-bit PCM WAV.  
 **Reason:** Preserve more precision for composition, editing, and DAW workflows while

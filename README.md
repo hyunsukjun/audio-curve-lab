@@ -32,7 +32,7 @@ The tool is especially useful before introducing more technical systems such as 
 
 - Realtime `Play`: Web Audio API / AudioWorklet transform engine.
 - `Download WAV`: browser-based offline transform export.
-- WAV export: stereo 24-bit PCM at the loaded source sample rate. The generated default sample exports at 48 kHz.
+- WAV export: stereo 24-bit PCM at the decoded AudioBuffer sample rate. Browser decoding may resample an imported file to the AudioContext rate; the generated default sample exports at 48 kHz.
 - Realtime and offline processing share `src/transform-core.js` for curve mapping,
   interpolation, signed source-position mapping, output duration, grain placement,
   smoothing constants, and deterministic jitter.
