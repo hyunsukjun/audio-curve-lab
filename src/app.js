@@ -7,12 +7,14 @@ import {
   sourcePositionAtProgress,
   speedFromNorm,
   valueAt
-} from "./transform-core.js?v=20260930-01";
+} from "./transform-core.js?v=20261003-01";
 import { OutputMeterAnalyzer } from "./output-meter.js?v=20260929-04";
 
 const fileInput = document.getElementById("fileInput");
 const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
+const sourceWaveCanvas = document.getElementById("sourceWaveCanvas");
+const sourceWaveCtx = sourceWaveCanvas.getContext("2d");
 const outputWaveCanvas = document.getElementById("outputWaveCanvas");
 const outputWaveCtx = outputWaveCanvas.getContext("2d");
 const sourceReadout = document.getElementById("sourceReadout");
@@ -24,7 +26,6 @@ const resetButton = document.getElementById("resetButton");
 const canvas = document.getElementById("waveCanvas");
 const ctx = canvas.getContext("2d");
 const curveFrame = canvas.parentElement;
-const outputWaveFrame = outputWaveCanvas.parentElement;
 const stretchMode = document.getElementById("stretchMode");
 const pitchMode = document.getElementById("pitchMode");
 const panMode = document.getElementById("panMode");
@@ -88,7 +89,7 @@ let playbackToken = 0;
 let renderOffline = null;
 let canvasCssWidth = 1;
 let canvasCssHeight = 1;
-let canvasBaseWidth = 0;
+let outputDirectionGradient = null;
 let isWaveSeeking = false;
 let meterAnimationFrame = 0;
 let meterLastFrameTime = performance.now();
@@ -99,8 +100,7 @@ const meterDisplay = meterRows.map(() => ({
   hold: 0,
   holdUntil: 0
 }));
-const canvasMinimumWidth = 1800;
-const canvasBaseHeight = 620;
+const waveformHeight = 96;
 const parameterScaleWidth = 54;
 const plotRightPadding = 8;
 
@@ -130,10 +130,8 @@ const curveLabels = {
 
 function resizeCanvas() {
   const frameRect = canvas.parentElement.getBoundingClientRect();
-  const targetWidth = Math.max(frameRect.width, canvasBaseWidth, canvasMinimumWidth);
-  canvasBaseWidth = targetWidth;
-  canvas.style.width = `${Math.round(canvasBaseWidth)}px`;
-  canvas.style.height = `${canvasBaseHeight}px`;
+  const targetWidth = Math.max(1, Math.floor(frameRect.width - 2));
+  canvas.style.width = `${targetWidth}px`;
   const rect = canvas.getBoundingClientRect();
   const scale = window.devicePixelRatio || 1;
   canvasCssWidth = Math.max(1, rect.width);
@@ -142,13 +140,16 @@ function resizeCanvas() {
   const nextHeight = Math.max(1, Math.floor(canvasCssHeight * scale));
   if (canvas.width !== nextWidth) canvas.width = nextWidth;
   if (canvas.height !== nextHeight) canvas.height = nextHeight;
-  outputWaveCanvas.style.width = `${Math.round(canvasBaseWidth)}px`;
-  outputWaveCanvas.style.height = "150px";
+  sourceWaveCanvas.style.width = `${targetWidth}px`;
+  outputWaveCanvas.style.width = `${targetWidth}px`;
   const waveScale = window.devicePixelRatio || 1;
   const waveWidth = Math.max(1, Math.floor(canvasCssWidth * waveScale));
-  const waveHeight = Math.max(1, Math.floor(150 * waveScale));
+  const waveHeight = Math.max(1, Math.floor(waveformHeight * waveScale));
+  if (sourceWaveCanvas.width !== waveWidth) sourceWaveCanvas.width = waveWidth;
+  if (sourceWaveCanvas.height !== waveHeight) sourceWaveCanvas.height = waveHeight;
   if (outputWaveCanvas.width !== waveWidth) outputWaveCanvas.width = waveWidth;
   if (outputWaveCanvas.height !== waveHeight) outputWaveCanvas.height = waveHeight;
+  outputDirectionGradient = null;
   draw();
 }
 
@@ -624,6 +625,7 @@ function drawPointTooltip(curveName, point) {
 
 function buildOutputWaveform() {
   outputWaveformDirty = false;
+  outputDirectionGradient = null;
   outputWaveform = waveform.map(() => []);
   if (!buffer || !waveform.length) return;
   const buckets = waveform[0].length;
@@ -645,64 +647,113 @@ function buildOutputWaveform() {
   }
 }
 
-function drawOutputWaveform() {
-  if (outputWaveformDirty) buildOutputWaveform();
+function getOutputDirectionGradient(left, width) {
+  if (outputDirectionGradient) return outputDirectionGradient;
+  const gradient = outputWaveCtx.createLinearGradient(left, 0, left + width, 0);
+  const neutral = [151, 163, 175];
+  const forward = [77, 167, 232];
+  const reverse = [235, 100, 111];
+  for (let i = 0; i <= 96; i += 1) {
+    const progress = i / 96;
+    const speed = effectiveSpeedAt(curves.stretch, progress, transformSettings.globalDirection);
+    const strength = Math.min(1, Math.abs(speed) / 0.3);
+    const target = speed < 0 ? reverse : forward;
+    const color = neutral.map((value, channel) => Math.round(value + (target[channel] - value) * strength));
+    gradient.addColorStop(progress, `rgba(${color.join(",")},0.92)`);
+  }
+  outputDirectionGradient = gradient;
+  return gradient;
+}
+
+function drawWaveform(ctx, peaksByChannel, duration, color, title, hint, position, seekHint = false) {
   const scale = window.devicePixelRatio || 1;
   const { left, width } = getPlotBounds();
-  const height = 150;
-  outputWaveCtx.setTransform(scale, 0, 0, scale, 0, 0);
-  outputWaveCtx.clearRect(0, 0, canvasCssWidth, height);
-  outputWaveCtx.fillStyle = "#0c1f31";
-  outputWaveCtx.fillRect(0, 0, canvasCssWidth, height);
-  outputWaveCtx.strokeStyle = "rgba(79, 121, 155, 0.28)";
-  outputWaveCtx.lineWidth = 1;
-  for (let i = 0; i <= 10; i += 1) {
-    const x = left + (i / 10 * width);
-    outputWaveCtx.beginPath();
-    outputWaveCtx.moveTo(x, 22);
-    outputWaveCtx.lineTo(x, 130);
-    outputWaveCtx.stroke();
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.clearRect(0, 0, canvasCssWidth, waveformHeight);
+  ctx.fillStyle = "#0c1f31";
+  ctx.fillRect(0, 0, canvasCssWidth, waveformHeight);
+  ctx.strokeStyle = "rgba(79, 121, 155, 0.28)";
+  ctx.lineWidth = 1;
+  const divisions = width < 680 ? 4 : 10;
+  for (let i = 0; i <= divisions; i += 1) {
+    const x = left + (i / divisions * width);
+    ctx.beginPath();
+    ctx.moveTo(x, 21);
+    ctx.lineTo(x, 77);
+    ctx.stroke();
   }
-  outputWaveCtx.fillStyle = "#9bb4c9";
-  outputWaveCtx.font = "11px sans-serif";
-  outputWaveCtx.textBaseline = "middle";
-  outputWaveCtx.fillText("OUTPUT TIME", 10, 13);
-  outputWaveCtx.fillText("CLICK / DRAG TO SEEK", left + 105, 13);
-  if (buffer) {
-    outputWaveCtx.fillStyle = "rgba(128, 158, 186, 0.72)";
-    const stereo = outputWaveform.length > 1;
-    const laneCenters = stereo ? [51, 101] : [76];
-    for (let channel = 0; channel < outputWaveform.length; channel += 1) {
-      const peaks = outputWaveform[channel];
+  ctx.fillStyle = "#9bb4c9";
+  ctx.font = "11px sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText(title, 10, 12);
+  const hintText = width > 550 ? hint : seekHint ? "CLICK TO SEEK" : "";
+  if (hintText) {
+    const hintX = Math.max(left + 112, 18 + ctx.measureText(title).width + 8);
+    if (hintX + ctx.measureText(hintText).width < canvasCssWidth - (seekHint && canvasCssWidth > 720 ? 170 : 10)) {
+      ctx.fillStyle = seekHint ? "#75c5f7" : "#9bb4c9";
+      ctx.fillText(hintText, hintX, 12);
+    }
+  }
+  if (buffer && peaksByChannel.length) {
+    ctx.fillStyle = color;
+    const stereo = peaksByChannel.length > 1;
+    const laneCenters = stereo ? [39, 63] : [51];
+    for (let channel = 0; channel < peaksByChannel.length; channel += 1) {
+      const peaks = peaksByChannel[channel];
       const mid = laneCenters[channel];
       for (let x = 0; x < width; x += 1) {
         const index = Math.min(peaks.length - 1, Math.floor(x / width * peaks.length));
-        const amplitude = Math.min(stereo ? 21 : 46, (peaks[index] || 0) * 50);
-        outputWaveCtx.fillRect(left + x, mid - amplitude, 1, Math.max(1, amplitude * 2));
+        const amplitude = Math.min(stereo ? 10 : 22, (peaks[index] || 0) * 45);
+        ctx.fillRect(left + x, mid - amplitude, 1, Math.max(1, amplitude * 2));
       }
     }
-    outputWaveCtx.fillStyle = "#9bb4c9";
-    outputWaveCtx.fillText(stereo ? "L" : "MONO", 11, laneCenters[0]);
-    if (stereo) outputWaveCtx.fillText("R", 11, laneCenters[1]);
-    outputWaveCtx.fillStyle = "#9bb4c9";
-    outputWaveCtx.textAlign = "center";
-    const duration = getPlaybackDuration();
-    for (let i = 0; i <= 10; i += 1) {
-      outputWaveCtx.fillText(formatTime(duration * i / 10), left + (i / 10 * width), 139);
+    ctx.fillStyle = "#9bb4c9";
+    ctx.fillText(stereo ? "L" : "MONO", 11, laneCenters[0]);
+    if (stereo) ctx.fillText("R", 11, laneCenters[1]);
+    for (let i = 0; i <= divisions; i += 1) {
+      ctx.textAlign = i === 0 ? "left" : i === divisions ? "right" : "center";
+      ctx.fillText(formatTime(duration * i / divisions), left + (i / divisions * width), 87);
     }
-    outputWaveCtx.textAlign = "start";
-    const progress = duration > 0 ? Math.max(0, Math.min(1, playheadSeconds / duration)) : 0;
-    const cursorX = left + progress * width;
-    outputWaveCtx.strokeStyle = "#e6edf1";
-    outputWaveCtx.lineWidth = 1.5;
-    outputWaveCtx.beginPath();
-    outputWaveCtx.moveTo(cursorX, 22);
-    outputWaveCtx.lineTo(cursorX, 130);
-    outputWaveCtx.stroke();
+    ctx.textAlign = "start";
+    const cursorX = left + Math.max(0, Math.min(1, position)) * width;
+    ctx.strokeStyle = "#e6edf1";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cursorX, 21);
+    ctx.lineTo(cursorX, 77);
+    ctx.stroke();
+    if (seekHint) {
+      ctx.fillStyle = "#e6edf1";
+      ctx.beginPath();
+      ctx.arc(cursorX, 22, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawSourceWaveform() {
+  const position = buffer?.duration ? sourcePlayheadSeconds / buffer.duration : 0;
+  drawWaveform(sourceWaveCtx, waveform, buffer?.duration || 0,
+    "rgba(146, 171, 190, 0.86)", "ORIGINAL / SOURCE TIME", "SOURCE READ POSITION", position);
+}
+
+function drawOutputWaveform() {
+  if (outputWaveformDirty) buildOutputWaveform();
+  const { left, width } = getPlotBounds();
+  const duration = getPlaybackDuration();
+  const progress = duration > 0 ? Math.max(0, Math.min(1, playheadSeconds / duration)) : 0;
+  drawWaveform(outputWaveCtx, outputWaveform, duration,
+    getOutputDirectionGradient(left, width), "OUTPUT TIME", "CLICK / DRAG TO SEEK", progress, true);
+  if (canvasCssWidth > 720) {
+    outputWaveCtx.font = "10px sans-serif";
+    outputWaveCtx.textAlign = "right";
     outputWaveCtx.fillStyle = "#4da7e8";
-    outputWaveCtx.beginPath();
-    outputWaveCtx.arc(cursorX, 23, 5, 0, Math.PI * 2);
-    outputWaveCtx.fill();
+    outputWaveCtx.fillText("FORWARD", canvasCssWidth - 88, 12);
+    outputWaveCtx.fillStyle = "#eb646f";
+    outputWaveCtx.fillText("REVERSE", canvasCssWidth - 10, 12);
+    outputWaveCtx.textAlign = "start";
+  }
+  if (buffer) {
     outputWaveCanvas.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
     outputWaveCanvas.setAttribute("aria-valuetext", `${formatClock(playheadSeconds)} of ${formatClock(duration)}`);
   }
@@ -779,6 +830,7 @@ function draw() {
   panReadout.textContent = formatPan(currentPan);
   modeReadout.textContent = curveLabels[activeCurve];
   pointsReadout.textContent = String(curves[activeCurve].length);
+  drawSourceWaveform();
   drawOutputWaveform();
 }
 
@@ -835,7 +887,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-    await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20260930-01");
+  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20261003-01");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -930,7 +982,8 @@ function seekToProgress(progress) {
     buffer.duration,
     curves.stretch,
     transformSettings.globalDirection,
-    progress
+    progress,
+    getPlaybackDuration()
   );
   node?.port.postMessage({ type: "seek", progress, token: playbackToken });
   draw();
@@ -1248,12 +1301,6 @@ window.addEventListener("keyup", updateToolCursor);
 window.addEventListener("blur", () => updateToolCursor());
 
 window.addEventListener("resize", resizeCanvas);
-outputWaveFrame.addEventListener("scroll", () => {
-  if (curveFrame.scrollLeft !== outputWaveFrame.scrollLeft) curveFrame.scrollLeft = outputWaveFrame.scrollLeft;
-});
-curveFrame.addEventListener("scroll", () => {
-  if (outputWaveFrame.scrollLeft !== curveFrame.scrollLeft) outputWaveFrame.scrollLeft = curveFrame.scrollLeft;
-});
 if ("ResizeObserver" in window) {
   const canvasResizeObserver = new ResizeObserver(resizeCanvas);
   canvasResizeObserver.observe(canvas);

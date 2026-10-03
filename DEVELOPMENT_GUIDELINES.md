@@ -46,13 +46,14 @@ changing curve semantics.
 ## Canvas Rendering
 
 - The Canvas uses device-pixel-ratio backing resolution for Retina/high-DPI clarity.
-- The current workspace has a minimum logical width of 1800. Narrower windows
-  show a clipped viewport; waveform and editor scroll horizontally together to
-  preserve their shared output-time geometry and access later positions.
+- The original source waveform fits the available width and has its own source-time
+  axis. The curve editor and speed-mapped preview also fit the width, sharing one
+  output-time axis without automatic scrolling during playback.
 - Parameter scale space is reserved at the left; pointer mapping uses the plot area.
 - Active and inactive curves remain semantically visible; only the active curve shows
   editable points.
-- Waveform display is an overview, not sample-accurate editing data.
+- Waveform display is an overview, not sample-accurate editing data. The lower
+  preview is a Speed projection of source peaks, not processed output audio.
 
 Any Canvas change must test both drawing coordinates and pointer coordinates at narrow
 and wide sizes.

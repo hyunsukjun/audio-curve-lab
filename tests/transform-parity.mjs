@@ -89,6 +89,10 @@ assert.equal(estimateOutputDuration(8, neutralSpeed), 8);
 assert.equal(estimateOutputDuration(8, [{ x: 0, y: 0.625 }, { x: 1, y: 0.625 }]), 16);
 assert.ok(Math.abs(sourcePositionAtProgress(8, neutralSpeed, 1, 0.5) - 4) < 0.02);
 assert.ok(Math.abs(sourcePositionAtProgress(8, neutralSpeed, -1, 0.5) - 4) < 0.02);
+assert.ok(Math.abs(sourcePositionAtProgress(300, neutralSpeed, 1, 0.5, 180) - 90) < 0.02);
+assert.ok(Math.abs(sourcePositionAtProgress(300, neutralSpeed, -1, 0.5, 180) - 210) < 0.02);
+assert.ok(Math.abs(sourcePositionAtProgress(300, neutralSpeed, 1, 1, 180) - 180) < 0.02);
+assert.ok(Math.abs(sourcePositionAtProgress(300, [{ x: 0, y: 0.625 }, { x: 1, y: 0.625 }], 1, 0.5, 180) - 45) < 0.02);
 const reverseGrainStart = grainStart(6000, 256, -1, length, 0);
 assert.ok(reverseGrainStart >= 255 && reverseGrainStart < length - 3);
 

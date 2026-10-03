@@ -143,19 +143,27 @@ is `TO BE DOCUMENTED`.
 position.
 
 **User behavior:** Play or Spacebar starts; Stop or Spacebar stops. The Bottom Transport
-shows output time/duration. Clicking or dragging the upper waveform seeks by output
-time; the lower Canvas remains dedicated to curve editing. Natural completion returns
+shows output time/duration. Clicking or dragging the lower Speed-mapped waveform seeks
+by output time; the middle Canvas remains dedicated to curve editing. Natural completion returns
 the timer and playhead to zero.
 
 **Processing:** An AudioWorklet receives the source, curves, and settings. Position
 messages update the UI at approximately 30 Hz. Curve edits are sent to an active engine.
+Seeking integrates source travel over the actual capped output duration, so a long
+source's click position agrees with the waveform projection and Preview timeline.
 
-**Display:** A solid cursor crosses both the upper waveform and lower curve editor
-at the same output-time x coordinate. Source read time has a separate numeric
-readout. The upper waveform projects source peaks through the signed Speed curve;
-it is a visual guide, not a rendered-output waveform or sample-accurate audio trace.
-Mono input has one labeled lane; stereo input has separate L/R lanes. The
-waveform indicates input channel count, not the channel count of the WAV export.
+**Display:** The upper original waveform has a source-time read cursor that may
+retreat or hold; the middle curve and lower preview share one forward-moving
+output-time cursor. The lower waveform projects source peaks through signed Speed,
+with blue forward, red reverse, and neutral color near zero. It is a visual guide,
+not a rendered-output waveform or sample-accurate audio trace; Pitch and Pan are
+not drawn into it. Mono input has one labeled lane; stereo input has L/R lanes.
+The views indicate input channel count, not the WAV export channel count.
+The upper view explicitly labels source time and shows a line-only read cursor;
+the curve header and lower view label output time. The lower view retains a
+handle-like cursor and a visible click/drag seek hint. Its accessible name and
+hover help, rather than its short on-screen title, identify the Speed-based
+projection as approximate and distinct from the rendered WAV.
 
 **Edge cases:** AudioContext suspension after sleep/wake and long-session browser state
 remain lifecycle risks. Stale worklet messages are ignored by playback token.
@@ -172,8 +180,10 @@ manual browser tests.
 and show the level that actually leaves the realtime engine.
 
 **User behavior:** The bottom area contains Play/Stop, current output time and duration,
-and a compact stereo L/R meter. Seeking happens on the upper waveform. The meter shows RMS body, Peak extent,
+and a compact stereo L/R meter. Seeking happens on the lower preview waveform. The meter shows RMS body, Peak extent,
 Peak Hold, and a latched Clip indicator that can be clicked to reset.
+The transport stays visible at the bottom of a laptop viewport; short viewports
+reduce only the displayed editor height, not the normalized curve data.
 
 **Input / output:** `src/output-meter.js` receives the final realtime Web Audio output,
 splits it by channel, and reports channel-indexed Peak/RMS/Clip data. `src/app.js` owns

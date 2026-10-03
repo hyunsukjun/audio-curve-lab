@@ -54,6 +54,8 @@ or Pan blue merely to match the product identity.
 - Radius: 4 px small, 6 px medium, 8 px large.
 - Borders are generally 1 px with a stronger border for focus/selection.
 - Typography uses the operating-system sans-serif stack; no external font is required.
+- Laptop text hierarchy: 13 px commands and status values, 11-12 px metadata,
+  and 16 px output time. Status labels share a baseline with one another.
 - Letter spacing remains neutral.
 
 These values are current web measurements. Their hierarchy and proportions are the
@@ -65,12 +67,21 @@ portable design knowledge.
 - Common toolbar: parameter modes, Pen/Eraser, semantic legend, destructive actions.
 - Thin status strip: current curve, point count, engine, parameter values, source
   read time, and WAV state.
-- Upper waveform: output-time overview and click/drag seek target. Lower Canvas:
-  major/minor grid, parameter curves, points, tooltip, and aligned output-time cursor.
+- Upper waveform: original source overview with a signed-Speed read cursor, no seek
+  gesture. Middle Canvas: parameter curves and output-time cursor. Lower waveform:
+  Speed-mapped preview and click/drag output-time seek target. Blue indicates forward
+  source travel, red reverse, and neutral gray the turn through zero; these colors
+  belong to the preview only, not to Speed/Pitch/Pan parameter identity.
+- Label the upper axis as source time and the middle/lower axes as output time.
+  The upper read cursor is a line without a handle; the lower seek cursor retains
+  its handle-like circle. Keep the lower click/drag hint prominent, and identify
+  its Speed-based approximation in hover help and accessible text rather than
+  implying that the visible waveform is a rendered WAV.
 - The input waveform has one labeled lane for mono and separate L/R lanes for stereo;
   displaying stereo as one mono-looking lane misrepresents the loaded source.
 - Bottom Transport: Play/Stop, one authoritative current-time/duration display,
-  and compact final-output meter.
+  and compact final-output meter. Keep it visible on laptop-height viewports and
+  reserve scroll space so it cannot hide the end of the editor.
 - The Canvas stays visually dominant and is never placed inside decorative nested cards.
 
 ## Playback And Meter Visibility
@@ -133,8 +144,13 @@ to change their layout, editor geometry, DSP, or project-specific brand color.
 - Header and toolbar may wrap; controls must not overlap or truncate key commands.
 - Canvas uses a high-DPI backing store based on device pixel ratio.
 - Canvas musical coordinates remain normalized and independent of CSS size.
-- Current product behavior uses a minimum Canvas width of 1800 px and clips the right
-  portion in narrow windows rather than rescaling curve data.
+- All three views fit the available width without following the playhead. The middle
+  curve and lower preview share output-time x; the upper original has a separate
+  source-time x. Only the display scale changes; normalized curve data does not.
+- On short viewports, reduce the Canvas display height while keeping normalized
+  point values unchanged; the transport stays in view. Align status labels and
+  values to consistent baselines, and keep metadata legible without changing the
+  established visual hierarchy.
 - Validate the scale gutter and pointer mapping after any layout change.
 
 ## Platform-Independent Requirements

@@ -17,7 +17,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260930-01";
+} from "./transform-core.js?v=20261003-01";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -113,7 +113,8 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.duration,
           this.stretchCurve,
           this.settings.globalDirection,
-          progress
+          progress,
+          this.outputDuration
         ) * this.sampleRateSource;
         this.positionFramesUntilUpdate = 0;
         this.grains = [];

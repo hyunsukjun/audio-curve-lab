@@ -68,10 +68,10 @@ position. The tooltip follows the active parameter's semantic color.
 **Behavior:** Play starts or resumes the current Preview state. Spacebar toggles
 Play/Stop when focus is not in a typing control. Curve edits are sent to the active
 engine.  
-**Feedback:** Bottom Transport time, output-time cursors on the upper waveform and
-lower curve editor, Source readout, Speed, Pitch, Pan, and output meter advance.
-The two cursors share one output-time x coordinate. Source read time can move
-backward or freeze independently. Natural completion returns time and cursors to zero.
+**Feedback:** Bottom Transport time, aligned output-time cursors on the middle curve
+and lower preview, Source readout, moving source-time cursor on the upper original,
+Speed, Pitch, Pan, and output meter advance. The source cursor can move backward
+or freeze while output time moves forward. Natural completion resets the cursors.
 
 ## Stop
 
@@ -83,13 +83,22 @@ silence according to its display ballistics.
 ## Seek
 
 **Intent:** Audition a different output-time position.  
-**Behavior:** Clicking or dragging the upper waveform maps the chosen output-time
-position to source position using the signed Speed curve. The lower curve editor
-does not seek. Keyboard focus on the upper waveform supports Left/Right (1 second),
+**Behavior:** Clicking or dragging the lower Speed-mapped waveform maps the chosen
+output-time position to source position using signed Speed. The upper original
+waveform only shows source position; clicking it does not seek, because one source
+position can occur at several output times under Reverse or Freeze. The middle
+curve editor does not seek. Keyboard focus on the lower waveform supports Left/Right (1 second),
 Shift+Left/Right (0.1 second), Home, and End. Active grains/control smoothing
 restart around the new location.
-On narrow windows, the waveform and curve editor keep their fixed time scale;
-horizontal scrolling either view moves both together to reach later times.
+Visible labels identify the upper source-time view and the middle/lower output-time
+views; the lower view explicitly indicates that click/drag seeks. Only the lower
+cursor has a handle-like circle, since the source-time cursor is display-only.
+Hover help and the accessible name explain that the lower waveform is an
+approximate Speed-based guide, not rendered audio.
+The source-position calculation uses the same capped output duration as Preview,
+including when a long source exceeds the 180-second output limit.
+All views fit their available width without automatically following playback.
+The upper original uses source time; the middle curve and lower preview use output time.
 
 ## Reset Clip Indicator
 

@@ -17,7 +17,7 @@ import {
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20260930-01";
+} from "./transform-core.js?v=20261003-01";
 
 function encodeWav(left, right, sampleRate) {
   const length = left.length;

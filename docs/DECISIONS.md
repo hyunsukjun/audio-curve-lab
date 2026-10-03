@@ -184,6 +184,7 @@ display-only and does not change the Bottom Transport, curve data, or audio engi
 ## D-017: Separate Seeking From Curve Editing On One Output-Time Axis
 
 **Date:** 2026-10-02
+**Status:** Placement superseded by D-020; distinct seek and edit surfaces remain.
 **Decision:** Put an output-time waveform above the curve editor. Click/drag on the
 waveform seeks; the lower Canvas edits points only. Both cursors share the same
 output-time x coordinate. Remove the Bottom Transport Position slider and show
@@ -211,3 +212,36 @@ Inputs beyond two channels still show only the first two, matching the current
 processing boundary. The display describes input channels, not the stereo export.
 **Affects:** Waveform display and future standalone visual contract only; no audio
 engine, curve meaning, or export change.
+
+## D-019: Capped Seek Mapping And Laptop Transport Visibility
+
+**Date:** 2026-10-03
+**Decision:** Compute seek source position from the same capped output duration used
+by Preview and the output-time waveform. Keep the bottom transport visible on short
+screens; adapt only the Canvas display height and text alignment.
+**Reason:** Long-file seeks must not read a different source moment than the playhead
+suggests, and laptop users need Play/Stop and metering while editing.
+**Trade-off:** A shorter visible Canvas reduces vertical editing precision on small
+screens; normalized musical values and DSP behavior remain unchanged.
+**Affects:** Seek, waveform trust, responsive layout, Standalone interaction design.
+
+## D-020: Separate Original, Curve, And Speed-Mapped Preview
+
+**Date:** 2026-10-03
+**Decision:** Show the original source waveform and its signed-Speed read position
+above the editor; keep the output-time curve in the middle and move the Speed-mapped
+preview/seek waveform below. Fit each view to the available width without auto-follow.
+**Reason:** Musicians should see both where the source is read and where the output
+timeline is, even when Speed reverses or freezes; the whole short sound should stay
+visible on a laptop. Source-time clicks are ambiguous under repeated/reversed reads,
+so seeking remains on the output-time preview.
+**Trade-off:** Long sounds have less horizontal editing precision. The lower preview
+projects source peaks through Speed only, not Pitch/Pan or rendered WAV audio; its
+blue-to-red color indicates direction and is not a sound-quality indicator.
+Short source-time and output-time labels distinguish the two clocks. The
+display-only source cursor has no circular handle, while the lower seek cursor
+retains one. The lower visible title prioritizes output-time seeking; hover
+help and accessible text retain the approximate Speed-map qualification.
+This adds no DSP processing or third time model.
+**Affects:** Web layout, display-only waveform projection, seek placement, standalone
+timeline design; no change to normalized curve data, DSP, or export.

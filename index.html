@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Audio Curve Lab</title>
-    <link rel="stylesheet" href="src/styles.css?v=20261002-02">
+    <link rel="stylesheet" href="src/styles.css?v=20261003-04">
   </head>
   <body>
     <main class="app">
@@ -66,7 +66,7 @@
           </div>
           <div class="readout">
             <span>Engine</span>
-            <strong>Audio Transform</strong>
+            <strong>Transform</strong>
           </div>
           <div class="readout">
             <span>Speed</span>
@@ -89,11 +89,15 @@
             <strong id="downloadReadout">not ready</strong>
           </div>
         </div>
-        <div class="outputWaveFrame">
-          <canvas id="outputWaveCanvas" width="1400" height="150" role="slider" tabindex="0" aria-label="Output time position. Click or drag to seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true"></canvas>
+        <div class="sourceWaveFrame">
+          <canvas id="sourceWaveCanvas" width="1400" height="96" role="img" aria-label="Original source waveform and moving source read position"></canvas>
         </div>
         <div class="canvasFrame">
+          <div class="curveTimeLabel">CURVES / OUTPUT TIME</div>
           <canvas id="waveCanvas" width="1400" height="620"></canvas>
+        </div>
+        <div class="outputWaveFrame">
+          <canvas id="outputWaveCanvas" width="1400" height="96" role="slider" tabindex="0" title="Speed-based guide only; Pitch, Pan, and rendered WAV are not shown." aria-label="Approximate Speed-mapped waveform at output time, not the rendered WAV. Blue means forward, red means reverse. Click or drag here to seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true"></canvas>
         </div>
       </section>
 
@@ -141,6 +145,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20261002-06" type="module"></script>
+    <script src="src/app.js?v=20261003-04" type="module"></script>
   </body>
 </html>

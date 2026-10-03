@@ -183,9 +183,9 @@ export function estimateOutputDuration(sourceDuration, speedCurve, steps = 1024)
   return averageSpeed > 1e-6 ? sourceDuration / averageSpeed : sourceDuration;
 }
 
-export function sourcePositionAtProgress(sourceDuration, speedCurve, globalDirection, progress, steps = 1024) {
+export function sourcePositionAtProgress(sourceDuration, speedCurve, globalDirection, progress, outputDuration = estimateOutputDuration(sourceDuration, speedCurve), steps = 1024) {
   const safeProgress = clamp(progress, 0, 1);
-  const outputDuration = estimateOutputDuration(sourceDuration, speedCurve, steps);
+  // Seek over the duration the player actually uses, which may be capped for long files.
   const initialDirection = initialPlaybackDirection(speedCurve, globalDirection);
   let sourceSeconds = initialDirection < 0 ? sourceDuration : 0;
   const completedSteps = Math.max(1, Math.ceil(steps * safeProgress));

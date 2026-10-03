@@ -116,7 +116,8 @@ schedulers differ.
 ### Transport And Playhead
 
 **Current web implementation:** DOM buttons/Spacebar, worklet messages near 30 Hz,
-aligned waveform/editor cursors, click/drag waveform seek.
+aligned output preview/editor cursors, a separate source cursor, and click/drag
+seek on the lower preview waveform.
 **Platform-independent behavior:** Play/Stop toggle, reset on natural end, output-time
 display, signed-Speed-aware source seek.  
 **Replacement needed:** Native commands, keyboard handling, timeline display, reliable
@@ -126,20 +127,21 @@ audio-thread clock transfer.
 ### Three Time And Display Coordinates
 
 ```text
-output time t / estimated output duration D -> upper waveform seek and curve x
+output time t / estimated output duration D -> lower preview seek and middle curve x
                                      Speed(t) -> source read position s(t)
-source read position s / source duration S -> separate Source time readout
+source read position s / source duration S -> upper original waveform x and Source readout
 ```
 
-The lower curve and upper waveform share one output-progress x axis. The waveform
-is a projection of 4,000 peak buckets per input channel (up to L/R) using signed Speed and
-the estimated (capped) output duration. It is not rendered output audio or
+The middle curve and lower preview share one output-progress x axis, while the upper
+original uses source-time x. The lower preview is a projection of 4,000 peak buckets
+per input channel (up to L/R) using signed Speed and the estimated (capped) output
+duration. Blue means forward, red reverse, and gray near zero. It is not rendered output audio or
 sample-accurate edit data; Pitch and granular artifacts are not represented.
 Mono sources have one waveform lane, stereo sources have separate L/R lanes;
 this input display does not describe the channel count of the stereo export.
-The Bottom Transport shows output time/duration. Matching cursors on both views
-show output progress, while Source time is numeric because reverse and Freeze can
-move or hold the source independently. A native design should preserve these
+The Bottom Transport shows output time/duration. Matching cursors on the curve
+and preview show output progress, while the original source cursor can retreat or
+hold independently. A native design should preserve these
 distinct clocks without implying that source and output x coordinates are identical.
 
 Seek estimates source position by integrating the signed Speed curve over output

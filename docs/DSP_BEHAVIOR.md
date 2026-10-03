@@ -104,6 +104,9 @@ loop.
 Output duration is estimated from average absolute Speed over 1024 samples of the curve:
 `sourceDuration / average(abs(speed))`, ignoring the Freeze region. An all-Freeze curve
 falls back to source duration. Preview and Render cap output at 180 seconds.
+For seeking, source travel is integrated over that same capped Preview duration.
+Using the uncapped estimate would jump too far into a long source when the user
+clicks an output-time position; the projected waveform already uses the capped duration.
 
 ## Smoothing
 

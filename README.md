@@ -2,7 +2,7 @@
 
 Draw time, pitch, and space onto sound.
 
-Audio Curve Lab is a browser-based classroom tool for electronic music and sound composition. Students can load an audio file, draw speed, pitch, and pan curves over the waveform, then export the result as a WAV file.
+Audio Curve Lab is a browser-based classroom tool for electronic music and sound composition. Students can load an audio file, draw speed, pitch, and pan curves between the original and speed-mapped waveforms, then export the result as a WAV file.
 
 The audio file is processed locally in the student's browser. It is not uploaded to a server.
 
@@ -11,7 +11,7 @@ The audio file is processed locally in the student's browser. It is not uploaded
 1. Open the website.
 2. Click `Open Audio` and choose a short audio file.
 3. Select `Speed`, `Pitch`, or `Pan`.
-4. Draw points directly on the waveform.
+4. Draw points in the curve editor. The upper waveform shows the original read position; click the lower speed-mapped waveform to seek in output time.
 5. Use `Play` for a quick check.
 6. Use `Download WAV` to export the transformed sound.
 7. Use `Clear Current` to reset only the selected curve, or `Reset All` to reset every curve after confirmation.
