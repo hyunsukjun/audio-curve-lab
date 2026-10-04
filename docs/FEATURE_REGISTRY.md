@@ -257,3 +257,11 @@ Reset All.
 - Dedicated touch-first interaction
 - Analytics, accounts, upload, or cloud rendering
 - User-visible global Forward/Reverse transport control
+
+## ACL-IDENTITY-001: Hub-Aligned Audio Identity Pilot
+
+**Category:** PROJECT-SPECIFIC
+**Status:** IMPLEMENTED (Audio-only identity pilot)
+
+Header and favicon use pinned Hub v0.10 Audio assets. Brand blue is #459BFF.
+See `IDENTITY_PILOT.md` for provenance, scope, validation, and rollback.

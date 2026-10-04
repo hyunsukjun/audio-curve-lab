@@ -1,0 +1,9 @@
+/* Pinned Hub v0.10 palette. Update from palette.json together. */
+:root {
+  --curve-lab-audio: #459BFF;
+  --curve-lab-timbre: #F4CB38;
+  --curve-lab-space: #A982FF;
+  --curve-lab-granular: #EF4FA4;
+  --curve-lab-spectral: #FF7047;
+  --curve-lab-oscillator: #28CDB0;
+}

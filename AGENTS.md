@@ -1,7 +1,8 @@
 # Audio Curve Lab Agent Rules
 
 This repository is the Audio Curve Lab product. Its brand color is Blue
-`#4DA7E8`. These rules apply only to this repository.
+`#459BFF`, pinned to the Hub v0.10 palette for the Audio-only identity pilot.
+See `assets/identity/palette.json` and `docs/IDENTITY_PILOT.md`. These rules apply only to this repository.
 
 ## Working Order
 

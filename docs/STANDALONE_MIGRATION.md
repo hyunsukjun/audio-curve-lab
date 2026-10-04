@@ -188,3 +188,9 @@ duration, direction, curve response, transients, and output level must be compar
   representative devices; no approved performance threshold exists yet.
 
 These items are `TO BE DOCUMENTED`; do not guess them during a port.
+
+## Identity Asset Pilot
+
+`STANDALONE ASSET`: `assets/identity/audio-app.svg` preserves the Hub v0.10
+Audio app-tile concept; symbol/micro variants and palette accompany it. Native
+packaging and small-Dock validation are not performed by this web pilot.

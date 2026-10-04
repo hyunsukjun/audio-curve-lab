@@ -245,3 +245,11 @@ help and accessible text retain the approximate Speed-map qualification.
 This adds no DSP processing or third time model.
 **Affects:** Web layout, display-only waveform projection, seek placement, standalone
 timeline design; no change to normalized curve data, DSP, or export.
+
+## D-021: Pilot Hub v0.10 Identity In Audio Only
+
+**Date:** 2026-10-04
+**Classification:** PROJECT-SPECIFIC pilot / COMMON CANDIDATE palette
+**Decision:** Supersede D-009's prior blue where applicable with Hub Audio #459BFF;
+use exact Hub v0.10 symbol and micro SVGs. Keep semantic parameter colors and DSP intact.
+See `IDENTITY_PILOT.md`. No commit/publish or sibling rollout is implied.

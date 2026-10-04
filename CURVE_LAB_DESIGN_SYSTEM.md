@@ -2,7 +2,7 @@
 
 ## Identity And Hierarchy
 
-Audio Curve Lab uses brand Blue `#4DA7E8`. Brand color identifies the product through
+Audio Curve Lab uses brand Blue `#459BFF`. Brand color identifies the product through
 the top-left icon, the words `Curve Lab`, and restrained focus/accent details. It does
 not replace parameter colors or fill the workspace.
 
@@ -31,8 +31,8 @@ The visual priority is:
 | Primary text | `--cl-text` | `#E8F0F6` |
 | Secondary text | `--cl-text-secondary` | `#AABCCC` |
 | Muted text | `--cl-text-muted` | `#71889B` |
-| Audio brand | `--cl-accent` | `#4DA7E8` |
-| Focus | `--cl-focus` | `#7CC8F5` |
+| Audio brand | `--cl-accent` | `#459BFF` |
+| Focus | `--cl-focus` | `#8FBFFF` |
 | Speed parameter | `--cl-speed` | `#6DE0C0` |
 | Pitch parameter | `--cl-pitch` | `#EB6F75` |
 | Pan parameter | `--cl-pan` | `#B887F4` |
@@ -164,3 +164,14 @@ A native implementation may use different widgets and measurements, but must pre
 - high contrast without decorative overload;
 - accessible focus, hover, disabled, and reduced-motion behavior;
 - stable geometry that does not modify musical curve data.
+
+## Hub v0.10 Identity Pilot (2026-10-04)
+
+`PROJECT-SPECIFIC` pilot using a `COMMON CANDIDATE` palette from CURVE LAB HUB for macOS.
+The palette is pinned in `assets/identity/palette.json` and loaded through
+`assets/identity/tokens.css`; `--cl-accent` aliases `--curve-lab-audio`.
+Header symbol and favicon are byte-for-byte Hub v0.10 Audio symbol/micro SVGs.
+The app SVG is retained as a future `STANDALONE ASSET`, not installed as a native icon.
+Focus #8FBFFF and hover #6AAFFF are Audio web derivatives, not new suite brand colors.
+Semantic parameter, meter and waveform colors remain unchanged. Background and
+workspace geometry retain the existing web design. See `docs/IDENTITY_PILOT.md`.

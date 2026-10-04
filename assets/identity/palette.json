@@ -1,0 +1,18 @@
+{
+  "source": "CURVE LAB HUB for macOS / DesignIdentity / 2026-10-04-v0.10",
+  "status": "Audio-only identity pilot; not a suite-wide deployment",
+  "colorSpace": "sRGB",
+  "colors": {
+    "audio": "#459BFF",
+    "timbre": "#F4CB38",
+    "space": "#A982FF",
+    "granular": "#EF4FA4",
+    "spectral": "#FF7047",
+    "oscillator": "#28CDB0"
+  },
+  "assets": {
+    "audio-symbol.svg": "378b9b8854fc4a92bd148efba4b8f20c634cce89aab29cae6cee868b7b71e882",
+    "audio-micro.svg": "77fb526f15d6030598da241d19dbcbe8a03b325360797aea82dd2e25230e74d2",
+    "audio-app.svg": "c18b2f96c2dcc6a9ab8874771b12686f4311d657e380cfa56a38dab94108c898"
+  }
+}

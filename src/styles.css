@@ -11,9 +11,9 @@
   --cl-text: #e8f0f6;
   --cl-text-secondary: #aabccc;
   --cl-text-muted: #71889b;
-  --cl-accent: #4da7e8;
-  --cl-accent-hover: #66b6ee;
-  --cl-focus: #7cc8f5;
+  --cl-accent: var(--curve-lab-audio);
+  --cl-accent-hover: #6aafff;
+  --cl-focus: #8fbfff;
   --cl-speed: #6de0c0;
   --cl-pitch: #eb6f75;
   --cl-pan: #b887f4;
@@ -89,11 +89,8 @@ input {
 .brandMark {
   width: 48px;
   height: 48px;
-  fill: none;
-  stroke: var(--cl-accent);
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: block;
+  object-fit: contain;
 }
 
 .brandCopy {
@@ -193,14 +190,14 @@ button:active:not(:disabled),
 
 #downloadButton {
   min-width: 128px;
-  border-color: #4c98c9;
-  background: #286f9d;
+  border-color: var(--cl-accent);
+  background: color-mix(in srgb, var(--cl-accent) 48%, var(--cl-bg));
   color: #f4fbff;
 }
 
 #downloadButton:hover {
-  border-color: #72bbe9;
-  background: #3283b5;
+  border-color: var(--cl-accent-hover);
+  background: color-mix(in srgb, var(--cl-accent) 60%, var(--cl-bg));
 }
 
 #stopButton {

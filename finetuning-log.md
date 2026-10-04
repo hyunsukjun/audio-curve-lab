@@ -127,3 +127,11 @@ signal cannot incorrectly display the red region.
 
 **Standalone Consideration:** `STANDALONE ASSET`; retain threshold meaning and retest
 exact colors for the native display color space.
+
+## Hub v0.10 Audio identity pilot — 2026-10-04
+
+PROJECT-SPECIFIC experiment: use the Hub's #459BFF and original Audio symbols
+in the header/favicon while preserving functional color semantics.
+Acceptance: compare header and favicon at desktop/narrow sizes, verify exact assets
+and unchanged processing files. User aesthetic acceptance remains pending.
+Details: `docs/IDENTITY_PILOT.md`.
