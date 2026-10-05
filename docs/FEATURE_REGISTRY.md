@@ -161,7 +161,8 @@ not drawn into it. Mono input has one labeled lane; stereo input has L/R lanes.
 The views indicate input channel count, not the WAV export channel count.
 The upper view explicitly labels source time and shows a line-only read cursor;
 the curve header and lower view label output time. The lower view retains a
-handle-like cursor and a visible click/drag seek hint. Its accessible name and
+paired triangle cursor handles and a visible click/drag seek hint. An equally bright 1.5px dashed
+hover guide previews the target, hidden while dragging or outside the view. Its accessible name and
 hover help, rather than its short on-screen title, identify the Speed-based
 projection as approximate and distinct from the rendered WAV.
 

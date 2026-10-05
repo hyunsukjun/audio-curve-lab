@@ -72,6 +72,7 @@ let waveform = [];
 let outputWaveform = [];
 let outputWaveformDirty = true;
 let seekingDisabled = true;
+let outputHoverProgress = null;
 let activeCurve = "stretch";
 let selectedTool = "pen";
 let selectedPoint = null;
@@ -715,17 +716,38 @@ function drawWaveform(ctx, peaksByChannel, duration, color, title, hint, positio
       ctx.fillText(formatTime(duration * i / divisions), left + (i / divisions * width), 87);
     }
     ctx.textAlign = "start";
+    const seekColor = outputHoverProgress !== null || isWaveSeeking ? "#b4e4ff" : "#75c5f7";
+    // The hover guide previews a seek without changing playback or curve data.
+    if (seekHint && !seekingDisabled && !isWaveSeeking && outputHoverProgress !== null) {
+      const hoverX = left + outputHoverProgress * width;
+      ctx.save();
+      ctx.strokeStyle = seekColor;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(hoverX, 21);
+      ctx.lineTo(hoverX, 77);
+      ctx.stroke();
+      ctx.restore();
+    }
     const cursorX = left + Math.max(0, Math.min(1, position)) * width;
-    ctx.strokeStyle = "#e6edf1";
+    ctx.strokeStyle = seekHint ? seekColor : "#e6edf1";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(cursorX, 21);
     ctx.lineTo(cursorX, 77);
     ctx.stroke();
     if (seekHint) {
-      ctx.fillStyle = "#e6edf1";
+      ctx.fillStyle = seekColor;
       ctx.beginPath();
-      ctx.arc(cursorX, 22, 4, 0, Math.PI * 2);
+      ctx.moveTo(cursorX - 5, 21);
+      ctx.lineTo(cursorX + 5, 21);
+      ctx.lineTo(cursorX, 28);
+      ctx.closePath();
+      ctx.moveTo(cursorX - 5, 77);
+      ctx.lineTo(cursorX + 5, 77);
+      ctx.lineTo(cursorX, 70);
+      ctx.closePath();
       ctx.fill();
     }
   }
@@ -1005,13 +1027,34 @@ outputWaveCanvas.addEventListener("pointerdown", (event) => {
 
 outputWaveCanvas.addEventListener("pointermove", (event) => {
   if (isWaveSeeking) seekFromWavePointer(event);
+  else updateOutputHover(event);
 });
+
+function updateOutputHover(event) {
+  const rect = outputWaveCanvas.getBoundingClientRect();
+  const { left, width } = getPlotBounds();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  outputHoverProgress = !seekingDisabled && event.pointerType !== "touch"
+    && x >= left && x <= left + width && y >= 0 && y <= rect.height
+    ? (x - left) / width : null;
+  drawOutputWaveform();
+}
 
 function endWaveSeek(event) {
   isWaveSeeking = false;
   if (outputWaveCanvas.hasPointerCapture(event.pointerId)) outputWaveCanvas.releasePointerCapture(event.pointerId);
+  if (event.type === "pointercancel") {
+    outputHoverProgress = null;
+    drawOutputWaveform();
+  } else updateOutputHover(event);
 }
 
+outputWaveCanvas.addEventListener("pointerenter", updateOutputHover);
+outputWaveCanvas.addEventListener("pointerleave", () => {
+  outputHoverProgress = null;
+  drawOutputWaveform();
+});
 outputWaveCanvas.addEventListener("pointerup", endWaveSeek);
 outputWaveCanvas.addEventListener("pointercancel", endWaveSeek);
 

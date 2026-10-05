@@ -74,7 +74,10 @@ portable design knowledge.
   belong to the preview only, not to Speed/Pitch/Pan parameter identity.
 - Label the upper axis as source time and the middle/lower axes as output time.
   The upper read cursor is a line without a handle; the lower seek cursor retains
-  its handle-like circle. Keep the lower click/drag hint prominent, and identify
+  paired 10px inward-facing triangle handles and a bright blue vertical line.
+  A dashed hover guide matches the current cursor's 1.5px width and brightness,
+  previewing the destination without a time label;
+  hide it during dragging and when the pointer leaves. Keep the lower click/drag hint prominent, and identify
   its Speed-based approximation in hover help and accessible text rather than
   implying that the visible waveform is a rendered WAV.
 - The input waveform has one labeled lane for mono and separate L/R lanes for stereo;

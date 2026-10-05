@@ -92,7 +92,10 @@ Shift+Left/Right (0.1 second), Home, and End. Active grains/control smoothing
 restart around the new location.
 Visible labels identify the upper source-time view and the middle/lower output-time
 views; the lower view explicitly indicates that click/drag seeks. Only the lower
-cursor has a handle-like circle, since the source-time cursor is display-only.
+cursor has paired triangle handles, since the source-time cursor is display-only.
+Pointer hover previews the destination with a dashed line matching the current cursor's 1.5px width and brightness, without changing
+playback or displaying another time label. Dragging hides the guide; leaving or
+cancelling clears it. Hover redraws only the lower waveform and adds no animation loop.
 Hover help and the accessible name explain that the lower waveform is an
 approximate Speed-based guide, not rendered audio.
 The source-position calculation uses the same capped output duration as Preview,

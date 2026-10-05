@@ -431,7 +431,7 @@ button:disabled {
 }
 
 #outputWaveCanvas {
-  cursor: pointer;
+  cursor: ew-resize;
   touch-action: none;
 }
 
