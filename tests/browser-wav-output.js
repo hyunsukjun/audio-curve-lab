@@ -1,4 +1,4 @@
-import {renderOffline} from '../src/offline-render.js?v=20261006-48k-02';
+import {renderOffline} from '../src/offline-render.js?v=20261006-limit-02';
 import {prepareWavChannels} from '../src/wav-output.js?v=20261006-48k-02';
 const flat=y=>[{x:0,y},{x:1,y}];
 const settings={grainSizeMs:140,density:5.5,randomness:.02,outputGain:.95,globalDirection:1};

@@ -275,3 +275,11 @@ Node conversion and existing transform parity checks passed. 6-second 96k fixtur
 loaded, played/stopped, exported, and the saved WAV reopened at 6 seconds.
 **Still open:** 180-second cap, broad listening, long real music, cross-browser/device
 coverage. No commit/public deployment in this change.
+
+## 2026-10-06 — Reject over-limit export instead of truncating (local, unpublished)
+
+Previously the renderer silently limited the body to 180 seconds and reported capped after downloading. It now raises EXPORT_DURATION_LIMIT before output allocation; the app states that no file was saved and restores the controls. Audio checks estimated output duration after Speed; Timbre checks source duration and preserves the existing Delay tail for accepted files. Exactly 180 seconds remains supported. This is an interim explicit limit, not full long-file support. Preview and DSP inside the supported range are unchanged. Long-file memory/cancellation and full-duration policy remain open.
+
+Validation: actual 180-second render accepted, 181/540 seconds rejected, and Audio 120-second input at Speed 0.5 rejected for its 240-second output. Browser 181-second file produced the explicit message with no console errors.
+
+The interim export-limit patch is grouped with cancellation/recovery and time-limit clarity for one release review. No automatic expansion beyond 180 seconds; full-length rendering awaits memory/cancellation/Preview validation.

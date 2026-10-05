@@ -273,7 +273,8 @@ function markDownloadStale() {
     URL.revokeObjectURL(downloadUrl);
     downloadUrl = null;
   }
-  downloadReadout.textContent = "needs export";
+  downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
+    ? "export limit: 180 s output" : "needs export";
 }
 
 function clearDownload() {
@@ -365,7 +366,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20261006-48k-02");
+    const module = await import("./offline-render.js?v=20261006-limit-02");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -844,7 +845,7 @@ function draw() {
   if (tooltip) drawPointTooltip(tooltip.curveName, tooltip.point);
 
   timeStatus.textContent = buffer
-    ? `${formatClock(playheadSeconds)} / ${formatClock(getPlaybackDuration())}`
+    ? `${formatClock(playheadSeconds)} / ${formatClock(getPlaybackDuration())}${estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds ? " · preview limit" : ""}`
     : "00:00.00 / 00:00.00";
   sourceReadout.textContent = formatTime(sourcePlayheadSeconds);
   stretchReadout.textContent = `${currentSpeed.toFixed(2)} x`;
@@ -972,7 +973,8 @@ async function loadAudioFile(file) {
     const longFileNote = buffer.duration > largeFileSeconds ? " - long file" : "";
     fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s${longFileNote}`;
     clearDownload();
-    downloadReadout.textContent = buffer.duration > largeFileSeconds ? "export capped" : "ready";
+    downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
+      ? "export limit: 180 s output" : "ready";
     playheadSeconds = 0;
     sourcePlayheadSeconds = 0;
     resetCurrentReadouts();
@@ -1120,6 +1122,8 @@ downloadButton.addEventListener("click", async () => {
   } catch (error) {
     if (error.name === "AbortError") {
       downloadReadout.textContent = "cancelled";
+    } else if (error.code === "EXPORT_DURATION_LIMIT") {
+      downloadReadout.textContent = error.message;
     } else {
       console.error(error);
       downloadReadout.textContent = "export failed";
