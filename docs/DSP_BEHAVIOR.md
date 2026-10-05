@@ -148,7 +148,9 @@ need additional listening fixtures and, if required, a band-limited resampler.
 - Default sample: 48 kHz.
 - User source: `decodeAudioData` produces an AudioBuffer at the AudioContext rate;
   this may differ from the imported file's original sample rate.
-- Offline output: decoded AudioBuffer sample rate.
+- Offline DSP: decoded AudioBuffer sample rate. Final WAV: 48,000 Hz / stereo / 24-bit PCM.
+- Non-48k completed DSP buffers are band-limited and resampled by `wav-output.js`;
+  the original source and realtime Preview buffer are not changed.
 - Realtime output: AudioContext/AudioWorklet sample rate; grain read rate includes the
   source/output sample-rate ratio.
 - Worklet position updates: approximately 30 Hz.
@@ -189,8 +191,8 @@ practical listening/visual evaluation before becoming a shared Curve Lab specifi
 
 `src/offline-render.js` schedules complete grains in hop-sized steps into stereo float
 buffers. It yields to the UI after roughly 1% progress or 60 ms, supports cancellation,
-uses deterministic jitter, and encodes stereo 24-bit PCM WAV at the decoded
-AudioBuffer sample rate.
+uses deterministic jitter, then converts the completed output to 48 kHz and encodes
+stereo 24-bit PCM WAV. 48 kHz signals bypass the conversion unchanged.
 
 Render filename: `AudioCurveLab-export.wav`.
 
@@ -237,3 +239,25 @@ play/seek/stop lifecycle as appropriate. Natural completion posts an ended state
   whether exported WAV sounds the same are unrecorded; see `finetuning-log.md`.
 - WAV output is stereo 24-bit PCM. This improves final quantization precision but does
   not change granular artifacts, interpolation, clipping behavior, or Preview quality.
+
+## Final WAV Rate Conversion (2026-10-06)
+
+`COMMON CANDIDATE` / `STANDALONE ASSET`: output frame count is
+`max(1, round(processedFrames * 48000 / processedRate))`. The centered 96-tap,
+DC-normalized Blackman-windowed sinc uses cutoff `0.94 * min(1, 48000/sourceRate)`
+(relative to source Nyquist). Rational phases are exact for common integer rates;
+unusual rates use at most 1024 nearest phases. Boundary samples extend the endpoints.
+The centered kernel compensates its delay; it does not append latency or a tail.
+
+Conversion yields every 8192 output frames and checks cancellation between blocks.
+This avoids relying on browser-dependent AudioBufferSource resampling. In the tested
+Codex in-app browser, native 96->48k OfflineAudioContext playback did not suppress a
+30 kHz tone, whereas decodeAudioData did; these are distinct paths. This is not a claim
+about all browsers. Do not generalize the current -98 dB measurement to all stopband
+frequencies, source rates, or music.
+
+This conversion does not alter grain interpolation, smoothing, speed/Freeze math,
+normalization, Preview, or the existing 180-second limit. Non-48k exports deliberately
+remove out-of-band content and may differ near Nyquist. Subjective approval remains
+NEEDS LISTENING TEST. The old source-rate export behavior is recorded in D-010;
+D-022 defines the new output contract.

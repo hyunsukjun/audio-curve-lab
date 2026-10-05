@@ -1,3 +1,4 @@
+import { prepareWavChannels } from "./wav-output.js?v=20261006-48k-02";
 import {
   TRANSFORM_CONSTANTS,
   alignedGrainStart,
@@ -106,15 +107,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
       }
     }
 
-    onProgress?.(1);
-    return {
-      left: outL,
-      right: outR,
-      sampleRate: sourceRate,
-      duration: outLength / sourceRate,
-      blob: encodeWav(outL, outR, sourceRate),
-      truncated: requestedDuration > maxDuration
-    };
+    return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress);
   }
 
   const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((settings.grainSizeMs / 1000) * sourceRate));
@@ -206,13 +199,12 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     outR[i] = Math.tanh(outR[i] * normalise);
   }
 
+  return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress);
+}
+
+async function finishWav(left, right, sourceRate, truncated, signal, onProgress) {
+  const output = await prepareWavChannels(left, right, sourceRate, signal);
+  const blob = encodeWav(output.left, output.right, output.sampleRate);
   onProgress?.(1);
-  return {
-    left: outL,
-    right: outR,
-    sampleRate: sourceRate,
-    duration: outLength / sourceRate,
-    blob: encodeWav(outL, outR, sourceRate),
-    truncated: requestedDuration > maxDuration
-  };
+  return { ...output, duration: output.left.length / output.sampleRate, blob, truncated };
 }

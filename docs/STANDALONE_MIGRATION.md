@@ -104,9 +104,10 @@ channel data model, Clip semantics, and tested meter ballistics after approval.
 **Current web implementation:** Main-thread asynchronous renderer, Float32 buffers,
 Blob download, 24-bit PCM encoder.  
 **Platform-independent behavior:** Deterministic render, cancellation, progress, stereo
-WAV at source rate, 180-second cap, current normalization/limiting behavior.  
+48 kHz / 24-bit PCM WAV, actual band-limited conversion after source-rate DSP,
+180-second cap, current normalization/limiting behavior.
 **Reusable data/algorithm:** Offline grain schedule, shared alignment and gain helpers,
-Freeze seed, mappings, and encoder contract.
+Freeze seed, mappings, windowed-sinc output conversion and encoder contract.
 **Web-specific dependency:** Blob, DOM download, `performance.now`, timer yielding.  
 **Replacement needed:** Background render job, native file save panel, WAV library or
 equivalent encoder.  
@@ -194,3 +195,11 @@ These items are `TO BE DOCUMENTED`; do not guess them during a port.
 `STANDALONE ASSET`: `assets/identity/audio-app.svg` preserves the Hub v0.10
 Audio app-tile concept; symbol/micro variants and palette accompany it. Native
 packaging and small-Dock validation are not performed by this web pilot.
+
+### WAV Conversion Reference Asset
+
+The browser-independent `wav-output.js` and `tests/wav-output.mjs` define the new 48k
+output boundary (D-022). Native migration must preserve duration to one output frame,
+channel separation, DC gain and out-of-band rejection. A different resampler may be
+used, but its passband/stopband and boundary behavior require numerical and listening
+comparison. The current 180-second cap is not a future-native requirement.

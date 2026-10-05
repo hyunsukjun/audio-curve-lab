@@ -86,7 +86,7 @@ Pitch, and Pan colors.
 **Reason:** Curve Lab family consistency without losing parameter meaning.  
 **Affects:** Header, focus/accent, Canvas, native design tokens.
 
-## D-010: WAV Output Contract
+## D-010: WAV Output Contract (rate superseded by D-022)
 
 **Date:** Current baseline documented 2026-09-29  
 **Decision:** Offline export is stereo 24-bit PCM WAV at the decoded AudioBuffer sample rate, capped at
@@ -253,3 +253,25 @@ timeline design; no change to normalized curve data, DSP, or export.
 **Decision:** Supersede D-009's prior blue where applicable with Hub Audio #459BFF;
 use exact Hub v0.10 symbol and micro SVGs. Keep semantic parameter colors and DSP intact.
 See `IDENTITY_PILOT.md`. No commit/publish or sibling rollout is implied.
+
+## D-022: Fixed 48 kHz WAV With Band-Limited PCM Conversion
+
+**Date:** 2026-10-06
+**Decision:** Render at the existing decoded-source rate, then convert the completed
+stereo DSP output to 48 kHz before 24-bit PCM encoding. 48 kHz buffers bypass conversion.
+**Previous:** Export kept the decoded source rate (D-010); only its rate policy changes.
+**Reason:** Adopt the Curve Lab Web v1 family export target without changing existing
+sample-rate-dependent DSP smoothing or Preview as a side effect.
+**Rejected:** Header-only relabeling changes time/pitch. Native OfflineAudioContext
+buffer playback alone failed the 30 kHz rejection test in the current in-app browser.
+**Trade-off:** A 96-tap windowed-sinc converter adds CPU and output buffers for non-48k
+exports. It yields/cancels by blocks; long-file memory work remains separate. Its
+high-frequency rolloff is an intentional part of rate conversion, not a claim of
+subjective improvement. Native file decoding was independently checked (-74 dB at
+30 kHz for the PCM16 test); that path is not replaced.
+**Verification:** Four 60-second source rates (44.1/48/88.2/96k) produced 2,880,000-frame
+48k/24-bit stereo WAV and decoded back to 60 seconds. Eleven browser checks passed;
+Node conversion and existing transform parity checks passed. 6-second 96k fixture
+loaded, played/stopped, exported, and the saved WAV reopened at 6 seconds.
+**Still open:** 180-second cap, broad listening, long real music, cross-browser/device
+coverage. No commit/public deployment in this change.

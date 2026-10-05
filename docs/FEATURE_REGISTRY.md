@@ -215,9 +215,9 @@ and deliberately clipped source listening remains `TO BE DOCUMENTED`.
 progress, and downloads `AudioCurveLab-export.wav`. Pressing the action during an active
 render cancels it.
 
-**Output:** Stereo 24-bit PCM WAV at the decoded AudioBuffer sample rate, maximum
-180 seconds. `decodeAudioData` may resample imported audio to the browser's
-AudioContext rate, so this need not match the file's original sample rate.
+**Output:** Stereo 24-bit PCM WAV at 48 kHz, maximum 180 seconds. The source-rate DSP
+result is actually band-limited and resampled when needed; no header-only conversion.
+The source/Preview buffer and musical duration rules remain unchanged.
 
 **Processing:** Uses shared mappings/constants with a deterministic offline grain
 schedule. Transformed output is peak-scaled toward 0.92 before `tanh`; neutral direct
@@ -227,8 +227,10 @@ bounded correction based on the actual sine-window overlap sum.
 **Edge cases:** Preview and Render are not bit-identical. Long output consumes memory.
 
 **Tests:** Direct-path expected samples, deterministic transformed output, finite values,
-bounds, reverse, Freeze, and extremes are automated. WAV header/browser download and
-listening parity are manual.
+bounds, reverse, Freeze, and extremes are automated. `tests/wav-output.mjs` checks the
+output converter. `tests/browser-wav-output.html` verifies four rates at 60 seconds,
+WAV re-decode, mode lengths, stereo, stopband rejection, and cancellation. Browser
+download/reopen was checked with a generated 96k stereo WAV; listening parity is manual.
 
 ## ACL-COM-005: Clear And Reset
 
