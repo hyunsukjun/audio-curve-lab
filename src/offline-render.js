@@ -1,5 +1,6 @@
-import { encodeWav } from "./wav-encoder.js?v=20261006-chunk-01";
-import { prepareWavChannels } from "./wav-output.js?v=20261006-48k-02";
+import { exportWav } from "./wav-export.js?v=20261006-stream-01";
+import { encodeWav } from "./wav-encoder.js?v=20261006-stream-01";
+import { prepareWavChannels } from "./wav-output.js?v=20261006-stream-01";
 import {
   TRANSFORM_CONSTANTS,
   alignedGrainStart,
@@ -22,7 +23,7 @@ import {
 } from "./transform-core.js?v=20261003-01";
 
 
-export async function renderOffline({ audioBuffer, curves, settings, signal, onProgress }) {
+export async function renderOffline({ audioBuffer, curves, settings, signal, onProgress, includePCM = true }) {
   if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
   const sourceRate = audioBuffer.sampleRate;
   const sourceDuration = audioBuffer.duration;
@@ -73,7 +74,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
       }
     }
 
-    return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress);
+    return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM);
   }
 
   const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((settings.grainSizeMs / 1000) * sourceRate));
@@ -165,10 +166,15 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     outR[i] = Math.tanh(outR[i] * normalise);
   }
 
-  return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress);
+  return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM);
 }
 
-async function finishWav(left, right, sourceRate, truncated, signal, onProgress) {
+async function finishWav(left, right, sourceRate, truncated, signal, onProgress, includePCM) {
+  if (!includePCM) {
+    const result = await exportWav(left, right, sourceRate, signal);
+    onProgress?.(1);
+    return { ...result, truncated };
+  }
   const output = await prepareWavChannels(left, right, sourceRate, signal);
   const blob = await encodeWav(output.left, output.right, output.sampleRate, signal);
   onProgress?.(1);

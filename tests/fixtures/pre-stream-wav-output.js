@@ -33,28 +33,16 @@ function makeKernel(sourceRate) {
 
 // Resample the completed DSP output. Keep source-rate DSP and Preview untouched.
 // A centered, DC-normalized Blackman-windowed sinc compensates filter delay.
-// Optional onBlock is synchronous and must consume/copy views before returning.
-// Its buffers are reused; omitting it preserves the full-PCM diagnostic API.
-export async function prepareWavChannels(left, right, sourceRate, signal, onBlock) {
+export async function prepareWavChannels(left, right, sourceRate, signal) {
   if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
   if (!left.length || left.length !== right.length || !Number.isInteger(sourceRate) || sourceRate <= 0) {
     throw new Error("Invalid stereo output for WAV conversion");
   }
-  if (sourceRate === WAV_SAMPLE_RATE) {
-    if (!onBlock) return { left, right, sampleRate: WAV_SAMPLE_RATE };
-    for (let start = 0; start < left.length; start += BLOCK_FRAMES) {
-      if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
-      const end = Math.min(left.length, start + BLOCK_FRAMES);
-      onBlock(left.subarray(start, end), right.subarray(start, end));
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-    if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
-    return { frameCount: left.length, sampleRate: WAV_SAMPLE_RATE };
-  }
+  if (sourceRate === WAV_SAMPLE_RATE) return { left, right, sampleRate: WAV_SAMPLE_RATE };
 
   const frameCount = Math.max(1, Math.round(left.length * WAV_SAMPLE_RATE / sourceRate));
-  const outL = new Float32Array(onBlock ? Math.min(BLOCK_FRAMES, frameCount) : frameCount);
-  const outR = new Float32Array(onBlock ? Math.min(BLOCK_FRAMES, frameCount) : frameCount);
+  const outL = new Float32Array(frameCount);
+  const outR = new Float32Array(frameCount);
   const { phaseCount, coefficients } = makeKernel(sourceRate);
   const ratio = sourceRate / WAV_SAMPLE_RATE;
   for (let start = 0; start < frameCount; start += BLOCK_FRAMES) {
@@ -75,13 +63,12 @@ export async function prepareWavChannels(left, right, sourceRate, signal, onBloc
         l += left[index] * weight;
         r += right[index] * weight;
       }
-      outL[onBlock ? frame - start : frame] = l;
-      outR[onBlock ? frame - start : frame] = r;
+      outL[frame] = l;
+      outR[frame] = r;
     }
-    if (onBlock) onBlock(outL.subarray(0, end - start), outR.subarray(0, end - start));
     // Yield between blocks so cancellation and browser UI remain responsive.
-    if (onBlock || end < frameCount) await new Promise(resolve => setTimeout(resolve, 0));
+    if (end < frameCount) await new Promise(resolve => setTimeout(resolve, 0));
   }
   if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
-  return onBlock ? { frameCount, sampleRate: WAV_SAMPLE_RATE } : { left: outL, right: outR, sampleRate: WAV_SAMPLE_RATE };
+  return { left: outL, right: outR, sampleRate: WAV_SAMPLE_RATE };
 }

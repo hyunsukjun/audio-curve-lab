@@ -164,3 +164,8 @@ Already-aborted or over-limit renders exit before accessing source PCM channels 
 Cancel during PCM-to-WAV encoding raises AbortError at a block boundary; no partial Blob is returned or downloaded. A pending cancellation after the final PCM block is checked before success. Controls recover through the existing render lifecycle. Progress remains the existing DSP progress indicator; no new encoding percentage is claimed.
 
 Validation: tests/wav-encoder.mjs and tests/browser-wav-encoder.html cover legacy byte parity across block boundaries, pre-abort, final-block abort, and cancel/recovery. Existing WAV, limit and recovery regressions pass; Audio transform parity also passes. Local app default 8-second export saved a 48k/24-bit WAV. Listening, Safari and low-memory device verification remain open.
+
+
+### Block-fed export lifecycle
+
+Download WAV uses the Blob-only renderer path. Existing Cancel and control recovery remain; no partial file is published. Progress retains its existing DSP-only meaning. PCM arrays are returned only to callers using the default diagnostic path.

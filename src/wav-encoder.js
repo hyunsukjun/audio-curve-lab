@@ -1,9 +1,8 @@
-export async function encodeWav(left, right, sampleRate, signal) {
+export function createWavWriter(length, sampleRate, signal) {
   const checkAbort = () => {
     if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
   };
   checkAbort();
-  const length = left.length;
   const channelCount = 2;
   const bytesPerSample = 3;
   const blockAlign = channelCount * bytesPerSample;
@@ -37,21 +36,34 @@ export async function encodeWav(left, right, sampleRate, signal) {
 
   // Snapshot each bounded PCM block; never allocate one full WAV ArrayBuffer.
   const parts = [new Blob([view])];
-  const blockFrames = 65536;
-  for (let start = 0; start < length; start += blockFrames) {
-    checkAbort();
-    const end = Math.min(length, start + blockFrames);
-    view = new DataView(new ArrayBuffer((end - start) * blockAlign));
-    let offset = 0;
-    for (let i = start; i < end; i += 1) {
-      writeInt24(offset, left[i]);
-      writeInt24(offset + bytesPerSample, right[i]);
-      offset += blockAlign;
+  let written = 0;
+  return {
+    append(left, right) {
+      checkAbort();
+      if (left.length !== right.length || written + left.length > length) throw new Error("Invalid WAV block length");
+      view = new DataView(new ArrayBuffer(left.length * blockAlign));
+      for (let i = 0; i < left.length; i += 1) {
+        writeInt24(i * blockAlign, left[i]);
+        writeInt24(i * blockAlign + bytesPerSample, right[i]);
+      }
+      parts.push(new Blob([view]));
+      written += left.length;
+    },
+    finish() {
+      checkAbort();
+      if (written !== length) throw new Error("Incomplete WAV output");
+      return new Blob(parts, { type: "audio/wav" });
     }
-    parts.push(new Blob([view]));
-    // Also yield after the last block so a pending cancel wins over download.
+  };
+}
+
+export async function encodeWav(left, right, sampleRate, signal) {
+  if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
+  const writer = createWavWriter(left.length, sampleRate, signal);
+  for (let start = 0; start < left.length; start += 65536) {
+    const end = Math.min(left.length, start + 65536);
+    writer.append(left.subarray(start, end), right.subarray(start, end));
     await new Promise(resolve => setTimeout(resolve, 0));
   }
-  checkAbort();
-  return new Blob(parts, { type: "audio/wav" });
+  return writer.finish();
 }
