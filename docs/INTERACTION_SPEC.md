@@ -157,3 +157,10 @@ Validation: actual 180-second render accepted, 181/540 seconds rejected, and Aud
 ### Export recovery follow-up — 2026-10-06
 
 Already-aborted or over-limit renders exit before accessing source PCM channels or allocating output arrays. Five cancel/re-render cycles reproduce the same clean WAV. Browser checks with a 180-second file confirm Cancel returns controls; loading a new 6-second file then exports stereo 48k/24-bit/6 seconds. No console warnings/errors observed. Audio labels its existing capped playback timeline “preview limit”; this does not extend playback or export support. Long-file heap/GC behavior and low-memory device testing are still unverified.
+
+
+## Cancellable WAV encoding — 2026-10-06
+
+Cancel during PCM-to-WAV encoding raises AbortError at a block boundary; no partial Blob is returned or downloaded. A pending cancellation after the final PCM block is checked before success. Controls recover through the existing render lifecycle. Progress remains the existing DSP progress indicator; no new encoding percentage is claimed.
+
+Validation: tests/wav-encoder.mjs and tests/browser-wav-encoder.html cover legacy byte parity across block boundaries, pre-abort, final-block abort, and cancel/recovery. Existing WAV, limit and recovery regressions pass; Audio transform parity also passes. Local app default 8-second export saved a 48k/24-bit WAV. Listening, Safari and low-memory device verification remain open.

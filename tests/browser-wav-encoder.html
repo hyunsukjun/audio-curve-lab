@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><title>WAV encoder checks</title><h1>WAV encoder checks</h1><button id="run">Run checks</button><pre id="result">Ready</pre><script type="module">
+import {runEncoderTests} from './wav-encoder-suite.js';
+document.querySelector('#run').onclick=async()=>{document.querySelector('#result').textContent='Running';try{const rows=await runEncoderTests();document.querySelector('#result').textContent='PASS '+rows.length+' checks\n'+rows.join('\n');}catch(e){document.querySelector('#result').textContent='FAIL '+e.stack;}};
+</script>

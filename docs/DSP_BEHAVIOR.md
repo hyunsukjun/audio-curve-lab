@@ -275,3 +275,10 @@ Already-aborted or over-limit renders exit before accessing source PCM channels 
 ### Release boundary verification
 
 Ten 180-second synthetic-render cancellations with explicit Node GC left no additional ArrayBuffer bytes after collection. This is not browser/device memory certification. Audio accepts a 240-second source when 2x Speed produces 120 seconds; Timbre accepts a 180-second source plus its 100ms test Delay tail. Supported-range DSP and Preview remain unchanged.
+
+
+## Cancellable WAV encoding — 2026-10-06
+
+Encoding moved to src/wav-encoder.js. PCM quantization, clamping, channel interleave, header bytes and sample count match the frozen legacy encoder. Each block is snapshotted into a Blob part; a final Blob joins the parts. Source-rate DSP, resampling, gain, curves, Preview and duration limits remain unchanged. PCM input/output arrays are still retained; this is not streaming DSP or full long-file support.
+
+Validation: tests/wav-encoder.mjs and tests/browser-wav-encoder.html cover legacy byte parity across block boundaries, pre-abort, final-block abort, and cancel/recovery. Existing WAV, limit and recovery regressions pass; Audio transform parity also passes. Local app default 8-second export saved a 48k/24-bit WAV. Listening, Safari and low-memory device verification remain open.

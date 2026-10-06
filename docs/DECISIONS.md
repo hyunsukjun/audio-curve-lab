@@ -283,3 +283,10 @@ Previously the renderer silently limited the body to 180 seconds and reported ca
 Validation: actual 180-second render accepted, 181/540 seconds rejected, and Audio 120-second input at Speed 0.5 rejected for its 240-second output. Browser 181-second file produced the explicit message with no console errors.
 
 The interim export-limit patch is grouped with cancellation/recovery and time-limit clarity for one release review. No automatic expansion beyond 180 seconds; full-length rendering awaits memory/cancellation/Preview validation.
+
+
+## Cancellable WAV encoding — 2026-10-06
+
+COMMON CANDIDATE: use bounded PCM blocks and event-loop yields at the WAV serialization boundary, preserving exact file bytes. This removes the single full-WAV ArrayBuffer allocation and allows cancellation. Blob storage/copy behavior is runtime-dependent; Node RSS improvement is not a browser memory guarantee. No support-limit increase is included.
+
+Validation: tests/wav-encoder.mjs and tests/browser-wav-encoder.html cover legacy byte parity across block boundaries, pre-abort, final-block abort, and cancel/recovery. Existing WAV, limit and recovery regressions pass; Audio transform parity also passes. Local app default 8-second export saved a 48k/24-bit WAV. Listening, Safari and low-memory device verification remain open.
