@@ -13,11 +13,12 @@ import {
   initialPlaybackDirection,
   panFromNorm,
   readCubic,
+  readDirectionAtProgress,
   sourcePositionAtProgress,
   speedDirection,
   transformCanUseDirect,
   valueAt
-} from "./transform-core.js?v=20261003-01";
+} from "./transform-core.js?v=20261006-freeze-seek1";
 
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -109,6 +110,9 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         const fallbackProgress = this.outputDuration > 0 ? (data.seconds || 0) / this.outputDuration : 0;
         const progress = Math.max(0, Math.min(1, data.progress ?? fallbackProgress));
         this.outputFrame = progress * this.outputDurationFrames();
+        this.lastReadDirection = readDirectionAtProgress(
+          this.stretchCurve, this.settings.globalDirection, progress
+        );
         this.sourceFrame = sourcePositionAtProgress(
           this.duration,
           this.stretchCurve,

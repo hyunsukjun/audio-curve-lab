@@ -173,6 +173,23 @@ export function initialPlaybackDirection(speedCurve, globalDirection = 1) {
   return globalDirection < 0 ? -1 : 1;
 }
 
+// A seek has no live grain history. Resolve the last non-Freeze direction
+// from the curve rather than inheriting whichever region played previously.
+export function readDirectionAtProgress(speedCurve, globalDirection, progress) {
+  const at = clamp(progress, 0, 1);
+  const speed = effectiveSpeedAt(speedCurve, at, globalDirection);
+  if (Math.abs(speed) > TRANSFORM_CONSTANTS.freezeThreshold) return speedDirection(speed);
+  // Smoothstep is monotonic between points; the latest non-Freeze knot gives
+  // the approach direction of a Freeze interval without a sampling grid.
+  for (let i = speedCurve.length - 1; i >= 0; i -= 1) {
+    const point = speedCurve[i];
+    if (point.x > at) continue;
+    const prior = speedFromNorm(point.y) * (globalDirection < 0 ? -1 : 1);
+    if (Math.abs(prior) > TRANSFORM_CONSTANTS.freezeThreshold) return speedDirection(prior);
+  }
+  return initialPlaybackDirection(speedCurve, globalDirection);
+}
+
 export function estimateOutputDuration(sourceDuration, speedCurve, steps = 1024) {
   let distance = 0;
   for (let i = 0; i < steps; i += 1) {

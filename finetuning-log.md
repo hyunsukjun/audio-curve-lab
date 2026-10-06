@@ -135,3 +135,6 @@ in the header/favicon while preserving functional color semantics.
 Acceptance: compare header and favicon at desktop/narrow sizes, verify exact assets
 and unchanged processing files. User aesthetic acceptance remains pending.
 Details: `docs/IDENTITY_PILOT.md`.
+
+## 2026-10-06 — Audio sign-transition verification (PROJECT-SPECIFIC)
+24 rapid sign/Freeze trajectories across global Reverse and ±2400-cent extremes are numerically bounded;120 seek comparisons are independent of previous playback. Uninterrupted PCM matches deployed baseline exactly. No listening tuning performed. Keep audible clicks at rapid reversals and grain/gain restart after seek on the level-matched listening list. See docs/DSP_BEHAVIOR.md for scope and tests.

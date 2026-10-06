@@ -169,3 +169,6 @@ Validation: tests/wav-encoder.mjs and tests/browser-wav-encoder.html cover legac
 ### Block-fed export lifecycle
 
 Download WAV uses the Blob-only renderer path. Existing Cancel and control recovery remain; no partial file is published. Progress retains its existing DSP-only meaning. PCM arrays are returned only to callers using the default diagnostic path.
+
+### Freeze seek direction — 2026-10-06 local candidate
+Seeking into Freeze now restores direction from the current Speed trajectory rather than the previously played region. Leading/all-Freeze retains the existing initial/global Reverse fallback. Seeking still restarts grains and gain smoothing; it is not continuous-playback sample reconstruction. See DSP_BEHAVIOR.md and tests/freeze-seek.mjs.

@@ -299,3 +299,15 @@ COMMON CANDIDATE: browser Download WAV requests includePCM:false. After unchange
 Cancellation is checked through conversion, append and finalization, including after the final block yield. The writer rejects incomplete output. Source-rate output and Blob payload still occupy memory; this is not streaming the DSP itself. The 180-second policy and Preview stay unchanged. Native migration should preserve this file contract without requiring the web Blob implementation.
 
 Validation: frozen pre-change conversion/PCM24 oracle, 32 cases per Lab across 32/44.1/48/88.2/96 kHz, block edges, cancellation/recovery and renderer parity (Timbre Delay tail included). Existing regression suites pass. Nine-minute stereo 96k QA-only profiles preserve WAV duration and marker regions; Node memory measurements do not certify browser/low-memory behavior or listening quality.
+
+## 2026-10-06 — Freeze seek direction is independent of playback history
+
+PROJECT-SPECIFIC / STANDALONE ASSET. A seek clears active grains and resets controls, but previously retained lastReadDirection. A prior reverse region could therefore change the sound of the same Freeze target. Reproduced via processor messages: fresh all-Freeze seek reads forward, a seek after reverse reads backward.
+
+The seek handler now restores direction from the current Speed curve: use target speed when outside the Freeze threshold; otherwise use the most recent non-Freeze control point before the target. Smoothstep is monotonic within each segment, so knot traversal avoids missing a short interval through grid sampling. Leading/all-Freeze falls back to the existing initialPlaybackDirection rule, including global Reverse. This defines reproducible seek direction, not reconstruction of every prior grain or sample-smoothed playback state.
+
+Only seek initialization changes. Uninterrupted playback, offline WAV DSP, range, smoothing, grain texture, 180-second export limit and 48k/24-bit contract remain unchanged. Normal Preview/Render grain/normalization differences remain known and need matched listening.
+
+Verification: tests/freeze-seek.mjs failed before the fix, then all6 direction/history cases passed; actual browser OfflineAudioContext+AudioWorklet also passed6 corresponding cases with exact PCM equality and nonzero output. Browser harness waits50ms for message delivery before rendering/resume (an initial unsynchronized harness run produced silence, not a product failure). Existing transform-parity passes. tests/transport-boundaries.mjs covers9 signed speeds ×3 pitches(-2400/0/+2400), including ±0.019/±0.021 around Freeze: finite bounded PCM, Preview/Render length equality, natural replay and Stop/replay determinism. This is synthetic48k testing, not cross-rate or listening approval.
+
+Local candidate, uncommitted/unpublished. Remaining: rapid sign changes/seek smoothing differences, real music, cross-rate Preview and device performance.
