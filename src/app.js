@@ -386,7 +386,7 @@ async function getOfflineRenderer() {
   return renderOffline;
 }
 
-async function ensureAudioContext() {
+async function ensureAudioContext({ resume = true } = {}) {
   if (!audioContext) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
@@ -394,7 +394,7 @@ async function ensureAudioContext() {
     }
     audioContext = new AudioContextClass();
   }
-  if (audioContext.state !== "running") await audioContext.resume();
+  if (resume && audioContext.state !== "running") await audioContext.resume();
 }
 
 function sendBufferToWorklet() {
@@ -983,7 +983,9 @@ async function loadAudioFile(file) {
   isPlaying = false;
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   try {
-    await ensureAudioContext();
+    // Decoding does not require playback permission. Safari may keep resume pending
+    // after the file chooser closes; only Play should wait for activation.
+    await ensureAudioContext({ resume: false });
     await preflightWav(file, audioContext.sampleRate);
     const data = await file.arrayBuffer();
     const candidate = await decodeAudioFile(data);

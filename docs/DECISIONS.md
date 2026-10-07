@@ -327,3 +327,9 @@ Input guards remain independent provisional resource limits:128MiB file and192Mi
 ## Give editing and dialogs priority over global transport (2026-10-07)
 
 COMMON CANDIDATE: transport shortcuts must respect the same availability as Play and must not consume form editing or modal button activation. Guard the current handlers without changing DSP or curve data. The old modal handling could start background playback (Audio/Space handler path; directly reproduced in Space) or suppress Cancel keyup (directly reproduced in Spectral). Both phases now defer to the open dialog.
+
+## Import before first playback in Safari (2026-10-07)
+
+Local file decoding creates/reuses the AudioContext without resuming it. Playback still resumes the context through the existing Play path. A file chooser can return without the user activation Safari requires for `resume()`, leaving its promise pending; import must not wait for permission to play. File-size/PCM guards, native-rate decode, previous-source preservation on failure, normalized curves and DSP remain unchanged.
+
+Evidence: actual Safari public baseline remained Loading for a valid stereo 48 kHz/24-bit/300-second WAV before any playback. Local corrected version imported the same file and completed a 300-second render with two other idle Lab windows. `tests/import-suspended-context.mjs` fails on the previous handler with a never-resolving resume promise and passes after the change; it also verifies decode failure preserves the previous source and that playback still requests resume. Local disk download was not approved; final public saved-file verification is recorded separately in the family workboard.

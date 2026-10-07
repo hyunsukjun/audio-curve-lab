@@ -245,3 +245,7 @@ Input guards remain independent provisional resource limits:128MiB file and192Mi
 ## Portable keyboard availability contract (2026-10-07)
 
 COMMON CANDIDATE: one physical shortcut press dispatches at most one available transport action. Editing controls and open modal dialogs own their keyboard events. Native focus and key-repeat APIs replace DOM checks; sound and transport semantics remain product-specific.
+
+## Import before first playback in Safari (2026-10-07)
+
+Local file decoding creates/reuses the AudioContext without resuming it. Playback still resumes the context through the existing Play path. A file chooser can return without the user activation Safari requires for `resume()`, leaving its promise pending; import must not wait for permission to play. File-size/PCM guards, native-rate decode, previous-source preservation on failure, normalized curves and DSP remain unchanged.
