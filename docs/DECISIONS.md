@@ -311,3 +311,15 @@ Only seek initialization changes. Uninterrupted playback, offline WAV DSP, range
 Verification: tests/freeze-seek.mjs failed before the fix, then all6 direction/history cases passed; actual browser OfflineAudioContext+AudioWorklet also passed6 corresponding cases with exact PCM equality and nonzero output. Browser harness waits50ms for message delivery before rendering/resume (an initial unsynchronized harness run produced silence, not a product failure). Existing transform-parity passes. tests/transport-boundaries.mjs covers9 signed speeds ×3 pitches(-2400/0/+2400), including ±0.019/±0.021 around Freeze: finite bounded PCM, Preview/Render length equality, natural replay and Stop/replay determinism. This is synthetic48k testing, not cross-rate or listening approval.
 
 Local candidate, uncommitted/unpublished. Remaining: rapid sign changes/seek smoothing differences, real music, cross-rate Preview and device performance.
+
+
+## 2026-10-07 feedback candidate — PROJECT-SPECIFIC
+
+2026-10-07 feedback candidate: prefer resource admission plus explicit output limits over a universal five-minute rule. 128/192 MiB are conservative provisional thresholds, not measured safe limits for every device. Compressed/unknown format expansion can still exhaust memory during decode before the post-decode guard. Multiple tabs/windows independently allocate PCM and run DSP; no cross-tab lock, tab count detection or forced shutdown was added. Safari short-WAV rendering reached its site download permission dialog locally; the reported multi-window failure is not yet reproduced and user-activation expiry is only a hypothesis.
+
+
+## Approved five-minute policy — 2026-10-07 — PROJECT-SPECIFIC
+
+This supersedes earlier 180-second/3-minute limits in this document for Audio only. Final Speed-derived output and Preview timeline now share MAX_OUTPUT_SECONDS = 300 from output-policy.js. Exactly 300 seconds is accepted; longer WAV requests are rejected before source PCM reads/output allocation, never silently truncated. A visible live estimated-duration notice appears while editing over-limit curves and clears when the output fits. Input duration is not itself the output limit: 150 seconds at0.5x is300 seconds. 48kHz/24bit stereo and sound mappings are unchanged. Other Labs retain their policies.
+
+Input guards remain independent provisional resource limits:128MiB file and192MiB decoded PCM. Thus five minutes is a maximum output capability, not acceptance of every five-minute high-rate/multichannel input on every device. Encoded-format decode expansion, concurrent tabs and low-memory devices still require testing. Native migration should preserve explicit duration/no-truncation semantics while measuring its own resource budget.

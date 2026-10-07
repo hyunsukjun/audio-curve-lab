@@ -1,3 +1,4 @@
+import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
 import {
   TRANSFORM_CONSTANTS,
   alignedGrainStart,
@@ -131,7 +132,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
   }
 
   updateOutputDuration() {
-    this.outputDuration = Math.min(180, estimateOutputDuration(this.duration || 0, this.stretchCurve));
+    this.outputDuration = Math.min(MAX_OUTPUT_SECONDS, estimateOutputDuration(this.duration || 0, this.stretchCurve));
   }
 
   outputDurationFrames() {

@@ -1,3 +1,4 @@
+import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
 import { exportWav } from "./wav-export.js?v=20261006-stream-01";
 import { encodeWav } from "./wav-encoder.js?v=20261006-stream-01";
 import { prepareWavChannels } from "./wav-output.js?v=20261006-stream-01";
@@ -29,9 +30,9 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   const sourceDuration = audioBuffer.duration;
   const globalDirection = settings.globalDirection < 0 ? -1 : 1;
   const requestedDuration = estimateOutputDuration(sourceDuration, curves.stretch);
-  const maxDuration = 180;
+  const maxDuration = MAX_OUTPUT_SECONDS;
   if (requestedDuration > maxDuration) {
-    const error = new RangeError("Export exceeds 180 s output limit; no file saved.");
+    const error = new RangeError("Estimated output exceeds 5 minutes. Use a shorter source excerpt or increase Speed. No file was saved.");
     error.code = "EXPORT_DURATION_LIMIT";
     throw error;
   }

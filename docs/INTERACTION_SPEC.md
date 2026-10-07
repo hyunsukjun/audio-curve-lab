@@ -172,3 +172,15 @@ Download WAV uses the Blob-only renderer path. Existing Cancel and control recov
 
 ### Freeze seek direction — 2026-10-06 local candidate
 Seeking into Freeze now restores direction from the current Speed trajectory rather than the previously played region. Leading/all-Freeze retains the existing initial/global Reverse fallback. Seeking still restarts grains and gain smoothing; it is not continuous-playback sample reconstruction. See DSP_BEHAVIOR.md and tests/freeze-seek.mjs.
+
+
+## 2026-10-07 feedback candidate — PROJECT-SPECIFIC
+
+Pan ticks, lines (including inactive overlays), endpoints, hover tooltips and pointer conversion share the same inverted display mapping. Render completion retains a visible Save WAV anchor for a direct user click if automatic saving is blocked. The anchor is invalidated on curve/settings changes, successful file replacement and new export. Ready means a WAV Blob exists, not that disk saving succeeded. Rejected imports preserve previous audio, curves and completed export. An attempted decode stops playback; size-only rejection happens before stopping.
+
+
+## Approved five-minute policy — 2026-10-07 — PROJECT-SPECIFIC
+
+This supersedes earlier 180-second/3-minute limits in this document for Audio only. Final Speed-derived output and Preview timeline now share MAX_OUTPUT_SECONDS = 300 from output-policy.js. Exactly 300 seconds is accepted; longer WAV requests are rejected before source PCM reads/output allocation, never silently truncated. A visible live estimated-duration notice appears while editing over-limit curves and clears when the output fits. Input duration is not itself the output limit: 150 seconds at0.5x is300 seconds. 48kHz/24bit stereo and sound mappings are unchanged. Other Labs retain their policies.
+
+Input guards remain independent provisional resource limits:128MiB file and192MiB decoded PCM. Thus five minutes is a maximum output capability, not acceptance of every five-minute high-rate/multichannel input on every device. Encoded-format decode expansion, concurrent tabs and low-memory devices still require testing. Native migration should preserve explicit duration/no-truncation semantics while measuring its own resource budget.

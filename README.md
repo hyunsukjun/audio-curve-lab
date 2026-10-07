@@ -92,3 +92,7 @@ sound quality, Preview/WAV parity, and browser regression checks over feature br
 - Chrome, Edge, and Safari are the first browsers to test.
 - If the browser slows down, reload the page and use a shorter file.
 - Downloaded WAV files are created by the browser and can be imported into a DAW.
+
+
+### Web output limits (2026-10-07)
+Final output: up to5minutes after Speed processing; stereo48kHz/24bit WAV. The UI, Preview and exporter use one shared limit. Longer output is warned about during editing and cannot be saved until adjusted. Large inputs use provisional resource guards; use short excerpts and avoid concurrent heavy Lab processing.

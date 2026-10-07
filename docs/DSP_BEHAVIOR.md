@@ -313,3 +313,15 @@ A frozen deployed HEAD Worklet compared with the candidate on the same24 uninter
 Seek reconstructs curve-derived position/direction and resets grains/control smoothing; it intentionally does not restore the state of uninterrupted playback sample-for-sample. Rapid-transition artifacts, smoothing after seek and subjective Freeze character remain listening questions, not measured acoustic approval.
 
 The Freeze seek fix plus these regressions is ready for commit/deploy review. Still local and unpublished; await the user's release request.
+
+
+## 2026-10-07 feedback candidate — PROJECT-SPECIFIC
+
+This feedback patch changes no transform DSP, resampling, pan law or WAV format. Pan is a reversible display/input mapping. Imported bytes are handed to decodeAudioData without an unnecessary full ArrayBuffer copy. Rejection cannot undo allocations made internally by a browser decoder.
+
+
+## Approved five-minute policy — 2026-10-07 — PROJECT-SPECIFIC
+
+This supersedes earlier 180-second/3-minute limits in this document for Audio only. Final Speed-derived output and Preview timeline now share MAX_OUTPUT_SECONDS = 300 from output-policy.js. Exactly 300 seconds is accepted; longer WAV requests are rejected before source PCM reads/output allocation, never silently truncated. A visible live estimated-duration notice appears while editing over-limit curves and clears when the output fits. Input duration is not itself the output limit: 150 seconds at0.5x is300 seconds. 48kHz/24bit stereo and sound mappings are unchanged. Other Labs retain their policies.
+
+Input guards remain independent provisional resource limits:128MiB file and192MiB decoded PCM. Thus five minutes is a maximum output capability, not acceptance of every five-minute high-rate/multichannel input on every device. Encoded-format decode expansion, concurrent tabs and low-memory devices still require testing. Native migration should preserve explicit duration/no-truncation semantics while measuring its own resource budget.

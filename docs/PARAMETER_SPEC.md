@@ -176,3 +176,15 @@ historical reason for each envelope value are `TO BE DOCUMENTED`.
 Bit depth is an output-storage property, not a Preview parameter. Internal DSP remains
 Float32. The 24-bit export reduces final quantization error but does not alter granular
 windowing, curve response, limiting, or clipping prevention.
+
+
+## 2026-10-07 feedback candidate — PROJECT-SPECIFIC
+
+Pan screen coordinates now use screenY = normalized y: top is L (-1), center C (0), bottom R (+1). Stored y and pan = 2(y - 0.5) are unchanged. Speed/Pitch retain their existing display orientation.
+
+
+## Approved five-minute policy — 2026-10-07 — PROJECT-SPECIFIC
+
+This supersedes earlier 180-second/3-minute limits in this document for Audio only. Final Speed-derived output and Preview timeline now share MAX_OUTPUT_SECONDS = 300 from output-policy.js. Exactly 300 seconds is accepted; longer WAV requests are rejected before source PCM reads/output allocation, never silently truncated. A visible live estimated-duration notice appears while editing over-limit curves and clears when the output fits. Input duration is not itself the output limit: 150 seconds at0.5x is300 seconds. 48kHz/24bit stereo and sound mappings are unchanged. Other Labs retain their policies.
+
+Input guards remain independent provisional resource limits:128MiB file and192MiB decoded PCM. Thus five minutes is a maximum output capability, not acceptance of every five-minute high-rate/multichannel input on every device. Encoded-format decode expansion, concurrent tabs and low-memory devices still require testing. Native migration should preserve explicit duration/no-truncation semantics while measuring its own resource budget.

@@ -1,3 +1,5 @@
+import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
+import { screenY, curveY, checkFileSize, checkPCM, preflightWav } from "./browser-safety.js?v=20261007-1";
 import {
   centsFromNorm,
   effectiveSpeedAt,
@@ -11,6 +13,9 @@ import {
 import { OutputMeterAnalyzer } from "./output-meter.js?v=20260929-04";
 
 const fileInput = document.getElementById("fileInput");
+const durationNotice = document.getElementById("durationNotice");
+const fileNotice = document.getElementById("fileNotice");
+const saveWavLink = document.getElementById("saveWavLink");
 const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
 const sourceWaveCanvas = document.getElementById("sourceWaveCanvas");
@@ -54,7 +59,7 @@ const transformSettings = {
   globalDirection: 1
 };
 
-const largeFileSeconds = 180;
+const largeFileSeconds = MAX_OUTPUT_SECONDS;
 
 const curveColors = {
   stretch: "#6de0c0",
@@ -267,17 +272,26 @@ function sendSettings() {
   });
 }
 
+function updateDurationNotice() {
+  const duration = buffer ? estimateOutputDuration(buffer.duration, curves.stretch) : 0;
+  if (duration <= MAX_OUTPUT_SECONDS && fileNotice.textContent.startsWith("Estimated output exceeds")) fileNotice.textContent = "";
+  durationNotice.textContent = duration > MAX_OUTPUT_SECONDS
+    ? `Estimated output ${formatClock(duration)} exceeds the 5-minute limit. Shorten the source excerpt or increase Speed. Preview stops at 05:00; WAV will not be saved until the output fits.`
+    : "";
+}
+
 function markDownloadStale() {
   if (!buffer) return;
-  if (downloadUrl) {
-    URL.revokeObjectURL(downloadUrl);
-    downloadUrl = null;
-  }
+  updateDurationNotice();
+  if (fileNotice.textContent.startsWith("WAV ready.")) fileNotice.textContent = "";
+  clearDownload();
   downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
-    ? "export limit: 180 s output" : "needs export";
+    ? "export limit: 5 min output" : "needs export";
 }
 
 function clearDownload() {
+  saveWavLink.hidden = true;
+  saveWavLink.removeAttribute("href");
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
   downloadUrl = null;
 }
@@ -366,7 +380,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20261006-stream-01");
+    const module = await import("./offline-render.js?v=20261007-5min1");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -507,7 +521,7 @@ function drawParameterScale() {
   ctx.strokeStyle = "rgba(72, 111, 143, 0.28)";
   ctx.lineWidth = 1;
   for (const tick of getParameterTicks()) {
-    const y = (1 - tick.y) * height;
+    const y = screenY(activeCurve, tick.y) * height;
     const textY = Math.max(9, Math.min(height - 7, y + 4));
     ctx.font = tick.emphasis
       ? "750 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
@@ -529,7 +543,7 @@ function drawParameterScale() {
   ctx.restore();
 }
 
-function drawCurve(curve, color, width, fillPoints) {
+function drawCurve(curve, color, width, fillPoints, curveName) {
   const { left, width: w, height: h } = getPlotBounds();
   ctx.save();
   ctx.globalAlpha = 1;
@@ -542,7 +556,7 @@ function drawCurve(curve, color, width, fillPoints) {
     const x = i / w;
     const y = valueAt(curve, x);
     const px = left + (x * w);
-    const py = (1 - y) * h;
+    const py = screenY(curveName, y) * h;
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
@@ -551,7 +565,7 @@ function drawCurve(curve, color, width, fillPoints) {
   if (fillPoints) {
     for (const point of curve) {
       ctx.beginPath();
-      ctx.arc(left + (point.x * w), (1 - point.y) * h, 6, 0, Math.PI * 2);
+      ctx.arc(left + (point.x * w), screenY(curveName, point.y) * h, 6, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
       ctx.strokeStyle = "#06111c";
@@ -567,9 +581,9 @@ function drawCurves() {
   for (const name of curveOrder) {
     if (name === activeCurve) continue;
     if (!editedCurves[name]) continue;
-    drawCurve(curves[name], curveColors[name], 2.1, false);
+    drawCurve(curves[name], curveColors[name], 2.1, false, name);
   }
-  drawCurve(curves[activeCurve], curveColors[activeCurve], 4.8, true);
+  drawCurve(curves[activeCurve], curveColors[activeCurve], 4.8, true, activeCurve);
 }
 
 function roundedRectPath(x, y, width, height, radius) {
@@ -601,7 +615,7 @@ function drawPointTooltip(curveName, point) {
   const { left, width: w, height: h } = getPlotBounds();
   const text = formatPointValue(curveName, point);
   const px = left + (point.x * w);
-  const py = (1 - point.y) * h;
+  const py = screenY(curveName, point.y) * h;
   const paddingX = 8;
   const boxHeight = 26;
 
@@ -877,7 +891,7 @@ function buildWaveform(audioBuffer) {
 }
 
 function decodeAudioFile(arrayBuffer) {
-  const data = arrayBuffer.slice(0);
+  const data = arrayBuffer;
   return new Promise((resolve, reject) => {
     const promise = audioContext.decodeAudioData(data, resolve, reject);
     if (promise?.then) promise.then(resolve).catch(reject);
@@ -910,7 +924,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20261006-freeze-seek1");
+  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20261007-5min1");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -953,6 +967,11 @@ async function setupAudio() {
 
 async function loadAudioFile(file) {
   if (!file) return;
+  fileNotice.textContent = "";
+  try { checkFileSize(file.size); }
+  catch (error) { fileNotice.textContent = error.message; return; }
+  const previousStatus = fileStatus.textContent;
+  const previousDownloadStatus = downloadReadout.textContent;
   if (renderAbortController) {
     renderAbortController.abort();
     renderAbortController = null;
@@ -965,25 +984,30 @@ async function loadAudioFile(file) {
   node?.port.postMessage({ type: "stop", reset: true, token: nextPlaybackToken() });
   try {
     await ensureAudioContext();
+    await preflightWav(file, audioContext.sampleRate);
     const data = await file.arrayBuffer();
-    buffer = await decodeAudioFile(data);
+    const candidate = await decodeAudioFile(data);
+    checkPCM(candidate.length, candidate.numberOfChannels);
+    buffer = candidate;
     buildWaveform(buffer);
     workletBufferLoaded = false;
     sendBufferToWorklet();
+    fileNotice.textContent = "";
+    updateDurationNotice();
     const longFileNote = buffer.duration > largeFileSeconds ? " - long file" : "";
     fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s${longFileNote}`;
     clearDownload();
     downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
-      ? "export limit: 180 s output" : "ready";
+      ? "export limit: 5 min output" : "ready";
     playheadSeconds = 0;
     sourcePlayheadSeconds = 0;
     resetCurrentReadouts();
     draw();
   } catch (error) {
     console.error(error);
-    fileStatus.textContent = "Could not load audio. Try WAV, MP3, or M4A.";
-    downloadReadout.textContent = "not ready";
-    buffer = null;
+    fileStatus.textContent = previousStatus;
+    downloadReadout.textContent = previousDownloadStatus;
+    fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."} Previous audio remains available.`;
   } finally {
     setTransportBusy(false);
   }
@@ -1111,12 +1135,11 @@ downloadButton.addEventListener("click", async () => {
     });
 
     downloadUrl = URL.createObjectURL(rendered.blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = "AudioCurveLab-export.wav";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    saveWavLink.href = downloadUrl;
+    saveWavLink.hidden = false;
+    // Keep a direct user-click save path when an automatic download is blocked.
+    saveWavLink.click();
+    fileNotice.textContent = "WAV ready. If saving did not start, click Save WAV. Browser download permissions may require approval.";
     downloadReadout.textContent = rendered.truncated
       ? `${rendered.duration.toFixed(1)} s, capped`
       : `${rendered.duration.toFixed(1)} s`;
@@ -1124,10 +1147,12 @@ downloadButton.addEventListener("click", async () => {
     if (error.name === "AbortError") {
       downloadReadout.textContent = "cancelled";
     } else if (error.code === "EXPORT_DURATION_LIMIT") {
-      downloadReadout.textContent = error.message;
+      fileNotice.textContent = error.message;
+      downloadReadout.textContent = "output exceeds 5 min";
     } else {
       console.error(error);
       downloadReadout.textContent = "export failed";
+      fileNotice.textContent = "Could not create WAV. Try a shorter excerpt and stop playback/rendering in other Lab windows.";
     }
   } finally {
     renderAbortController = null;
@@ -1224,7 +1249,7 @@ function pointerToPoint(event) {
   const { left, width } = getPlotBounds();
   const canvasX = event.clientX - rect.left;
   const x = Math.max(0, Math.min(1, (canvasX - left) / width));
-  const y = Math.max(0, Math.min(1, 1 - ((event.clientY - rect.top) / rect.height)));
+  const y = Math.max(0, Math.min(1, curveY(activeCurve, (event.clientY - rect.top) / rect.height)));
   return { x, y };
 }
 

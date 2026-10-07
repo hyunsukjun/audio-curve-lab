@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+globalThis.sampleRate=48000;
+globalThis.AudioWorkletProcessor=class {constructor(){this.messages=[];this.port={postMessage:m=>this.messages.push(m)}}};
+let Processor;globalThis.registerProcessor=(_,p)=>Processor=p;await import('../src/transform-worklet.js');
+const flat=y=>[{x:0,y},{x:1,y}];
+const p=new Processor(),send=data=>p.port.onmessage({data});
+const source=new Float32Array(300*48000);source.fill(.1);
+send({type:'buffer',left:source,right:source,sampleRate:48000});
+send({type:'curves',stretchCurve:flat(.75),pitchCurve:flat(.5),panCurve:flat(.5)});
+assert.equal(p.outputDuration,300);send({type:'play',token:1});send({type:'seek',seconds:299.999,token:2});
+assert.ok(Math.abs(p.outputFrame-299.999*48000)<.01);
+p.process([],[[new Float32Array(128),new Float32Array(128)]]);
+assert.equal(p.settings.playing,false);assert.equal(p.messages.filter(m=>m.type==='ended').length,1);
+send({type:'play',token:3});assert.equal(p.outputFrame,0);
+send({type:'curves',stretchCurve:flat(.625),pitchCurve:flat(.5),panCurve:flat(.5)});assert.equal(p.outputDuration,300);
+console.log('PASS: Preview 300s, near-end seek/automatic end/restart and over-limit cap');

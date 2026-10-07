@@ -770,3 +770,9 @@ button:disabled {
     grid-template-columns: 11px minmax(70px, 1fr);
   }
 }
+
+/* File admission and persistent direct-save feedback. */
+[hidden] { display: none !important; }
+.fileNotice { color: #ffcd87; margin: 8px 0; overflow-wrap: anywhere; }
+.fileNotice:empty { display: none; }
+#saveWavLink { text-decoration: none; }

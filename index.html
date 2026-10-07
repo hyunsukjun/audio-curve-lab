@@ -6,7 +6,7 @@
     <title>Audio Curve Lab</title>
     <link rel="icon" type="image/svg+xml" href="assets/identity/audio-micro.svg?v=hub-v0.10">
     <link rel="stylesheet" href="assets/identity/tokens.css?v=hub-v0.10">
-    <link rel="stylesheet" href="src/styles.css?v=20261005-seek">
+    <link rel="stylesheet" href="src/styles.css?v=20261007-5min1">
   </head>
   <body>
     <main class="app">
@@ -17,7 +17,7 @@
             <h1><span>Audio </span><span class="brandAccent">Curve Lab</span></h1>
             <p class="tagline">Draw time, pitch, and space onto sound.</p>
             <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
-            <p class="formatNote">Recommended: WAV, MP3. Some formats may vary by browser.</p>
+            <p class="formatNote">Recommended: WAV, MP3. Output: up to 5 min · 48 kHz / 24-bit WAV. Files up to 128 MiB; short excerpts recommended. Use one Lab at a time for heavy processing.</p>
           </div>
         </div>
         <div class="transport">
@@ -25,9 +25,13 @@
             Open Audio
             <input id="fileInput" type="file" accept="audio/*">
           </label>
+          <a id="saveWavLink" class="fileButton" download="AudioCurveLab-export.wav" hidden>Save WAV</a>
           <button id="downloadButton" type="button" title="Stereo WAV · 48 kHz · 24-bit PCM" disabled>Download WAV</button>
         </div>
       </header>
+
+      <p id="durationNotice" role="status" class="fileNotice"></p>
+      <p id="fileNotice" role="alert" class="fileNotice"></p>
 
       <section class="editor">
         <div class="legend">
@@ -145,6 +149,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20261006-freeze-seek1" type="module"></script>
+    <script src="src/app.js?v=20261007-5min1" type="module"></script>
   </body>
 </html>
