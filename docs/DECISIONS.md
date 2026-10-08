@@ -333,3 +333,10 @@ COMMON CANDIDATE: transport shortcuts must respect the same availability as Play
 Local file decoding creates/reuses the AudioContext without resuming it. Playback still resumes the context through the existing Play path. A file chooser can return without the user activation Safari requires for `resume()`, leaving its promise pending; import must not wait for permission to play. File-size/PCM guards, native-rate decode, previous-source preservation on failure, normalized curves and DSP remain unchanged.
 
 Evidence: actual Safari public baseline remained Loading for a valid stereo 48 kHz/24-bit/300-second WAV before any playback. Local corrected version imported the same file and completed a 300-second render with two other idle Lab windows. `tests/import-suspended-context.mjs` fails on the previous handler with a never-resolving resume promise and passes after the change; it also verifies decode failure preserves the previous source and that playback still requests resume. Local disk download was not approved; final public saved-file verification is recorded separately in the family workboard.
+
+
+## 2026-10-08 — Cancel pending first playback
+
+Stop and actual source replacement invalidate a pending Play even before the AudioWorklet node exists. Stop now advances the playback token unconditionally, and Play checks the captured token after asynchronous engine preparation. Forced Stop follows the same rule where present. Explicit Play after cancellation remains available. No-file chooser cancellation and each Lab's existing failed-import policy are preserved. DSP, curve semantics, and export format are unchanged.
+
+Regression: tests/initial-play-cancel.mjs invokes actual application handlers with delayed engine preparation. Old code failed the Stop case; corrected code passes Stop, forced Stop where present, successful source replacement, and explicit retry. This proves request cancellation, not cold-start speed or physical audio onset. Standalone should preserve the same invalidation rule across asynchronous engine setup.
