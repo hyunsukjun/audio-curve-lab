@@ -96,3 +96,10 @@ sound quality, Preview/WAV parity, and browser regression checks over feature br
 
 ### Web output limits (2026-10-07)
 Final output: up to5minutes after Speed processing; stereo48kHz/24bit WAV. The UI, Preview and exporter use one shared limit. Longer output is warned about during editing and cannot be saved until adjusted. Large inputs use provisional resource guards; use short excerpts and avoid concurrent heavy Lab processing.
+
+
+### Portable AIFF input
+
+AIFF (.aif/.aiff), mono/stereo 16/24-bit PCM, is converted locally on import.
+AIFF-C is not supported by this importer; use PCM WAV instead. Original files
+are unchanged. See [support scope and limits](docs/AIFF_IMPORT.md).

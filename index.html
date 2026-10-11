@@ -17,13 +17,13 @@
             <h1><span>Audio </span><span class="brandAccent">Curve Lab</span></h1>
             <p class="tagline">Draw time, pitch, and space onto sound.</p>
             <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
-            <p class="formatNote">Recommended: WAV, MP3. Output: up to 5 min · 48 kHz / 24-bit WAV. Files up to 128 MiB; short excerpts recommended. Use one Lab at a time for heavy processing.</p>
+            <p class="formatNote">Recommended: WAV, MP3. AIFF: mono/stereo 16/24-bit PCM is converted locally on import. Output: up to 5 min · 48 kHz / 24-bit WAV. Files up to 128 MiB; short excerpts recommended. Use one Lab at a time for heavy processing.</p>
           </div>
         </div>
         <div class="transport">
           <label class="fileButton">
             Open Audio
-            <input id="fileInput" type="file" accept="audio/*">
+            <input id="fileInput" type="file" accept="audio/*,.aif,.aiff,.aifc">
           </label>
           <a id="saveWavLink" class="fileButton" download="AudioCurveLab-export.wav" hidden>Save WAV</a>
           <button id="downloadButton" type="button" title="Stereo WAV · 48 kHz · 24-bit PCM" disabled>Download WAV</button>
@@ -149,6 +149,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20261008-initial-stop1" type="module"></script>
+    <script src="src/app.js?v=20261011-aiff1" type="module"></script>
   </body>
 </html>

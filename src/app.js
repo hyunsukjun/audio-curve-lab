@@ -1,3 +1,4 @@
+import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
 import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
 import { screenY, curveY, checkFileSize, checkPCM, preflightWav } from "./browser-safety.js?v=20261007-1";
 import {
@@ -991,7 +992,7 @@ async function loadAudioFile(file) {
     // after the file chooser closes; only Play should wait for activation.
     await ensureAudioContext({ resume: false });
     await preflightWav(file, audioContext.sampleRate);
-    const data = await file.arrayBuffer();
+    const data = await readAudioFile(file, audioContext.sampleRate);
     const candidate = await decodeAudioFile(data);
     checkPCM(candidate.length, candidate.numberOfChannels);
     buffer = candidate;

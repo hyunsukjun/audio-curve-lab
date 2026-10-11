@@ -340,3 +340,11 @@ Evidence: actual Safari public baseline remained Loading for a valid stereo 48 k
 Stop and actual source replacement invalidate a pending Play even before the AudioWorklet node exists. Stop now advances the playback token unconditionally, and Play checks the captured token after asynchronous engine preparation. Forced Stop follows the same rule where present. Explicit Play after cancellation remains available. No-file chooser cancellation and each Lab's existing failed-import policy are preserved. DSP, curve semantics, and export format are unchanged.
 
 Regression: tests/initial-play-cancel.mjs invokes actual application handlers with delayed engine preparation. Old code failed the Stop case; corrected code passes Stop, forced Stop where present, successful source replacement, and explicit retry. This proves request cancellation, not cold-start speed or physical audio onset. Standalone should preserve the same invalidation rule across asynchronous engine setup.
+
+
+## AIFF input compatibility (2026-10-11)
+
+See [AIFF import contract](AIFF_IMPORT.md): local PCM AIFF 16/24-bit mono/stereo
+normalization into PCM WAV before the established decoder. Existing DSP,
+resampling and Lab-specific channel policies are preserved. Browser and memory
+verification limits are recorded there.
