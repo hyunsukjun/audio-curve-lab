@@ -190,3 +190,72 @@ Magnifier buttons and Fit sit beside Undo; a compact horizontal range slider mov
 Source view: solid white 1.5px playback head and dashed blue 1px edit cursor. Draw both above selection/fade shading; hide out-of-view lines rather than pinning them to a false edge.
 
 During playback, hide the dashed source edit cursor; retain its stored position and restore it when stopped (if within the visible viewport). The solid source playback head remains visible. No selection or audio changes.
+
+2026-10-13 visual revision: the source edit-position cursor now uses the same white solid 1.5px line as the playback head, replacing the blue dashed style. It remains hidden during playback; stored position and selection semantics are unchanged.
+
+Current layout: one source waveform with a34px output-time strip underneath; no lower Final Output waveform. Flat blue progress fill represents time, not energy or amplitude. Curve canvas uses the reclaimed height.
+
+
+## Bottom transport and pause/resume (2026-10-13)
+PROJECT-SPECIFIC. Inspired by Granular's grouped transport: Return to start, Play, Pause, output-position bar, elapsed/total time and stereo meter.
+The upper waveform remains the source editing surface. Output seeking retains
+pointer and keyboard control, with its own responsive canvas width.
+Pause (the existing stopButton ID) retains output/source time; Play resumes.
+Space toggles Play/Pause. Return to start seeks to zero without changing whether
+playback is active. It cancels pending initial Play when initialization is unfinished.
+Internal forced stops for source edits/import/render still reset as required.
+Worklet stop acknowledgments carry actual output/source seconds and playback tokens
+reject stale acknowledgments. Resume restarts grains/smoothing via the existing
+Play/seek path; this does not promise sample-identical continuous playback.
+
+
+### Transport icon presentation
+The bottom controls use compact monochrome geometric icons in the order Return to start,
+Play, Pause, with spacing after the navigation control. All three icons share
+the same neutral color; active playback uses a neutral background. Tooltips and accessible names retain the action meaning.
+Reference: https://www.ocenaudio.com/en/features (official toolbar screenshots);
+this adapts the compact icon-led grouping, not an exact copy of its full toolbar.
+Pause/resume and return-to-start semantics remain unchanged.
+
+
+### Full-source overview navigator
+PROJECT-SPECIFIC. The source navigation track aligns with the waveform time-axis
+width and represents 100% of the working source. An outlined viewport represents
+the displayed fraction (2x = 50%, 4x = 25%), and a dot marks the navigation anchor.
+Click/drag centers the viewport around that source position, clamped at boundaries.
+Navigation changes the view only, preserving selection, playback start and PCM.
+Arrow keys move 5% of source length (Shift: 1%); Home/End navigate to boundaries.
+Zoom centers on the selected range midpoint when a selection exists, otherwise
+the edit cursor. Near source boundaries the viewport is clamped to avoid empty space.
+Transport order is Return to start, Play, Pause, with neutral same-color icons.
+
+
+### Transport icon vertical alignment
+Center transport pseudo-element geometry absolutely at 50% / 50% of its button.
+Hidden text must not create an extra grid row that shifts the visible icon upward.
+Preserve the common 16px icon and 32px button height, colors and hit areas.
+
+
+### Bottom transport readability
+The output track is 6px high, centered at y=17 within its unchanged 34px
+pointer target; the white current-position marker is 3x14px on that same center.
+Stereo meter tracks are 9px high with 11px channel/value labels.
+Seeking, time mapping and meter analysis are unchanged.
+
+
+### Continuous output meter
+Remove visible OUT and numeric peak readouts; retain L/R and latched CLIP reset.
+Dark fixed color zones brighten up to the measured level: green below -12 dBFS,
+yellow from -12 to -3 dBFS, red from -3 to 0 dBFS, on the existing -60..0 scale.
+These are display choices, not processing thresholds. Clip full-width gradients
+instead of scaling them, so colors remain tied to dBFS. White peak hold and existing
+meter ballistics remain; CLIP retains the existing sampled-peak threshold 0.999
+(not a true-peak detector). Per-channel accessible labels retain numeric values.
+
+
+### Continuous meter refinement
+Use 8px continuous tracks without segment dividers or an outer border.
+A fixed full-width gradient moves from green through lime/yellow to orange/red;
+the measured level clips this field rather than stretching its color positions.
+Dim background follows the same gradient. Peak hold is a 1px pale line.
+Meter processing, -60..0 dBFS mapping and latched CLIP behavior are unchanged.

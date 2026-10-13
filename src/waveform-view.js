@@ -43,7 +43,7 @@ export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],dur
 export function paintSourceCursors(ctx,geom,range,editFrame,playFrame){
   const span=Math.max(1,range.end-range.start);
   ctx.save();
-  for(const [frame,dash,color,width] of [[editFrame,[3,4],'#8fbfff',1],[playFrame,[],'#ffffff',1.5]]){
+  for(const [frame,dash,color,width] of [[editFrame,[],'#ffffff',1.5],[playFrame,[],'#ffffff',1.5]]){
     if(!Number.isFinite(frame)||frame<range.start||frame>range.end)continue;
     const x=geom.left+(frame-range.start)/span*geom.width;
     ctx.setLineDash(dash);ctx.strokeStyle=color;ctx.lineWidth=width;

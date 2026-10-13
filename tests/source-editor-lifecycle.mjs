@@ -28,7 +28,7 @@ editor.load(original);await select(454,455);assert.equal(editor.cursor,24000);as
 const unchanged=current;el('editZoomIn').onclick();assert.equal(editor.viewport.end-editor.viewport.start,24000);assert.equal(editor.viewport.start,12000);assert.equal(current,unchanged);
 await select(254,454);assert.deepEqual(Array.from(editor.selection),[18000,24000]);await el('editDelete').onclick();assert.equal(current.length,41760);assert.equal(editor.cursor,18000);assert(editor.viewport.end<=41760);
 await el('editUndo').onclick();assert.equal(current.length,48000);
-el('editPan').value='1000';el('editPan').oninput();assert.equal(editor.viewport.end,48000);
+el('editPan').onkeydown({key:'End',preventDefault(){}});assert.equal(editor.viewport.end,48000);
 const key=(key,extra={})=>keys.keydown({target,key,preventDefault(){},stopImmediatePropagation(){},...extra});
 key('-');assert.equal(editor.viewport.start,0);assert.equal(editor.viewport.end,48000);
 key('+',{ctrlKey:true});assert.equal(editor.viewport.end,48000,'browser zoom shortcut not captured');
@@ -46,3 +46,23 @@ editor.followPlayback(2000);assert(editor.viewport.start<=2000&&editor.viewport.
 const freezeView=editor.viewport;editor.followPlayback(2000);assert.deepEqual(editor.viewport,freezeView);
 assert.equal(editor.cursor,editAnchor,'playback must not move the edit cursor');
 console.log('PASS source playback viewport forward/reverse/freeze tracking; edit cursor preserved');
+const seeks=[];
+const linked=sandbox.createSourceEditor({createBuffer:make,apply(){},stop(){},busyChanged(){},repaint(){},primePlayback(){},play(){},getSeekAnchor:()=>.7,seek:(frame,anchor)=>{seeks.push([frame,anchor]);return true}});
+linked.load(original);await select(454,454);assert.deepEqual(seeks,[[24000,.7]]);
+await select(254,454);assert.equal(seeks.length,1,'range selection must not change playback start');
+console.log('PASS click routes selected source frame and pre-stop output anchor; drag only selects');
+
+linked.load(original);await select(214,534);
+assert.deepEqual(Array.from(linked.selection),[9600,28800]);
+el('editZoomIn').onclick();
+assert.equal((linked.viewport.start+linked.viewport.end)/2,19200,'zoom centers selection midpoint');
+el('editZoomIn').onclick();
+assert.equal((linked.viewport.start+linked.viewport.end)/2,19200,'repeat zoom retains selection midpoint');
+const nav=el('editPan');
+nav.listeners.pointerdown(event(646.5,nav,'pointerdown'));
+nav.listeners.pointerup(event(646.5,nav));
+assert.equal((linked.viewport.start+linked.viewport.end)/2,36000,'overview maps 75 percent to 75 percent of full source');
+assert.deepEqual(Array.from(linked.selection),[9600,28800],'overview does not alter selection');
+el('editZoomOut').onclick();
+assert.equal((linked.viewport.start+linked.viewport.end)/2,19200,'zoom returns to selected region center');
+console.log('PASS selection-centered zoom and full-source overview navigation');

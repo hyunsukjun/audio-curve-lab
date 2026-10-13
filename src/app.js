@@ -1,14 +1,10 @@
-import { createSourceEditor } from "./source-editor.js?v=20261013-source6";
-import { createOutputOverview } from "./output-overview.js?v=20261013-source6";
-import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261013-source6";
+import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
+import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261013-source8";
 let sourceEditor = null;
-let outputOverview = null;
 let sourceDisplayPeak = 1;
-let outputDisplayPeak = 0;
-let overviewDuration = 0;
-let overviewStatus = 'Updating output…';
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
-import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
+import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261013-transport1";
 import { screenY, curveY, checkFileSize, checkPCM, preflightWav } from "./browser-safety.js?v=20261007-1";
 import {
   centsFromNorm,
@@ -34,6 +30,7 @@ const outputWaveCanvas = document.getElementById("outputWaveCanvas");
 const outputWaveCtx = outputWaveCanvas.getContext("2d");
 const sourceReadout = document.getElementById("sourceReadout");
 const playButton = document.getElementById("playButton");
+const rewindButton = document.getElementById("rewindButton");
 const stopButton = document.getElementById("stopButton");
 const downloadButton = document.getElementById("downloadButton");
 const clearCurveButton = document.getElementById("clearCurveButton");
@@ -84,8 +81,6 @@ let outputMeter;
 let workletBufferLoaded = false;
 let buffer;
 let waveform = [];
-let outputWaveform = [];
-let outputWaveformDirty = true;
 let seekingDisabled = true;
 let outputHoverProgress = null;
 let activeCurve = "stretch";
@@ -105,7 +100,6 @@ let playbackToken = 0;
 let renderOffline = null;
 let canvasCssWidth = 1;
 let canvasCssHeight = 1;
-let outputDirectionGradient = null;
 let isWaveSeeking = false;
 let meterAnimationFrame = 0;
 let meterLastFrameTime = performance.now();
@@ -157,15 +151,15 @@ function resizeCanvas() {
   if (canvas.width !== nextWidth) canvas.width = nextWidth;
   if (canvas.height !== nextHeight) canvas.height = nextHeight;
   sourceWaveCanvas.style.width = `${targetWidth}px`;
-  outputWaveCanvas.style.width = `${targetWidth}px`;
+
   const waveScale = window.devicePixelRatio || 1;
   const waveWidth = Math.max(1, Math.floor(canvasCssWidth * waveScale));
   const waveHeight = Math.max(1, Math.floor(waveformHeight * waveScale));
   if (sourceWaveCanvas.width !== waveWidth) sourceWaveCanvas.width = waveWidth;
   if (sourceWaveCanvas.height !== waveHeight) sourceWaveCanvas.height = waveHeight;
-  if (outputWaveCanvas.width !== waveWidth) outputWaveCanvas.width = waveWidth;
-  if (outputWaveCanvas.height !== waveHeight) outputWaveCanvas.height = waveHeight;
-  outputDirectionGradient = null;
+  const outputWidth = Math.max(1, Math.floor(outputWaveCanvas.getBoundingClientRect().width * waveScale));
+  if (outputWaveCanvas.width !== outputWidth) outputWaveCanvas.width = outputWidth;
+  outputWaveCanvas.height = Math.max(1,Math.floor(34*waveScale));
   draw();
 }
 
@@ -214,11 +208,12 @@ function updateMeterDisplay(now) {
     }
 
     if (measured.clipped) meterClipLatched = true;
-    row.querySelector(".meterRms").style.transform = `scaleX(${meterPosition(display.rms)})`;
-    row.querySelector(".meterPeak").style.transform = `scaleX(${meterPosition(display.peak)})`;
+    row.querySelector(".meterRms").style.clipPath = `inset(0 ${(1-meterPosition(display.rms))*100}% 0 0)`;
+    row.querySelector(".meterPeak").style.clipPath = `inset(0 ${(1-meterPosition(display.peak))*100}% 0 0)`;
     row.querySelector(".meterHold").style.left = `${meterPosition(display.hold) * 100}%`;
     const peakDb = linearToDb(display.peak);
-    row.querySelector(".meterValue").textContent = Number.isFinite(peakDb) ? `${peakDb.toFixed(1)}` : "-∞";
+    row.setAttribute("aria-label", `${index === 0 ? "Left" : "Right"} output peak: ${Number.isFinite(peakDb) ? peakDb.toFixed(1) + " dBFS" : "silent"}`);
+    row.querySelector(".meterHold").style.opacity = display.hold > 0.001 ? "1" : "0";
   });
 
   meterClipButton.classList.toggle("clipped", meterClipLatched);
@@ -263,7 +258,6 @@ function sortCurve(curve) {
 
 function sendCurves() {
   markDownloadStale();
-  if (activeCurve === "stretch") outputWaveformDirty = true;
   if (!node) return;
   node.port.postMessage({
     type: "curves",
@@ -291,7 +285,6 @@ function updateDurationNotice() {
 }
 
 function markDownloadStale() {
-  outputOverview?.invalidate();
   updateDurationNotice();
   if (fileNotice.textContent.startsWith("WAV ready.")) fileNotice.textContent = "";
   clearDownload();
@@ -311,6 +304,7 @@ function setTransportBusy(isBusy) {
   sourceEditor?.setAvailable(!isBusy);
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
+  rewindButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
   setSeekingDisabled(isBusy || !buffer);
@@ -320,6 +314,7 @@ function setRenderBusy(isBusy) {
   sourceEditor?.setAvailable(!isBusy);
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
+  rewindButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
   downloadButton.disabled = !buffer;
   setSeekingDisabled(isBusy || !buffer);
@@ -355,6 +350,7 @@ async function playAudio() {
     node.port.postMessage({ type: "play", token: nextPlaybackToken() });
     isPlaying = true;
     playButton.textContent = "Playing";
+    draw();
   } catch (error) {
     console.error(error);
     fileStatus.textContent = error.message;
@@ -363,14 +359,19 @@ async function playAudio() {
 
 function stopAudio() {
   if (!buffer) return;
-  const stopToken = nextPlaybackToken();
-  node?.port.postMessage({ type: "stop", reset: true, token: stopToken });
+  // Invalidate pending initial Play even before the worklet exists.
+  const pauseToken = nextPlaybackToken();
+  node?.port.postMessage({ type: "stop", reset: false, token: pauseToken });
   isPlaying = false;
-  playheadSeconds = 0;
-  sourcePlayheadSeconds = 0;
-  resetCurrentReadouts();
   playButton.textContent = "Play";
   draw();
+}
+
+function rewindAudio() {
+  if (!buffer || seekingDisabled) return;
+  // Also cancel a pending initial Play, while retaining active playback.
+  if (!node) nextPlaybackToken();
+  seekToProgress(0);
 }
 
 function forceStopAudio() {
@@ -489,7 +490,6 @@ function loadGeneratedExample() {
   buildWaveform(buffer);
   sourceDisplayPeak = peakOf(waveform);
   sourceEditor?.load(buffer);
-  outputOverview?.invalidate();
   workletBufferLoaded = false;
   clearDownload();
   downloadReadout.textContent = "ready";
@@ -675,8 +675,8 @@ function drawSourceWaveform() {
     peaks=sourceViewCache.peaks;
   }else sourceViewCache=null;
   const geom=paintWaveform(sourceWaveCtx,{width:canvasCssWidth,height:waveformHeight,
-    peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:Math.max(sourceDisplayPeak,outputDisplayPeak),
-    title:'EDIT AUDIO / SOURCE TIME',hint:'SOLID: PLAYBACK · DASHED: EDIT CURSOR · + / −: ZOOM',
+    peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:sourceDisplayPeak,
+    title:'EDIT AUDIO / SOURCE TIME',hint:'CLICK: PLAYBACK START · DRAG: SELECT · + / −: ZOOM',
     position:-1});
   const x=frame=>geom.left+(frame-range.start)/span*geom.width;
   sourceWaveCtx.save();sourceWaveCtx.beginPath();sourceWaveCtx.rect(geom.left,geom.top,geom.width,geom.bottom-geom.top);sourceWaveCtx.clip();
@@ -705,16 +705,19 @@ function drawSourceWaveform() {
 }
 
 function drawOutputWaveform() {
-  const duration=overviewDuration||getPlaybackDuration();
-  const progress=duration?playheadSeconds/duration:0;
-  paintWaveform(outputWaveCtx,{width:canvasCssWidth,height:waveformHeight,peaks:outputWaveform,
-    duration,referencePeak:Math.max(sourceDisplayPeak,outputDisplayPeak),color:'#a2bdd0',
-    title:'FINAL OUTPUT',hint:overviewStatus,position:progress,hover:outputHoverProgress});
+  const duration=getPlaybackDuration(),progress=duration?Math.max(0,Math.min(1,playheadSeconds/duration)):0;
+  const scale=window.devicePixelRatio||1,w=outputWaveCanvas.getBoundingClientRect().width,left=8,right=8,span=Math.max(1,w-left-right);
+  outputWaveCtx.setTransform(scale,0,0,scale,0,0);outputWaveCtx.clearRect(0,0,w,34);
+  outputWaveCtx.fillStyle='#223a50';outputWaveCtx.fillRect(left,14,span,6);
+  outputWaveCtx.fillStyle='#459bff';outputWaveCtx.fillRect(left,14,span*progress,6);
+  if(outputHoverProgress!==null){outputWaveCtx.fillStyle='#8fbfff';outputWaveCtx.fillRect(left+span*outputHoverProgress,11,1,12);}
+  outputWaveCtx.fillStyle='#fff';outputWaveCtx.fillRect(left+span*progress-1.5,10,3,14);
   outputWaveCanvas.setAttribute('aria-valuenow',String(Math.round(progress*100)));
-  outputWaveCanvas.setAttribute('aria-valuetext',`${formatClock(playheadSeconds)} of ${formatClock(duration)} · ${overviewStatus}`);
+  outputWaveCanvas.setAttribute('aria-valuetext',`${formatClock(playheadSeconds)} of ${formatClock(duration)}`);
 }
 
 function draw() {
+  playButton.setAttribute("aria-pressed", String(isPlaying));
   const scale = window.devicePixelRatio || 1;
   const canvasWidth = canvasCssWidth;
   const { left, width: w, height: h } = getPlotBounds();
@@ -827,7 +830,7 @@ async function setupAudio() {
     throw new Error("AudioWorklet is not available. Use a current Chrome, Edge, or Safari version over HTTPS.");
   }
 
-  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20261007-5min1");
+  await audioContext.audioWorklet.addModule("src/transform-worklet.js?v=20261013-transport1");
     node = new AudioWorkletNode(audioContext, "audio-transform-processor", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
@@ -857,9 +860,8 @@ async function setupAudio() {
       } else if (event.data.type === "stopped") {
         playButton.textContent = "Play";
         isPlaying = false;
-        playheadSeconds = 0;
-        sourcePlayheadSeconds = 0;
-        resetCurrentReadouts();
+        playheadSeconds = event.data.seconds ?? 0;
+        sourcePlayheadSeconds = event.data.sourceSeconds ?? 0;
         draw();
       }
     };
@@ -879,7 +881,6 @@ async function loadAudioFile(file) {
     renderAbortController.abort();
     renderAbortController = null;
   }
-  outputOverview?.cancel();
   setTransportBusy(true);
   fileStatus.textContent = `Loading ${file.name}...`;
   downloadReadout.textContent = "loading";
@@ -899,8 +900,7 @@ async function loadAudioFile(file) {
     buildWaveform(buffer);
     sourceDisplayPeak = peakOf(waveform);
     sourceEditor?.load(buffer);
-    outputOverview?.invalidate();
-    workletBufferLoaded = false;
+      workletBufferLoaded = false;
     sendBufferToWorklet();
     fileNotice.textContent = "";
     updateDurationNotice();
@@ -920,8 +920,7 @@ async function loadAudioFile(file) {
     fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."} Previous audio remains available.`;
   } finally {
     setTransportBusy(false);
-    outputOverview?.invalidate();
-  }
+    }
 }
 
 fileInput.addEventListener("change", async () => {
@@ -932,6 +931,7 @@ fileInput.addEventListener("change", async () => {
 playButton.addEventListener("click", playAudio);
 
 stopButton.addEventListener("click", stopAudio);
+rewindButton.addEventListener("click", rewindAudio);
 
 function seekToProgress(progress) {
   if (!buffer || seekingDisabled) return;
@@ -944,13 +944,13 @@ function seekToProgress(progress) {
     progress,
     getPlaybackDuration()
   );
-  node?.port.postMessage({ type: "seek", progress, token: playbackToken });
+  node?.port.postMessage({ type: "seek", progress, token: nextPlaybackToken() });
   draw();
 }
 
 function seekFromWavePointer(event) {
   const rect = outputWaveCanvas.getBoundingClientRect();
-  const { left, width } = getPlotBounds();
+  const left=8,width=Math.max(1,rect.width-left-8);
   seekToProgress((event.clientX - rect.left - left) / width);
 }
 
@@ -969,7 +969,7 @@ outputWaveCanvas.addEventListener("pointermove", (event) => {
 
 function updateOutputHover(event) {
   const rect = outputWaveCanvas.getBoundingClientRect();
-  const { left, width } = getPlotBounds();
+  const left=8,width=Math.max(1,rect.width-left-8);
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
   outputHoverProgress = !seekingDisabled && event.pointerType !== "touch"
@@ -1026,7 +1026,6 @@ downloadButton.addEventListener("click", async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
-  outputOverview?.cancel();
   renderAbortController = new AbortController();
   setRenderBusy(true);
   downloadReadout.textContent = "creating 0%";
@@ -1070,8 +1069,7 @@ downloadButton.addEventListener("click", async () => {
     renderAbortController = null;
     downloadButton.textContent = "Download WAV";
     setRenderBusy(false);
-    outputOverview?.invalidate();
-  }
+    }
 });
 
 function closeResetDialog() {
@@ -1088,7 +1086,6 @@ function applyResetAll() {
   editedCurves.pitch = false;
   editedCurves.pan = false;
   transformSettings.globalDirection = 1;
-  outputWaveformDirty = true;
   resetCurrentReadouts();
   selectedPoint = null;
   hoverPoint = null;
@@ -1122,7 +1119,6 @@ window.addEventListener("keydown", (event) => {
 
 clearCurveButton.addEventListener("click", () => {
   forceStopAudio();
-  if (activeCurve === "stretch") outputWaveformDirty = true;
   curves[activeCurve] = defaultCurves[activeCurve]();
   editedCurves[activeCurve] = false;
   selectedPoint = null;
@@ -1290,6 +1286,7 @@ window.addEventListener("resize", resizeCanvas);
 if ("ResizeObserver" in window) {
   const canvasResizeObserver = new ResizeObserver(resizeCanvas);
   canvasResizeObserver.observe(canvas);
+  canvasResizeObserver.observe(outputWaveCanvas);
 }
 
 window.addEventListener("keydown", (event) => {
@@ -1323,12 +1320,18 @@ sourceEditor = createSourceEditor({
   createBuffer: createAudioBuffer,
   stop: forceStopAudio,
   busyChanged: busy => {
-    if(busy)outputOverview?.cancel();
     setTransportBusy(busy);
-    if(busy)stopButton.disabled=false;else outputOverview?.invalidate();
+    if(busy)stopButton.disabled=false;
   },
   primePlayback: () => { ensureAudioContext().catch(console.error); },
   play: playAudio,
+  getSeekAnchor:()=>getPlaybackDuration()?playheadSeconds/getPlaybackDuration():0,
+  seek:(frame,current)=>{
+    if(!buffer)return false;
+    const progress=findSourceSeek({sourceDuration:buffer.duration,curve:curves.stretch,direction:transformSettings.globalDirection,outputDuration:getPlaybackDuration(),target:frame/buffer.sampleRate,current});
+    seekToProgress(progress===null?current:progress);
+    return progress!==null;
+  },
   repaint: drawSourceWaveform,
   apply: candidate => {
     buffer=candidate;workletBufferLoaded=false;playheadSeconds=0;sourcePlayheadSeconds=0;
@@ -1337,15 +1340,3 @@ sourceEditor = createSourceEditor({
   }
 });
 sourceEditor.load(buffer);
-outputOverview=createOutputOverview({
-  capture:()=>buffer?{audioBuffer:buffer,curves:structuredClone(curves),settings:getSettings()}:null,
-  render:async(snapshot,signal)=>{const render=await getOfflineRenderer();return render({...snapshot,signal,pcmOnly:true});},
-  pending:()=>{outputWaveform=[];overviewDuration=0;overviewStatus='UPDATING · LATEST EDITS ALREADY FEED PREVIEW';drawOutputWaveform();},
-  publish:result=>{
-    outputWaveform=result?summarizeChannels([result.left,result.right]):[];
-    outputDisplayPeak=peakOf(outputWaveform);overviewDuration=result?result.left.length/result.sampleRate:0;
-    overviewStatus=result?'RENDERED RESULT · CLICK / DRAG TO SEEK':'EMPTY AUDIO';draw();
-  },
-  failed:error=>{outputWaveform=[];overviewStatus=error.code==='EXPORT_DURATION_LIMIT'?'OUTPUT EXCEEDS 5 MIN · PREVIEW ONLY':'OUTPUT VIEW FAILED · TRY A SHORTER EXCERPT';drawOutputWaveform();}
-});
-outputOverview.invalidate();

@@ -337,3 +337,10 @@ verification limits are recorded there.
 ## Source editing and waveform revision (2026-10-13)
 
 Source edits now precede the existing transform engine. Original PCM references remain immutable; complete edited PCM replaces the shared Preview/Render input at its native decoded rate. Joins use at most 5 ms complementary half-cosine overlap. End fades also precede curves, so reverse/pitch/freeze transform them. Export stays 48 kHz/24-bit. Display gain never modifies samples. See [current contract](OUTPUT_EDIT.md).
+
+
+## Pause position acknowledgment
+Pause uses stop(reset:false), preserving worklet output/source frames. The stop
+acknowledgment reports both frame-derived times, rather than hardcoded zero.
+Forced stop(reset:true) still resets. Existing Play/seek grain and smoothing
+initialization is retained; interpolation, gain, pitch and export are unchanged.

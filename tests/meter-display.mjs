@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+const pick=n=>{const a=source.indexOf('function '+n+'(');return source.slice(a,source.indexOf('\n}',a)+2)};
+const parts={};const row={querySelector:s=>parts[s]??=( {style:{}} ),setAttribute:(k,v)=>row[k]=v};
+const c={meterLastFrameTime:0,outputMeter:{read:()=>[{peak:1,rms:.1,clipped:true}]},meterRows:[row],meterDisplay:[{peak:1,rms:.1,hold:1,holdUntil:0}],meterClipLatched:false,meterClipButton:{classList:{toggle(){}},setAttribute(){}},requestAnimationFrame:()=>1};
+vm.createContext(c);vm.runInContext(['linearToDb','meterPosition','smoothMeterValue','updateMeterDisplay'].map(pick).join('\n'),c);
+c.updateMeterDisplay(16);
+assert.equal(parts['.meterPeak'].style.clipPath,'inset(0 0% 0 0)');
+assert.equal(c.meterPosition(.001),0);assert.equal(c.meterPosition(1),1);
+assert(Math.abs(c.meterPosition(10**(-12/20))-.8)<1e-12);
+assert(Math.abs(c.meterPosition(10**(-3/20))-.95)<1e-12);
+assert.equal(c.meterClipLatched,true);assert.match(row['aria-label'],/0.0 dBFS/);
+assert.equal(parts['.meterValue'],undefined);
+console.log('PASS fixed dBFS mapping, clipped fill, peak label, clip latch, no numeric DOM dependency');

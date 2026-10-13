@@ -105,7 +105,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
           this.sourceFrame = this.initialSourceFrame();
         }
         this.positionFramesUntilUpdate = 0;
-        this.port.postMessage({ type: "stopped", seconds: 0, token: this.token });
+        this.port.postMessage({ type: "stopped", seconds: this.outputFrame / sampleRate, sourceSeconds: this.sourceFrame / this.sampleRateSource, token: this.token });
       } else if (data.type === "seek") {
         this.token = data.token ?? this.token;
         const fallbackProgress = this.outputDuration > 0 ? (data.seconds || 0) / this.outputDuration : 0;

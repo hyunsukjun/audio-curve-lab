@@ -19,7 +19,7 @@
  .tagline{display:none}.formatNote{font-size:10px}.topbar h1{font-size:23px}
  #durationNotice{grid-row:2}#fileNotice{grid-row:3}.fileNotice:empty{display:none}
  .fileNotice{margin:2px 16px;font-size:11px}
- .editor{grid-row:4;grid-template-rows:auto auto auto minmax(120px,1fr) 130px;gap:7px;padding:8px 12px;align-content:stretch}
+ .editor{grid-row:4;grid-template-rows:auto auto auto minmax(120px,1fr);gap:7px;padding:8px 12px;align-content:stretch}
  .legend{min-height:40px;padding:4px 8px;gap:10px}.legend button{height:30px}
  .panel{padding:6px 8px}.readout{padding:0 10px}
  .canvasFrame{min-height:0;grid-template-rows:18px minmax(0,1fr)}
@@ -34,3 +34,99 @@
 
 #editZoomIn,#editZoomOut{display:inline-flex;align-items:center;gap:3px;font-size:14px}
 #editZoomIn svg,#editZoomOut svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6}
+
+#outputWaveCanvas{height:34px;cursor:ew-resize;border-top:1px solid #23394d}
+
+
+/* Shared transport grouping, with the Audio output timeline beside Play/Pause. */
+.playbackBar{grid-template-columns:auto minmax(100px,1fr) auto minmax(200px,25%);gap:12px}
+#outputWaveCanvas{min-width:0;width:100%;height:34px;border:0;background:transparent}
+.bottomTransport button{min-width:60px}
+#rewindButton{min-width:40px;padding-inline:10px}
+#timeStatus{min-width:0;font-size:13px}
+.outputMeter{grid-template-columns:auto minmax(70px,1fr) auto}
+@media(max-width:1100px){
+ .playbackBar{grid-template-columns:auto minmax(100px,1fr) auto}
+ .outputMeter{grid-column:1/-1;border-left:0;padding:2px 0 0}
+}
+@media(max-width:600px){
+ .playbackBar{grid-template-columns:auto 1fr;gap:6px}
+ #outputWaveCanvas{grid-row:2;grid-column:1/-1}
+ #timeStatus{grid-row:1;grid-column:2;font-size:11px}
+ .app{padding-bottom:160px}
+}
+
+/* Compact icon-led grouping inspired by the official Ocenaudio toolbar.
+   Shapes are CSS geometry, not copied product assets. */
+.bottomTransport{gap:0;padding:3px;border:1px solid #304252;border-radius:6px;background:#101d29}
+.bottomTransport button,#rewindButton{
+ position:relative;display:grid;place-items:center;width:38px;min-width:38px;
+ height:32px;padding:0;border:0;border-radius:3px;background:transparent;
+ color:#d2dce5;font-size:0;box-shadow:none;
+}
+.bottomTransport button::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;width:16px;height:16px;background:currentColor}
+#playButton::before{clip-path:polygon(20% 5%,95% 50%,20% 95%)}
+#stopButton::before{clip-path:polygon(15% 8%,38% 8%,38% 92%,15% 92%,15% 8%,62% 8%,85% 8%,85% 92%,62% 92%,62% 8%)}
+#rewindButton{margin-left:7px;border-left:1px solid #344655;border-radius:0 3px 3px 0}
+#rewindButton::before{clip-path:polygon(10% 10%,23% 10%,23% 90%,10% 90%,10% 10%,85% 10%,85% 90%,30% 50%,85% 10%)}
+.bottomTransport button:hover{background:#26394c;color:#fff}
+#playButton[aria-pressed="true"]{background:#183d63;color:#70b5ff}
+.bottomTransport button:focus-visible{outline:2px solid #91c6ff;outline-offset:2px}
+.bottomTransport button:disabled{opacity:.35}
+
+
+/* Neutral transport icons; state is conveyed by a neutral inset, not a hue. */
+#playButton,#stopButton,#rewindButton{color:#d2dce5}
+#playButton[aria-pressed="true"]{background:#35404b;color:#d2dce5}
+#rewindButton{margin-left:0;margin-right:7px;border-left:0;border-right:1px solid #344655;border-radius:3px 0 0 3px}
+.bottomTransport button:hover{background:#26394c;color:#d2dce5}
+/* The full overview track aligns exactly with the waveform's time axis. */
+.sourceNavigator{margin:0 8px 0 54px;padding:3px 0}
+#editPan{position:relative;display:block;width:100%;height:18px;margin:0;padding:0;
+ background:#142332;border:1px solid #344858;border-radius:3px;box-sizing:border-box;
+ cursor:crosshair;touch-action:none;overflow:hidden}
+.sourceViewport{position:absolute;top:1px;bottom:1px;left:var(--view-left,0%);width:var(--view-width,100%);
+ box-sizing:border-box;background:#9faeb333;border:1px solid #a8bacb;border-radius:2px;pointer-events:none}
+.sourceNavPoint{position:absolute;left:clamp(4px,var(--nav-point,0%),calc(100% - 4px));top:50%;
+ width:6px;height:6px;transform:translate(-50%,-50%);border-radius:50%;background:#eef4fa;pointer-events:none}
+#editPan[aria-disabled="true"]{opacity:.35;cursor:default}
+#editPan:focus-visible{outline:2px solid #d2dce5;outline-offset:2px}
+
+/* Keep the transport track centered at y=17 in its 34px hit area. */
+.playbackBar .meterTrack{height:9px}
+.playbackBar .meterChannelLabel,.playbackBar .meterValue{font-size:11px;color:#b5c6d6}
+.playbackBar .meterTitle{font-size:11px}
+.playbackBar .meterRow{grid-template-columns:12px minmax(60px,1fr) 38px}
+.playbackBar .meterChannels{gap:5px}
+
+/* Fixed dBFS color zones: -60..-12 green, -12..-3 yellow, -3..0 red.
+   Clip the full-width color field; never scale the gradient with the signal. */
+.playbackBar .outputMeter{grid-template-columns:minmax(0,1fr) auto}
+.playbackBar .meterRow{grid-template-columns:12px minmax(60px,1fr)}
+.playbackBar .meterTrack{
+ height:11px;border-color:#354453;
+ background:linear-gradient(to right,#163c28 0% 80%,#49421b 80% 95%,#481e25 95% 100%);
+}
+.playbackBar .meterRms,.playbackBar .meterPeak{
+ transform:none;clip-path:inset(0 100% 0 0);
+ background:linear-gradient(to right,#53db85 0% 80%,#f0cf54 80% 95%,#ff6470 95% 100%);
+}
+.playbackBar .meterRms{opacity:.55}
+.playbackBar .meterPeak{top:0;bottom:0;opacity:1}
+.playbackBar .meterTrack::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(to right,transparent 0 5px,#09121b 5px 7px);
+}
+.playbackBar .meterHold{z-index:1;width:2px;max-width:100%;transform:translateX(-1px);background:#f3f7fa;opacity:0}
+
+/* Continuous meter: fixed dBFS gradient, uncluttered by segment dividers. */
+.playbackBar .meterTrack{
+ height:8px;border:0;border-radius:2px;
+ background:linear-gradient(to right,#102b20 0%,#173822 65%,#323b1c 80%,#453b19 90%,#462c1c 95%,#481f25 100%);
+}
+.playbackBar .meterRms,.playbackBar .meterPeak{
+ background:linear-gradient(to right,#49ca87 0%,#6bd56e 65%,#b9db60 80%,#edce5b 90%,#f39b58 95%,#f26470 100%);
+}
+.playbackBar .meterTrack::after{display:none}
+.playbackBar .meterHold{width:1px;transform:translateX(-.5px);background:#eff5f8}
+.playbackBar .meterChannels{gap:6px}
