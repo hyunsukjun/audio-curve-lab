@@ -333,3 +333,7 @@ See [AIFF import contract](AIFF_IMPORT.md): local PCM AIFF 16/24-bit mono/stereo
 normalization into PCM WAV before the established decoder. Existing DSP,
 resampling and Lab-specific channel policies are preserved. Browser and memory
 verification limits are recorded there.
+
+## Source editing and waveform revision (2026-10-13)
+
+Source edits now precede the existing transform engine. Original PCM references remain immutable; complete edited PCM replaces the shared Preview/Render input at its native decoded rate. Joins use at most 5 ms complementary half-cosine overlap. End fades also precede curves, so reverse/pitch/freeze transform them. Export stays 48 kHz/24-bit. Display gain never modifies samples. See [current contract](OUTPUT_EDIT.md).

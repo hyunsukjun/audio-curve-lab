@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="assets/identity/audio-micro.svg?v=hub-v0.10">
     <link rel="stylesheet" href="assets/identity/tokens.css?v=hub-v0.10">
     <link rel="stylesheet" href="src/styles.css?v=20261007-5min1">
+  <link rel="stylesheet" href="src/output-editor.css?v=20261013-source6">
   </head>
   <body>
     <main class="app">
@@ -93,16 +94,20 @@
             <strong id="downloadReadout">not ready</strong>
           </div>
         </div>
-        <div class="sourceWaveFrame">
-          <canvas id="sourceWaveCanvas" width="1400" height="96" role="img" aria-label="Original source waveform and moving source read position"></canvas>
-        </div>
+        <section id="sourceEditPanel" class="sourceEditPanel" aria-label="Editable audio">
+          <div class="sourceEditToolbar"><strong>EDIT AUDIO</strong><span id="editStatus" role="status">Drag to select · Delete to join · Corner handles fade · Auto-applied</span><span id="editCursor" title="Source edit cursor">0.000 s</span><button id="editZoomOut" type="button" aria-label="Zoom out source" title="Zoom out (−)"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><span>−</span></button><button id="editZoomIn" type="button" aria-label="Zoom in source" title="Zoom in (+)"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><span>+</span></button><button id="editZoomFit" type="button" title="Show entire source">Fit · 1×</button><button id="editUndo" type="button" disabled>Undo</button><button id="editRedo" type="button" disabled>Redo</button><button id="editDelete" type="button" disabled>Delete</button></div>
+          <input id="editPan" type="range" min="0" max="1000" step="1" value="0" aria-label="Visible source range" title="Move through the zoomed source">
+          <div class="sourceWaveFrame">
+            <canvas id="sourceWaveCanvas" tabindex="0" role="group" aria-label="Editable audio waveform. Click sets edit cursor. Drag to select. Plus and minus zoom. Delete removes selection. Changes apply automatically."></canvas>
+            <button id="fadeInHandle" class="fadeHandle" type="button" aria-label="Fade in handle" title="Fade In · Drag inward; arrow keys adjust 10 ms; Home clears"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="M2 12 C7 12 10 2 18 2 L18 12 Z"/></svg></button><button id="fadeOutHandle" class="fadeHandle" type="button" aria-label="Fade out handle" title="Fade Out · Drag inward; arrow keys adjust 10 ms; Home clears"><svg viewBox="0 0 20 14" aria-hidden="true"><path d="M2 2 C10 2 13 12 18 12 L2 12 Z"/></svg></button>
+          </div>
+        </section>
         <div class="canvasFrame">
           <div class="curveTimeLabel">CURVES / OUTPUT TIME</div>
           <canvas id="waveCanvas" width="1400" height="620"></canvas>
         </div>
-        <div class="outputWaveFrame">
-          <canvas id="outputWaveCanvas" width="1400" height="96" role="slider" tabindex="0" title="Speed-based guide only; Pitch, Pan, and rendered WAV are not shown." aria-label="Approximate Speed-mapped waveform at output time, not the rendered WAV. Blue means forward, red means reverse. Click or drag here to seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true"></canvas>
-        </div>
+        <div class="outputWaveFrame"><canvas id="outputWaveCanvas" width="1400" height="128" role="slider" tabindex="0" aria-label="Final rendered output waveform. Click or drag to seek." aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true"></canvas></div>
+
       </section>
 
       <footer class="playbackBar" aria-label="Playback and output monitoring">
@@ -149,6 +154,6 @@
       </div>
     </div>
 
-    <script src="src/app.js?v=20261011-aiff1" type="module"></script>
+    <script src="src/app.js?v=20261013-source6" type="module"></script>
   </body>
 </html>

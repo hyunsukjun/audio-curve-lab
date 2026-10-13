@@ -199,3 +199,24 @@ Local file decoding creates/reuses the AudioContext without resuming it. Playbac
 Stop and actual source replacement invalidate a pending Play even before the AudioWorklet node exists. Stop now advances the playback token unconditionally, and Play checks the captured token after asynchronous engine preparation. Forced Stop follows the same rule where present. Explicit Play after cancellation remains available. No-file chooser cancellation and each Lab's existing failed-import policy are preserved. DSP, curve semantics, and export format are unchanged.
 
 Regression: tests/initial-play-cancel.mjs invokes actual application handlers with delayed engine preparation. Old code failed the Stop case; corrected code passes Stop, forced Stop where present, successful source replacement, and explicit retry. This proves request cancellation, not cold-start speed or physical audio onset. Standalone should preserve the same invalidation rule across asynchronous engine setup.
+
+## Source editing and waveform revision (2026-10-13)
+
+Import immediately enables source editing. Drag then Delete; fade release auto-applies. Shared Space/Play uses the complete latest edited source with curves. Curves stay editable. Bottom actual output supports seeking; source selection does not seek. Session edits are not disk autosaves. See [current contract](OUTPUT_EDIT.md).
+
+
+## Source cursor and zoom (2026-10-13, PROJECT-SPECIFIC)
+
+Click sets the source edit cursor (3px click tolerance); drag selects absolute source frames. Plain +/= and − zoom around that cursor. Text fields and Ctrl/Meta/Alt shortcuts are excluded. Fit shows the whole source. Range slider pans without moving the cursor or selection. Cursor may be offscreen after panning; it is not pinned to an incorrect edge. Fade handles outside the visible source range are hidden. Zoom/selection never seek final output.
+
+
+## Source playback head correction (2026-10-13, PROJECT-SPECIFIC)
+
+The source waveform draws a solid white playback head using the AudioWorklet's
+sourceSeconds at the working buffer sample rate. A dashed blue edit cursor remains
+independent. Forward/reverse/freeze therefore follow actual source reading, not
+elapsed output time. During playback, leaving the zoomed viewport recenters it
+around the source head; drag/busy editing suppresses follow. No DSP/transport or
+curve mapping changes. Source selection and zoom anchor are preserved.
+
+During playback, hide the dashed source edit cursor; retain its stored position and restore it when stopped (if within the visible viewport). The solid source playback head remains visible. No selection or audio changes.

@@ -11,7 +11,7 @@ const previous={length:10,numberOfChannels:1,duration:1};
 const candidate={length:14400000,numberOfChannels:2,duration:300};
 class AudioContext {constructor(){this.state='suspended';this.sampleRate=48000} resume(){resumes++;return new Promise(()=>{})}}
 const text=(value='')=>({textContent:value});
-const c={readAudioFile,window:{AudioContext},audioContext:null,buffer:previous,renderAbortController:null,node:null,
+const c={sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],peakOf:()=>1,readAudioFile,window:{AudioContext},audioContext:null,buffer:previous,renderAbortController:null,node:null,
  fileNotice:text(),fileStatus:text('previous'),downloadReadout:text('ready'),playButton:text('Play'),isPlaying:false,
  checkFileSize(){},setTransportBusy(x){busy.push(x)},nextPlaybackToken(){return 1},preflightWav:async()=>{},
  decodeAudioFile:async()=>{decoded++;if(rejectDecode)throw new Error('Invalid audio');return candidate},

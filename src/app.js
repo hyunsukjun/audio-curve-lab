@@ -1,3 +1,12 @@
+import { createSourceEditor } from "./source-editor.js?v=20261013-source6";
+import { createOutputOverview } from "./output-overview.js?v=20261013-source6";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261013-source6";
+let sourceEditor = null;
+let outputOverview = null;
+let sourceDisplayPeak = 1;
+let outputDisplayPeak = 0;
+let overviewDuration = 0;
+let overviewStatus = 'Updating output…';
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
 import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
 import { screenY, curveY, checkFileSize, checkPCM, preflightWav } from "./browser-safety.js?v=20261007-1";
@@ -107,7 +116,7 @@ const meterDisplay = meterRows.map(() => ({
   hold: 0,
   holdUntil: 0
 }));
-const waveformHeight = 96;
+const waveformHeight = 128;
 const parameterScaleWidth = 54;
 const plotRightPadding = 8;
 
@@ -282,10 +291,11 @@ function updateDurationNotice() {
 }
 
 function markDownloadStale() {
-  if (!buffer) return;
+  outputOverview?.invalidate();
   updateDurationNotice();
   if (fileNotice.textContent.startsWith("WAV ready.")) fileNotice.textContent = "";
   clearDownload();
+  if (!buffer) { downloadReadout.textContent = "empty audio"; return; }
   downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
     ? "export limit: 5 min output" : "needs export";
 }
@@ -298,6 +308,7 @@ function clearDownload() {
 }
 
 function setTransportBusy(isBusy) {
+  sourceEditor?.setAvailable(!isBusy);
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
   downloadButton.disabled = isBusy || !buffer;
@@ -306,6 +317,7 @@ function setTransportBusy(isBusy) {
 }
 
 function setRenderBusy(isBusy) {
+  sourceEditor?.setAvailable(!isBusy);
   playButton.disabled = isBusy || !buffer;
   stopButton.disabled = isBusy || !buffer;
   fileInput.disabled = isBusy;
@@ -384,7 +396,7 @@ function getSettings() {
 
 async function getOfflineRenderer() {
   if (!renderOffline) {
-    const module = await import("./offline-render.js?v=20261007-5min1");
+    const module = await import("./offline-render.js?v=20261013-edit1");
     renderOffline = module.renderOffline;
   }
   return renderOffline;
@@ -475,6 +487,9 @@ function createGeneratedExampleBuffer() {
 function loadGeneratedExample() {
   buffer = createGeneratedExampleBuffer();
   buildWaveform(buffer);
+  sourceDisplayPeak = peakOf(waveform);
+  sourceEditor?.load(buffer);
+  outputOverview?.invalidate();
   workletBufferLoaded = false;
   clearDownload();
   downloadReadout.textContent = "ready";
@@ -643,161 +658,60 @@ function drawPointTooltip(curveName, point) {
   ctx.restore();
 }
 
-function buildOutputWaveform() {
-  outputWaveformDirty = false;
-  outputDirectionGradient = null;
-  outputWaveform = waveform.map(() => []);
-  if (!buffer || !waveform.length) return;
-  const buckets = waveform[0].length;
-  const duration = getPlaybackDuration();
-  let sourceSeconds = initialPlaybackDirection(curves.stretch, transformSettings.globalDirection) < 0
-    ? buffer.duration : 0;
-  for (let i = 0; i < buckets; i += 1) {
-    const previous = sourceSeconds;
-    sourceSeconds = Math.max(0, Math.min(buffer.duration,
-      sourceSeconds + (effectiveSpeedAt(curves.stretch, (i + 0.5) / buckets, transformSettings.globalDirection) * duration / buckets)));
-    const from = Math.max(0, Math.min(buckets - 1, Math.floor(Math.min(previous, sourceSeconds) / buffer.duration * buckets)));
-    const to = Math.max(0, Math.min(buckets - 1, Math.floor(Math.max(previous, sourceSeconds) / buffer.duration * buckets)));
-    // Preserve transients that a fast or reverse read would skip between display columns.
-    for (let channel = 0; channel < waveform.length; channel += 1) {
-      let peak = 0;
-      for (let j = from; j <= to; j += 1) peak = Math.max(peak, waveform[channel][j]);
-      outputWaveform[channel].push(peak);
-    }
-  }
-}
-
-function getOutputDirectionGradient(left, width) {
-  if (outputDirectionGradient) return outputDirectionGradient;
-  const gradient = outputWaveCtx.createLinearGradient(left, 0, left + width, 0);
-  const neutral = [151, 163, 175];
-  const forward = [77, 167, 232];
-  const reverse = [235, 100, 111];
-  for (let i = 0; i <= 96; i += 1) {
-    const progress = i / 96;
-    const speed = effectiveSpeedAt(curves.stretch, progress, transformSettings.globalDirection);
-    const strength = Math.min(1, Math.abs(speed) / 0.3);
-    const target = speed < 0 ? reverse : forward;
-    const color = neutral.map((value, channel) => Math.round(value + (target[channel] - value) * strength));
-    gradient.addColorStop(progress, `rgba(${color.join(",")},0.92)`);
-  }
-  outputDirectionGradient = gradient;
-  return gradient;
-}
-
-function drawWaveform(ctx, peaksByChannel, duration, color, title, hint, position, seekHint = false) {
-  const scale = window.devicePixelRatio || 1;
-  const { left, width } = getPlotBounds();
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.clearRect(0, 0, canvasCssWidth, waveformHeight);
-  ctx.fillStyle = "#0c1f31";
-  ctx.fillRect(0, 0, canvasCssWidth, waveformHeight);
-  ctx.strokeStyle = "rgba(79, 121, 155, 0.28)";
-  ctx.lineWidth = 1;
-  const divisions = width < 680 ? 4 : 10;
-  for (let i = 0; i <= divisions; i += 1) {
-    const x = left + (i / divisions * width);
-    ctx.beginPath();
-    ctx.moveTo(x, 21);
-    ctx.lineTo(x, 77);
-    ctx.stroke();
-  }
-  ctx.fillStyle = "#9bb4c9";
-  ctx.font = "11px sans-serif";
-  ctx.textBaseline = "middle";
-  ctx.fillText(title, 10, 12);
-  const hintText = width > 550 ? hint : seekHint ? "CLICK TO SEEK" : "";
-  if (hintText) {
-    const hintX = Math.max(left + 112, 18 + ctx.measureText(title).width + 8);
-    if (hintX + ctx.measureText(hintText).width < canvasCssWidth - (seekHint && canvasCssWidth > 720 ? 170 : 10)) {
-      ctx.fillStyle = seekHint ? "#75c5f7" : "#9bb4c9";
-      ctx.fillText(hintText, hintX, 12);
-    }
-  }
-  if (buffer && peaksByChannel.length) {
-    ctx.fillStyle = color;
-    const stereo = peaksByChannel.length > 1;
-    const laneCenters = stereo ? [39, 63] : [51];
-    for (let channel = 0; channel < peaksByChannel.length; channel += 1) {
-      const peaks = peaksByChannel[channel];
-      const mid = laneCenters[channel];
-      for (let x = 0; x < width; x += 1) {
-        const index = Math.min(peaks.length - 1, Math.floor(x / width * peaks.length));
-        const amplitude = Math.min(stereo ? 10 : 22, (peaks[index] || 0) * 45);
-        ctx.fillRect(left + x, mid - amplitude, 1, Math.max(1, amplitude * 2));
-      }
-    }
-    ctx.fillStyle = "#9bb4c9";
-    ctx.fillText(stereo ? "L" : "MONO", 11, laneCenters[0]);
-    if (stereo) ctx.fillText("R", 11, laneCenters[1]);
-    for (let i = 0; i <= divisions; i += 1) {
-      ctx.textAlign = i === 0 ? "left" : i === divisions ? "right" : "center";
-      ctx.fillText(formatTime(duration * i / divisions), left + (i / divisions * width), 87);
-    }
-    ctx.textAlign = "start";
-    const seekColor = outputHoverProgress !== null || isWaveSeeking ? "#b4e4ff" : "#75c5f7";
-    // The hover guide previews a seek without changing playback or curve data.
-    if (seekHint && !seekingDisabled && !isWaveSeeking && outputHoverProgress !== null) {
-      const hoverX = left + outputHoverProgress * width;
-      ctx.save();
-      ctx.strokeStyle = seekColor;
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath();
-      ctx.moveTo(hoverX, 21);
-      ctx.lineTo(hoverX, 77);
-      ctx.stroke();
-      ctx.restore();
-    }
-    const cursorX = left + Math.max(0, Math.min(1, position)) * width;
-    ctx.strokeStyle = seekHint ? seekColor : "#e6edf1";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cursorX, 21);
-    ctx.lineTo(cursorX, 77);
-    ctx.stroke();
-    if (seekHint) {
-      ctx.fillStyle = seekColor;
-      ctx.beginPath();
-      ctx.moveTo(cursorX - 5, 21);
-      ctx.lineTo(cursorX + 5, 21);
-      ctx.lineTo(cursorX, 28);
-      ctx.closePath();
-      ctx.moveTo(cursorX - 5, 77);
-      ctx.lineTo(cursorX + 5, 77);
-      ctx.lineTo(cursorX, 70);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-}
-
+let sourceViewCache=null;
 function drawSourceWaveform() {
-  const position = buffer?.duration ? sourcePlayheadSeconds / buffer.duration : 0;
-  drawWaveform(sourceWaveCtx, waveform, buffer?.duration || 0,
-    "rgba(146, 171, 190, 0.86)", "ORIGINAL / SOURCE TIME", "SOURCE READ POSITION", position);
+  const state=sourceEditor?.state;
+  const count=buffer?.length||0;
+  const playbackFrame=sourcePlayheadSeconds*(buffer?.sampleRate||48000);
+  if(isPlaying)sourceEditor?.followPlayback(playbackFrame);
+  const range=sourceEditor?.viewport||{start:0,end:count};
+  const span=Math.max(1,range.end-range.start),rate=buffer?.sampleRate||48000;
+  let peaks=waveform;
+  if(buffer&&(range.start>0||range.end<count)){
+    const key=`${range.start}:${range.end}:${canvasCssWidth}`;
+    if(sourceViewCache?.buffer!==buffer||sourceViewCache.key!==key){
+      sourceViewCache={buffer,key,peaks:summarizeChannels([buffer.getChannelData(0).subarray(range.start,range.end),buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1)).subarray(range.start,range.end)],Math.ceil(canvasCssWidth*2))};
+    }
+    peaks=sourceViewCache.peaks;
+  }else sourceViewCache=null;
+  const geom=paintWaveform(sourceWaveCtx,{width:canvasCssWidth,height:waveformHeight,
+    peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:Math.max(sourceDisplayPeak,outputDisplayPeak),
+    title:'EDIT AUDIO / SOURCE TIME',hint:'SOLID: PLAYBACK · DASHED: EDIT CURSOR · + / −: ZOOM',
+    position:-1});
+  const x=frame=>geom.left+(frame-range.start)/span*geom.width;
+  sourceWaveCtx.save();sourceWaveCtx.beginPath();sourceWaveCtx.rect(geom.left,geom.top,geom.width,geom.bottom-geom.top);sourceWaveCtx.clip();
+  const selection=sourceEditor?.selection;
+  if(selection&&count){sourceWaveCtx.fillStyle='rgba(69,155,255,.28)';sourceWaveCtx.fillRect(x(selection[0]),geom.top,x(selection[1])-x(selection[0]),geom.bottom-geom.top);}
+  const fadeIn=state?.fadeIn||0,fadeOut=state?.fadeOut||0;
+  // Shade the attenuated (removed) area above the gain curve, not the retained signal.
+  for(const [frames,out] of [[fadeIn,false],[fadeOut,true]]){
+    if(!frames||!count)continue;
+    const start=out?count-frames:0;
+    sourceWaveCtx.beginPath();sourceWaveCtx.moveTo(x(start),geom.top);
+    for(let i=0;i<=40;i++){
+      const t=i/40,g=(1-Math.cos(Math.PI*(out?1-t:t)))/2;
+      sourceWaveCtx.lineTo(x(start+frames*t),geom.bottom-g*(geom.bottom-geom.top));
+    }
+    sourceWaveCtx.lineTo(x(start+frames),geom.top);sourceWaveCtx.closePath();
+    sourceWaveCtx.fillStyle='rgba(5,12,22,.58)';sourceWaveCtx.fill();
+    sourceWaveCtx.strokeStyle='#b9dcff';sourceWaveCtx.lineWidth=1;sourceWaveCtx.stroke();
+  }
+  sourceWaveCtx.restore();
+  paintSourceCursors(sourceWaveCtx,geom,range,isPlaying?null:(sourceEditor?.cursor||0),playbackFrame);
+  for(const [id,frame] of [['fadeInHandle',fadeIn],['fadeOutHandle',count-fadeOut]]){
+    const handle=document.getElementById(id);handle.hidden=!count||frame<range.start||frame>range.end;
+    handle.style.left=`${Math.max(12,Math.min(canvasCssWidth-12,x(frame)))}px`;
+  }
 }
 
 function drawOutputWaveform() {
-  if (outputWaveformDirty) buildOutputWaveform();
-  const { left, width } = getPlotBounds();
-  const duration = getPlaybackDuration();
-  const progress = duration > 0 ? Math.max(0, Math.min(1, playheadSeconds / duration)) : 0;
-  drawWaveform(outputWaveCtx, outputWaveform, duration,
-    getOutputDirectionGradient(left, width), "OUTPUT TIME", "CLICK / DRAG TO SEEK", progress, true);
-  if (canvasCssWidth > 720) {
-    outputWaveCtx.font = "10px sans-serif";
-    outputWaveCtx.textAlign = "right";
-    outputWaveCtx.fillStyle = "#4da7e8";
-    outputWaveCtx.fillText("FORWARD", canvasCssWidth - 88, 12);
-    outputWaveCtx.fillStyle = "#eb646f";
-    outputWaveCtx.fillText("REVERSE", canvasCssWidth - 10, 12);
-    outputWaveCtx.textAlign = "start";
-  }
-  if (buffer) {
-    outputWaveCanvas.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
-    outputWaveCanvas.setAttribute("aria-valuetext", `${formatClock(playheadSeconds)} of ${formatClock(duration)}`);
-  }
+  const duration=overviewDuration||getPlaybackDuration();
+  const progress=duration?playheadSeconds/duration:0;
+  paintWaveform(outputWaveCtx,{width:canvasCssWidth,height:waveformHeight,peaks:outputWaveform,
+    duration,referencePeak:Math.max(sourceDisplayPeak,outputDisplayPeak),color:'#a2bdd0',
+    title:'FINAL OUTPUT',hint:overviewStatus,position:progress,hover:outputHoverProgress});
+  outputWaveCanvas.setAttribute('aria-valuenow',String(Math.round(progress*100)));
+  outputWaveCanvas.setAttribute('aria-valuetext',`${formatClock(playheadSeconds)} of ${formatClock(duration)} · ${overviewStatus}`);
 }
 
 function draw() {
@@ -876,22 +790,7 @@ function draw() {
 }
 
 function buildWaveform(audioBuffer) {
-  const buckets = 4000;
-  waveform = Array.from({ length: Math.min(2, audioBuffer.numberOfChannels) }, (_, channelIndex) => {
-    const channel = audioBuffer.getChannelData(channelIndex);
-    const samplesPerBucket = Math.max(1, Math.floor(channel.length / buckets));
-    const peaks = [];
-    for (let i = 0; i < buckets; i += 1) {
-      let peak = 0;
-      const start = i * samplesPerBucket;
-      for (let j = 0; j < samplesPerBucket; j += 1) {
-        peak = Math.max(peak, Math.abs(channel[start + j] || 0));
-      }
-      peaks.push(peak);
-    }
-    return peaks;
-  });
-  outputWaveformDirty = true;
+  waveform=audioBuffer?summarizeChannels([audioBuffer.getChannelData(0),audioBuffer.getChannelData(Math.min(1,audioBuffer.numberOfChannels-1))]):[];
 }
 
 function decodeAudioFile(arrayBuffer) {
@@ -980,6 +879,7 @@ async function loadAudioFile(file) {
     renderAbortController.abort();
     renderAbortController = null;
   }
+  outputOverview?.cancel();
   setTransportBusy(true);
   fileStatus.textContent = `Loading ${file.name}...`;
   downloadReadout.textContent = "loading";
@@ -997,6 +897,9 @@ async function loadAudioFile(file) {
     checkPCM(candidate.length, candidate.numberOfChannels);
     buffer = candidate;
     buildWaveform(buffer);
+    sourceDisplayPeak = peakOf(waveform);
+    sourceEditor?.load(buffer);
+    outputOverview?.invalidate();
     workletBufferLoaded = false;
     sendBufferToWorklet();
     fileNotice.textContent = "";
@@ -1017,6 +920,7 @@ async function loadAudioFile(file) {
     fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."} Previous audio remains available.`;
   } finally {
     setTransportBusy(false);
+    outputOverview?.invalidate();
   }
 }
 
@@ -1122,6 +1026,7 @@ downloadButton.addEventListener("click", async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
+  outputOverview?.cancel();
   renderAbortController = new AbortController();
   setRenderBusy(true);
   downloadReadout.textContent = "creating 0%";
@@ -1165,6 +1070,7 @@ downloadButton.addEventListener("click", async () => {
     renderAbortController = null;
     downloadButton.textContent = "Download WAV";
     setRenderBusy(false);
+    outputOverview?.invalidate();
   }
 });
 
@@ -1410,3 +1316,36 @@ window.addEventListener("keyup", (event) => {
 resizeCanvas();
 loadGeneratedExample();
 startMeterAnimation();
+
+
+// Source edits publish the same complete working buffer to Preview and Render.
+sourceEditor = createSourceEditor({
+  createBuffer: createAudioBuffer,
+  stop: forceStopAudio,
+  busyChanged: busy => {
+    if(busy)outputOverview?.cancel();
+    setTransportBusy(busy);
+    if(busy)stopButton.disabled=false;else outputOverview?.invalidate();
+  },
+  primePlayback: () => { ensureAudioContext().catch(console.error); },
+  play: playAudio,
+  repaint: drawSourceWaveform,
+  apply: candidate => {
+    buffer=candidate;workletBufferLoaded=false;playheadSeconds=0;sourcePlayheadSeconds=0;
+    buildWaveform(buffer);if(buffer)sendBufferToWorklet();
+    markDownloadStale();resetCurrentReadouts();draw();
+  }
+});
+sourceEditor.load(buffer);
+outputOverview=createOutputOverview({
+  capture:()=>buffer?{audioBuffer:buffer,curves:structuredClone(curves),settings:getSettings()}:null,
+  render:async(snapshot,signal)=>{const render=await getOfflineRenderer();return render({...snapshot,signal,pcmOnly:true});},
+  pending:()=>{outputWaveform=[];overviewDuration=0;overviewStatus='UPDATING · LATEST EDITS ALREADY FEED PREVIEW';drawOutputWaveform();},
+  publish:result=>{
+    outputWaveform=result?summarizeChannels([result.left,result.right]):[];
+    outputDisplayPeak=peakOf(outputWaveform);overviewDuration=result?result.left.length/result.sampleRate:0;
+    overviewStatus=result?'RENDERED RESULT · CLICK / DRAG TO SEEK':'EMPTY AUDIO';draw();
+  },
+  failed:error=>{outputWaveform=[];overviewStatus=error.code==='EXPORT_DURATION_LIMIT'?'OUTPUT EXCEEDS 5 MIN · PREVIEW ONLY':'OUTPUT VIEW FAILED · TRY A SHORTER EXCERPT';drawOutputWaveform();}
+});
+outputOverview.invalidate();

@@ -1,0 +1,36 @@
+/* Editing is always available on the working source; both lanes share display scale. */
+[hidden]{display:none!important}
+.sourceEditPanel{min-width:0;position:relative;border:1px solid #315d88;border-radius:6px;background:#0b1420}
+.sourceEditToolbar{display:flex;align-items:center;gap:7px;min-height:30px;padding:3px 8px;font-size:11px}
+.sourceEditToolbar strong{color:#71b3ff;letter-spacing:.06em;white-space:nowrap}
+#editStatus{flex:1;min-width:0;color:#a8bfd5;font-size:11px}
+.sourceEditToolbar button{height:26px;min-width:0;padding:0 9px;font-size:11px}
+.sourceEditPanel .sourceWaveFrame{position:relative;overflow:hidden;border:0;border-radius:0 0 6px 6px}
+#sourceWaveCanvas,#outputWaveCanvas{width:100%;height:128px;display:block;touch-action:none}
+#sourceWaveCanvas{cursor:crosshair}
+.fadeHandle{position:absolute;top:22px;transform:translateX(-50%);width:24px;min-width:24px;height:20px;padding:2px;color:#d0e7ff;border:1px solid #579ce7;background:#172c44;touch-action:none;cursor:ew-resize;border-radius:3px;z-index:2}
+.fadeHandle svg{display:block;width:100%;height:100%;fill:currentColor}
+#fadeInHandle{left:54px}#fadeOutHandle{left:calc(100% - 8px)}
+#sourceWaveCanvas:focus-visible,.fadeHandle:focus-visible{outline:2px solid #e2f1ff;outline-offset:-2px}
+@media(min-width:900px){
+ .app{height:100dvh;min-height:700px;padding:0;grid-template-rows:auto auto auto minmax(0,1fr) auto}
+ .topbar{grid-row:1;padding:9px 16px;gap:12px}
+ .brandMark{width:38px;height:38px}.brand{grid-template-columns:38px minmax(0,1fr);gap:10px}
+ .tagline{display:none}.formatNote{font-size:10px}.topbar h1{font-size:23px}
+ #durationNotice{grid-row:2}#fileNotice{grid-row:3}.fileNotice:empty{display:none}
+ .fileNotice{margin:2px 16px;font-size:11px}
+ .editor{grid-row:4;grid-template-rows:auto auto auto minmax(120px,1fr) 130px;gap:7px;padding:8px 12px;align-content:stretch}
+ .legend{min-height:40px;padding:4px 8px;gap:10px}.legend button{height:30px}
+ .panel{padding:6px 8px}.readout{padding:0 10px}
+ .canvasFrame{min-height:0;grid-template-rows:18px minmax(0,1fr)}
+ #waveCanvas{height:100%;min-height:0}
+ .playbackBar{grid-row:5;position:static;min-height:54px;margin:0 12px 8px;padding:6px 10px}
+}
+@media(max-width:899px){.sourceEditToolbar{flex-wrap:wrap}#editStatus{flex-basis:65%}.editor{grid-template-rows:auto}}
+
+#editCursor{font-variant-numeric:tabular-nums;white-space:nowrap;color:#d0e7ff;font-size:11px}
+#editPan{display:block;width:calc(100% - 24px);height:12px;margin:0 12px;accent-color:#459bff;padding:0}
+#editPan:disabled{opacity:.3}
+
+#editZoomIn,#editZoomOut{display:inline-flex;align-items:center;gap:3px;font-size:14px}
+#editZoomIn svg,#editZoomOut svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6}

@@ -264,3 +264,22 @@ See [AIFF import contract](AIFF_IMPORT.md): local PCM AIFF 16/24-bit mono/stereo
 normalization into PCM WAV before the established decoder. Existing DSP,
 resampling and Lab-specific channel policies are preserved. Browser and memory
 verification limits are recorded there.
+
+## Source editing and waveform revision (2026-10-13)
+
+Preserve original/working-source/final-output ownership, atomic edit publication, linked stereo edits, reference Undo, and latest-revision render publication. Session auto-apply is distinct from project persistence. Preview and export consume the same working source and curves. See [current contract](OUTPUT_EDIT.md).
+
+
+## Source cursor and zoom (2026-10-13, PROJECT-SPECIFIC)
+
+Preserve separate source cursor, viewport and output transport state. Store edit selection in source frames, never screen coordinates. After an edit clamp cursor/view to the new source length; a new import resets view to Fit. Fine-detail peaks must come from the visible PCM region.
+
+
+## Source playback head correction (2026-10-13, PROJECT-SPECIFIC)
+
+The source waveform draws a solid white playback head using the AudioWorklet's
+sourceSeconds at the working buffer sample rate. A dashed blue edit cursor remains
+independent. Forward/reverse/freeze therefore follow actual source reading, not
+elapsed output time. During playback, leaving the zoomed viewport recenters it
+around the source head; drag/busy editing suppresses follow. No DSP/transport or
+curve mapping changes. Source selection and zoom anchor are preserved.

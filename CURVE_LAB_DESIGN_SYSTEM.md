@@ -178,3 +178,15 @@ The app SVG is retained as a future `STANDALONE ASSET`, not installed as a nativ
 Focus #8FBFFF and hover #6AAFFF are Audio web derivatives, not new suite brand colors.
 Semantic parameter, meter and waveform colors remain unchanged. Background and
 workspace geometry retain the existing web design. See `docs/IDENTITY_PILOT.md`.
+
+## Linked waveform display (2026-10-13)
+Top editable source and bottom actual output use equal 128px canvases, equal L/R lane heights and one linked peak-based display gain. Original source peak anchors the scale so fades remain visible. No audio normalization. At desktop widths the curve canvas flexes between both waveforms; below 900px controls wrap and scrolling preserves usable targets. Fade handles sit below the title row.
+
+
+## Source cursor and zoom (2026-10-13, PROJECT-SPECIFIC)
+
+Magnifier buttons and Fit sit beside Undo; a compact horizontal range slider moves the source viewport. Cursor time uses tabular milliseconds. Waveform amplitude scale and lane height do not change with time zoom.
+
+Source view: solid white 1.5px playback head and dashed blue 1px edit cursor. Draw both above selection/fade shading; hide out-of-view lines rather than pinning them to a false edge.
+
+During playback, hide the dashed source edit cursor; retain its stored position and restore it when stopped (if within the visible viewport). The solid source playback head remains visible. No selection or audio changes.

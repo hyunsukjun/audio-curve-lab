@@ -24,7 +24,7 @@ import {
 } from "./transform-core.js?v=20261003-01";
 
 
-export async function renderOffline({ audioBuffer, curves, settings, signal, onProgress, includePCM = true }) {
+export async function renderOffline({ audioBuffer, curves, settings, signal, onProgress, includePCM = true, pcmOnly = false }) {
   if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
   const sourceRate = audioBuffer.sampleRate;
   const sourceDuration = audioBuffer.duration;
@@ -75,7 +75,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
       }
     }
 
-    return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM);
+    return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM, pcmOnly);
   }
 
   const grainSamples = Math.max(TRANSFORM_CONSTANTS.minGrainSamples, Math.round((settings.grainSizeMs / 1000) * sourceRate));
@@ -167,10 +167,11 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
     outR[i] = Math.tanh(outR[i] * normalise);
   }
 
-  return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM);
+  return finishWav(outL, outR, sourceRate, requestedDuration > maxDuration, signal, onProgress, includePCM, pcmOnly);
 }
 
-async function finishWav(left, right, sourceRate, truncated, signal, onProgress, includePCM) {
+async function finishWav(left, right, sourceRate, truncated, signal, onProgress, includePCM, pcmOnly) {
+  if (pcmOnly) return prepareWavChannels(left, right, sourceRate, signal);
   if (!includePCM) {
     const result = await exportWav(left, right, sourceRate, signal);
     onProgress?.(1);

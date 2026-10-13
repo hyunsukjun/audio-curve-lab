@@ -188,3 +188,7 @@ Pan screen coordinates now use screenY = normalized y: top is L (-1), center C (
 This supersedes earlier 180-second/3-minute limits in this document for Audio only. Final Speed-derived output and Preview timeline now share MAX_OUTPUT_SECONDS = 300 from output-policy.js. Exactly 300 seconds is accepted; longer WAV requests are rejected before source PCM reads/output allocation, never silently truncated. A visible live estimated-duration notice appears while editing over-limit curves and clears when the output fits. Input duration is not itself the output limit: 150 seconds at0.5x is300 seconds. 48kHz/24bit stereo and sound mappings are unchanged. Other Labs retain their policies.
 
 Input guards remain independent provisional resource limits:128MiB file and192MiB decoded PCM. Thus five minutes is a maximum output capability, not acceptance of every five-minute high-rate/multichannel input on every device. Encoded-format decode expansion, concurrent tabs and low-memory devices still require testing. Native migration should preserve explicit duration/no-truncation semantics while measuring its own resource budget.
+
+## Source editing and waveform revision (2026-10-13)
+
+Source end fades default to zero; their total cannot exceed working-source length. Handle keys adjust 10 ms. Delete overlap is at most 5 ms. Existing normalized curve points are unchanged; shortened source changes their absolute-time interpretation. No additional curve parameters. See [current contract](OUTPUT_EDIT.md).
