@@ -87,8 +87,6 @@
  cursor:crosshair;touch-action:none;overflow:hidden}
 .sourceViewport{position:absolute;top:1px;bottom:1px;left:var(--view-left,0%);width:var(--view-width,100%);
  box-sizing:border-box;background:#9faeb333;border:1px solid #a8bacb;border-radius:2px;pointer-events:none}
-.sourceNavPoint{position:absolute;left:clamp(4px,var(--nav-point,0%),calc(100% - 4px));top:50%;
- width:6px;height:6px;transform:translate(-50%,-50%);border-radius:50%;background:#eef4fa;pointer-events:none}
 #editPan[aria-disabled="true"]{opacity:.35;cursor:default}
 #editPan:focus-visible{outline:2px solid #d2dce5;outline-offset:2px}
 

@@ -312,7 +312,7 @@ Play/seek path; this does not promise sample-identical continuous playback.
 ### Full-source overview navigator
 PROJECT-SPECIFIC. The source navigation track aligns with the waveform time-axis
 width and represents 100% of the working source. An outlined viewport represents
-the displayed fraction (2x = 50%, 4x = 25%), and a dot marks the navigation anchor.
+the displayed fraction (2x = 50%, 4x = 25%). No separate navigation-anchor dot is shown.
 Click/drag centers the viewport around that source position, clamped at boundaries.
 Navigation changes the view only, preserving selection, playback start and PCM.
 Arrow keys move 5% of source length (Shift: 1%); Home/End navigate to boundaries.

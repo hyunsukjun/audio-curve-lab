@@ -404,10 +404,15 @@ Pause/resume and return-to-start semantics remain unchanged.
 ### Full-source overview navigator
 PROJECT-SPECIFIC. The source navigation track aligns with the waveform time-axis
 width and represents 100% of the working source. An outlined viewport represents
-the displayed fraction (2x = 50%, 4x = 25%), and a dot marks the navigation anchor.
+the displayed fraction (2x = 50%, 4x = 25%). No separate navigation-anchor dot is shown.
 Click/drag centers the viewport around that source position, clamped at boundaries.
 Navigation changes the view only, preserving selection, playback start and PCM.
 Arrow keys move 5% of source length (Shift: 1%); Home/End navigate to boundaries.
 Zoom centers on the selected range midpoint when a selection exists, otherwise
 the edit cursor. Near source boundaries the viewport is clamped to avoid empty space.
 Transport order is Return to start, Play, Pause, with neutral same-color icons.
+
+## Source overview marker simplification — 2026-10-13
+PROJECT-SPECIFIC: remove the small round navigation-anchor marker. Keep the
+viewport rectangle, click/drag navigation, zoom centering and waveform playhead.
+This changes markup/styles only; audio processing and navigation state are unchanged.
