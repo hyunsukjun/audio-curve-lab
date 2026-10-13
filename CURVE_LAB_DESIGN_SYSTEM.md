@@ -259,3 +259,7 @@ A fixed full-width gradient moves from green through lime/yellow to orange/red;
 the measured level clips this field rather than stretching its color positions.
 Dim background follows the same gradient. Peak hold is a 1px pale line.
 Meter processing, -60..0 dBFS mapping and latched CLIP behavior are unchanged.
+
+
+## 2026-10-14 — Common Clear Current / Reset All appearance
+Both actions follow Audio's neutral navy reference: background #122438, text #aabccc, 6px radius, 13px/620 type, 92px minimum width, 38px height (30px at >=900px viewport width). Clear border #3b5063; Reset border #203a52. Shared hover/pressed/focus/disabled styles live in src/curve-actions.css. Red action emphasis is removed; brand/parameter colors elsewhere stay independent. Existing IDs, handlers, reset scope, confirmation mechanism and keyboard behavior remain unchanged. This is a local visual update, separate from DSP verification.
