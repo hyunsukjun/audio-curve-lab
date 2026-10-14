@@ -1,0 +1,21 @@
+.parameterHelp {
+  position: fixed;
+  z-index: 1000;
+  width: min(300px, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #36516b;
+  border-radius: 8px;
+  background: #102030;
+  color: #d4e0ec;
+  box-shadow: 0 5px 18px #0005;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.parameterHelp[hidden] { display: none; }
+.parameterHelp strong { display: block; margin-bottom: 4px; color: #f0f5fa; font-size: 12px; }
+.parameterHelp span { display: block; }
+
+/* Retain legacy nodes for existing UI writers; descriptions now live on controls. */
+.parameterLegend, .curveLegend { display: none !important; }
+.parameterHelp .helpState { margin-top: 6px; color: #a8bed3; font-size: 11px; }

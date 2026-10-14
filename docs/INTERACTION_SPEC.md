@@ -299,3 +299,13 @@ Pilot refinement: information control is now left of Open Audio, with a 28 px ci
 Approved circular dotted-i disclosure immediately left of Open Audio. Default format guidance moves into this optional panel; privacy and actual error/status notices remain. Space operates disclosure without audio transport; Escape/outside click dismiss. Output guidance: Up to 5 min · Stereo · 48 kHz / 24-bit WAV. Input limits reflect current implementation, not a device-memory guarantee. No DSP, admission, export, IDs or defaults changed.
 
 Family verification: all six information panels passed desktop/narrow bounds and Space/Escape/outside-click checks; shared keyboard regression 27/27 passed. Existing dynamic errors and audio handlers unchanged. User approved commit and publication on 2026-10-14. Release evidence in family FILE_HELP_2026-10-14.md. Earlier Audio-only pilot status is superseded.
+
+
+## 2026-10-14 — Parameter help pilot
+
+Parameter help appears after 500 ms pointer hover or immediately on button focus. Touch selection also reveals help; outside press, Escape, blur, scrolling or resizing closes it. Pointer may enter the help to read it. aria-describedby connects each button to its explanation. Parameter selection and Space transport are preserved.
+
+
+## 2026-10-14 — Family parameter help
+
+Static parameter descriptions are available on the relevant buttons using the Audio help design; current values, axes and activation feedback remain visible. See `docs/PARAMETER_HELP.md` (or `PARAMETER_HELP.md` in this directory). No DSP or curve mapping changes.

@@ -422,3 +422,13 @@ Audio-only pilot: file/export guidance is in an information disclosure beside Op
 ## 2026-10-14 — Family file information
 
 Approved circular dotted-i disclosure immediately left of Open Audio. Default format guidance moves into this optional panel; privacy and actual error/status notices remain. Space operates disclosure without audio transport; Escape/outside click dismiss. Output guidance: Up to 5 min · Stereo · 48 kHz / 24-bit WAV. Input limits reflect current implementation, not a device-memory guarantee. No DSP, admission, export, IDs or defaults changed.
+
+
+## 2026-10-14 — Parameter help pilot
+
+Audio-only parameter help pilot: Speed/Pitch/Pan static range legend moved into per-button tooltips. Live values, curve axes, colors and selection remain unchanged. Other Labs are not changed.
+
+
+## 2026-10-14 — Family parameter help
+
+Static parameter descriptions are available on the relevant buttons using the Audio help design; current values, axes and activation feedback remain visible. See `docs/PARAMETER_HELP.md` (or `PARAMETER_HELP.md` in this directory). No DSP or curve mapping changes.

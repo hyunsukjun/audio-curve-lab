@@ -421,3 +421,15 @@ This changes markup/styles only; audio processing and navigation state are uncha
 ## 2026-10-14 — File guidance disclosure (local pilot)
 
 Move long default format/limit guidance into optional help beside Open Audio; keep actual error notices visible. Apply only to Audio pending user review; do not propagate to sibling Labs yet. The 128 MiB input and 5-minute 48k/24-bit output policies are unchanged.
+
+
+## 2026-10-14 — Parameter help pilot
+
+COMMON CANDIDATE: show static parameter meaning/ranges on demand; keep live values and axes visible. Pilot only in Audio pending user review. No audio engine change or release in this step.
+
+Validation: syntax checks for app/core/worklet/offline renderer/help passed; transform-parity and five transport keyboard tests passed. Local browser verified Pitch selection/help, Escape dismissal, Tab to Pan help, Enter selects Pan. Screenshot recorded in family evidence/audio-parameter-help.png. No new listening/export or physical touch-device test claimed. Hover delay is implemented; browser automation did not exercise pointer hover.
+
+
+## 2026-10-14 — Family parameter help
+
+Static parameter descriptions are available on the relevant buttons using the Audio help design; current values, axes and activation feedback remain visible. See `docs/PARAMETER_HELP.md` (or `PARAMETER_HELP.md` in this directory). No DSP or curve mapping changes.

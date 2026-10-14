@@ -275,3 +275,13 @@ Pilot refinement: information control is now left of Open Audio, with a 28 px ci
 ## 2026-10-14 — Family file information
 
 Approved circular dotted-i disclosure immediately left of Open Audio. Default format guidance moves into this optional panel; privacy and actual error/status notices remain. Space operates disclosure without audio transport; Escape/outside click dismiss. Output guidance: Up to 5 min · Stereo · 48 kHz / 24-bit WAV. Input limits reflect current implementation, not a device-memory guarantee. No DSP, admission, export, IDs or defaults changed.
+
+
+## 2026-10-14 — Parameter help pilot
+
+Parameter help pilot: compact dark 300px maximum panel, 12px type, 8px radius, viewport-clamped position under its trigger (above when needed). Avoid a persistent range legend; preserve functional color and numeric feedback.
+
+
+## 2026-10-14 — Family parameter help
+
+Static parameter descriptions are available on the relevant buttons using the Audio help design; current values, axes and activation feedback remain visible. See `docs/PARAMETER_HELP.md` (or `PARAMETER_HELP.md` in this directory). No DSP or curve mapping changes.
