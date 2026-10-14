@@ -283,3 +283,19 @@ These are display choices, not processing thresholds. Clip full-width gradients
 instead of scaling them, so colors remain tied to dBFS. White peak hold and existing
 meter ballistics remain; CLIP retains the existing sampled-peak threshold 0.999
 (not a true-peak detector). Per-channel accessible labels retain numeric values.
+
+
+## 2026-10-14 — File guidance disclosure (local pilot)
+
+The file information disclosure opens by click, Enter or Space. Space events inside it do not reach audio transport. Escape closes it and focuses its summary; an outside pointer click closes it. File/duration alerts remain visible in their existing status/alert elements. No import, editing, rendering or transport handlers changed.
+
+Verification: transform-parity and 5 transport-keyboard checks pass; changed module and required engine syntax checks pass. Local browser: initial collapse, Space opens without starting playback, Escape and outside click close, panel fits observed narrow viewport, no console errors. Existing fileNotice/durationNotice and admission handlers remain unchanged; actual oversized-file rejection was not rerun. Not committed or deployed.
+
+Pilot refinement: information control is now left of Open Audio, with a 28 px circular outline and a distinct dotted i glyph (no nested circle). Help behavior remains unchanged.
+
+
+## 2026-10-14 — Family file information
+
+Approved circular dotted-i disclosure immediately left of Open Audio. Default format guidance moves into this optional panel; privacy and actual error/status notices remain. Space operates disclosure without audio transport; Escape/outside click dismiss. Output guidance: Up to 5 min · Stereo · 48 kHz / 24-bit WAV. Input limits reflect current implementation, not a device-memory guarantee. No DSP, admission, export, IDs or defaults changed.
+
+Family verification: all six information panels passed desktop/narrow bounds and Space/Escape/outside-click checks; shared keyboard regression 27/27 passed. Existing dynamic errors and audio handlers unchanged. User approved commit and publication on 2026-10-14. Release evidence in family FILE_HELP_2026-10-14.md. Earlier Audio-only pilot status is superseded.

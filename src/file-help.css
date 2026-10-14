@@ -1,0 +1,14 @@
+.fileHelp { position:relative; flex:none; }
+.fileHelp > summary { list-style:none; display:flex; align-items:center; justify-content:center; width:28px; height:28px; box-sizing:border-box; border:1px solid var(--cl-border); border-radius:50%; color:var(--cl-text-secondary); background:transparent; cursor:pointer; }
+.fileHelp > summary::-webkit-details-marker { display:none; }
+.fileHelp > summary:hover, .fileHelp[open] > summary { color:var(--cl-text); border-color:var(--cl-accent); }
+.fileHelp > summary:focus-visible { outline:2px solid var(--cl-accent); outline-offset:3px; }
+.fileHelpPanel { position:absolute; z-index:30; right:0; top:calc(100% + 8px); width:min(340px,calc(100vw - 32px)); box-sizing:border-box; padding:16px; border:1px solid var(--cl-border); border-radius:8px; background:#101e2c; color:#c8d7e5; box-shadow:0 12px 32px #0008; font-size:12px; line-height:1.5; }
+.fileHelpPanel > strong { color:#edf4fa; font-size:13px; }
+.fileHelpPanel dl { display:grid; grid-template-columns:58px minmax(0,1fr); gap:9px 12px; margin:12px 0; }
+.fileHelpPanel dt { color:#8fa9bf; }
+.fileHelpPanel dd { margin:0; }
+.fileHelpPanel p { margin:12px 0 0; padding-top:10px; border-top:1px solid var(--cl-border); color:#9fb4c5; }
+@media(max-width:600px) { .fileHelpPanel { position:fixed; left:16px; right:16px; top:150px; width:auto; max-height:calc(100dvh - 180px); overflow:auto; } }
+
+@media(min-width:601px) and (max-width:900px) { .fileHelpPanel { left:0; right:auto; } }

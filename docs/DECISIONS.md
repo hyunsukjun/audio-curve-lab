@@ -416,3 +416,8 @@ Transport order is Return to start, Play, Pause, with neutral same-color icons.
 PROJECT-SPECIFIC: remove the small round navigation-anchor marker. Keep the
 viewport rectangle, click/drag navigation, zoom centering and waveform playhead.
 This changes markup/styles only; audio processing and navigation state are unchanged.
+
+
+## 2026-10-14 — File guidance disclosure (local pilot)
+
+Move long default format/limit guidance into optional help beside Open Audio; keep actual error notices visible. Apply only to Audio pending user review; do not propagate to sibling Labs yet. The 128 MiB input and 5-minute 48k/24-bit output policies are unchanged.

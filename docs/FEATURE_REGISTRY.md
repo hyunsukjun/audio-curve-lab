@@ -412,3 +412,13 @@ A fixed full-width gradient moves from green through lime/yellow to orange/red;
 the measured level clips this field rather than stretching its color positions.
 Dim background follows the same gradient. Peak hold is a 1px pale line.
 Meter processing, -60..0 dBFS mapping and latched CLIP behavior are unchanged.
+
+
+## 2026-10-14 — File guidance disclosure (local pilot)
+
+Audio-only pilot: file/export guidance is in an information disclosure beside Open Audio. The permanent privacy line remains. No file admission or output policy changes.
+
+
+## 2026-10-14 — Family file information
+
+Approved circular dotted-i disclosure immediately left of Open Audio. Default format guidance moves into this optional panel; privacy and actual error/status notices remain. Space operates disclosure without audio transport; Escape/outside click dismiss. Output guidance: Up to 5 min · Stereo · 48 kHz / 24-bit WAV. Input limits reflect current implementation, not a device-memory guarantee. No DSP, admission, export, IDs or defaults changed.

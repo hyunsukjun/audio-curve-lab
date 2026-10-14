@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="src/styles.css?v=20261007-5min1">
   <link rel="stylesheet" href="src/output-editor.css?v=20261013-nav-clean1">
     <link rel="stylesheet" href="src/curve-actions.css?v=20261014-family1">
+    <link rel="stylesheet" href="src/file-help.css?v=20261014-family1">
   </head>
   <body>
     <main class="app">
@@ -19,16 +20,28 @@
             <h1><span>Audio </span><span class="brandAccent">Curve Lab</span></h1>
             <p class="tagline">Draw time, pitch, and space onto sound.</p>
             <p class="statusLine"><span id="fileStatus">No audio loaded</span><span class="privacyNote">Local browser processing. No upload.</span></p>
-            <p class="formatNote">Recommended: WAV, MP3. AIFF: mono/stereo 16/24-bit PCM is converted locally on import. Output: up to 5 min · 48 kHz / 24-bit WAV. Files up to 128 MiB; short excerpts recommended. Use one Lab at a time for heavy processing.</p>
           </div>
         </div>
         <div class="transport">
+          <details id="fileHelp" class="fileHelp">
+            <summary aria-label="Audio file and export information" title="Audio file and export information"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="4" r="1" fill="currentColor"/><path d="M6.5 7h1.5v5m-1.5 0h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="fileHelpPanel">
+              <strong>Files &amp; export</strong>
+              <dl>
+                <dt>Input</dt><dd>WAV, MP3 recommended.</dd>
+                <dt>AIFF</dt><dd>Mono/stereo 16/24-bit PCM (8–192 kHz), converted locally on import. AIFF-C is not supported.</dd>
+                <dt>File size</dt><dd>Up to 128 MiB; decoded audio up to 192 MiB.</dd>
+                <dt>Output</dt><dd>Up to 5 min · Stereo · 48 kHz / 24-bit WAV.</dd>
+              </dl>
+              <p>Short excerpts recommended. Use one Lab at a time for heavy processing.</p>
+            </div>
+          </details>
           <label class="fileButton">
             Open Audio
             <input id="fileInput" type="file" accept="audio/*,.aif,.aiff,.aifc">
           </label>
           <a id="saveWavLink" class="fileButton" download="AudioCurveLab-export.wav" hidden>Save WAV</a>
-          <button id="downloadButton" type="button" title="Stereo WAV · 48 kHz · 24-bit PCM" disabled>Download WAV</button>
+          <button id="downloadButton" type="button" disabled title="Up to 5 min · Stereo · 48 kHz / 24-bit WAV.">Download WAV</button>
         </div>
       </header>
 
@@ -154,6 +167,7 @@
       </div>
     </div>
 
+    <script src="src/file-help.js?v=20261014-family1" type="module"></script>
     <script src="src/app.js?v=20261013-meter1" type="module"></script>
   </body>
 </html>
