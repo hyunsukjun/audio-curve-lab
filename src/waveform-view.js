@@ -13,7 +13,7 @@ export function peakOf(peaks){let peak=0;for(const lane of peaks)for(const p of 
 export function visualGain(referencePeak){return 1/Math.max(.00001,referencePeak);}
 export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],duration=0,referencePeak=1,color='#8bc9ff',title='',hint='',position=0,hover=null,timeOffset=0}) {
   const scale=globalThis.devicePixelRatio||1,w=Math.max(1,width-left-right),top=24,bottom=height-19;
-  ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#191c20';ctx.fillRect(0,0,width,height);
+  ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#252c32';ctx.fillRect(0,0,width,height);
   const divisions=w<680?4:10;ctx.strokeStyle='rgba(139,149,162,.18)';ctx.lineWidth=1;
   for(let i=0;i<=divisions;i++){const x=left+w*i/divisions;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();}
   ctx.fillStyle='#a9b1bb';ctx.font='10px system-ui';ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(title,10,12);

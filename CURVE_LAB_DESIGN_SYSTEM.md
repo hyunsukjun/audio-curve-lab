@@ -460,3 +460,6 @@ See `docs/SHARED_VISUAL_CONTRACT.md` for the accepted shared baseline and resolu
 
 ## Audio-only information density pilot (unreleased)
 Speed/Pitch/Pan share one compact strip. Editing target, point count, engine and source playback position remain available in collapsed Details, in document flow. WAV status moves next to Download WAV. Preserve all bound readout IDs. No sibling adoption until user visual review.
+
+## Functional surfaces candidate
+See `docs/FUNCTIONAL_SURFACE_PILOT.md`: role-based neutral luminance within the continuous workspace. Local Audio-only experiment; supersedes identical-background interpretation, not the shared button/state rules.

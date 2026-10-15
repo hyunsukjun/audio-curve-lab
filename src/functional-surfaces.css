@@ -1,0 +1,19 @@
+/* Audio-only functional surface study. Continuous geometry; no card outlines. */
+:root {
+  --audio-surface-file: #373b43;
+  --audio-surface-controls: var(--audio-surface-file);
+  --audio-surface-values: var(--audio-surface-file);
+  --audio-surface-edit: var(--audio-surface-wave);
+  --audio-surface-wave: #252c32;
+  --audio-surface-curve: #191c20;
+  --audio-surface-transport: #30343c;
+}
+.topbar { background: var(--audio-surface-file); border-bottom-color: transparent; }
+.legend { background: var(--audio-surface-controls); }
+.valueStrip { background: var(--audio-surface-values); border-bottom-color: #171b20; }
+.sourceEditPanel, .sourceEditToolbar, .sourceNavigator { background: var(--audio-surface-edit); }
+.sourceEditPanel { border-top-color: #424a53; }
+.sourceEditPanel .sourceWaveFrame { background: var(--audio-surface-wave); }
+.canvasFrame { background: var(--audio-surface-curve); border-top-color: #111519; }
+.curveTimeLabel { background: var(--audio-surface-curve); border-bottom-color: #30363e; }
+.playbackBar { background: var(--audio-surface-transport); border-top-color: #4a525e; }

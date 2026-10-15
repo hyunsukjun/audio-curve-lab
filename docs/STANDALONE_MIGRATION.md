@@ -329,3 +329,6 @@ Pending visual review; no sibling rollout or deployment. See [STUDIO_UI_PILOT.md
 
 ## COMMON CANDIDATE: compact value hierarchy
 Current Audio pilot separates musical values, optional editing statistics and export status. Native UI should expose the basis of values (engine telemetry during playback versus curve targets at the stopped playhead). Do not mislabel point-hover values as live playback values. Pilot awaits visual approval; not a family-wide requirement yet.
+
+## Functional surfaces candidate
+See `FUNCTIONAL_SURFACE_PILOT.md`: role-based neutral luminance within the continuous workspace. Local Audio-only experiment; supersedes identical-background interpretation, not the shared button/state rules.
