@@ -1,3 +1,5 @@
+> Superseded: the new readout disclosures/compact strip were reverted by user request. Original presentation restored; see INTERACTION_SPEC.md.
+
 # Audio information-density pilot — 2026-10-15
 
 Status: local, awaiting review; not committed/deployed.

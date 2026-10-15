@@ -463,3 +463,6 @@ Speed/Pitch/Pan share one compact strip. Editing target, point count, engine and
 
 ## Functional surfaces candidate
 See `docs/FUNCTIONAL_SURFACE_PILOT.md`: role-based neutral luminance within the continuous workspace. Local Audio-only experiment; supersedes identical-background interpretation, not the shared button/state rules.
+
+## Readout disclosure rollback — 2026-10-15
+User requested removal of the newly introduced Details disclosures across the family. Original always-visible readout panels restored; Oscillator retains its pre-existing Synthesis detail panel and original contents. Value computation and audio behavior unchanged. Do not add disclosure or restructure information during color/minor-UI work. Audio also removes the border above EDIT AUDIO.

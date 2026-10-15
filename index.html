@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="src/studio-theme.css?v=20261015-studio9">
     <link rel="stylesheet" href="src/button-states.css?v=20261015-2">
       <link rel="stylesheet" href="src/value-strip.css?v=20261015-1">
-    <link rel="stylesheet" href="src/functional-surfaces.css?v=20261015-3">
+    <link rel="stylesheet" href="src/functional-surfaces.css?v=20261015-status1">
   </head>
   <body>
     <main class="app">
@@ -46,7 +46,7 @@
             <input id="fileInput" type="file" accept="audio/*,.aif,.aiff,.aifc">
           </label>
           <a id="saveWavLink" class="fileButton" download="AudioCurveLab-export.wav" hidden>Save WAV</a>
-          <span class="exportStatus" role="status" aria-label="WAV export status"><span>WAV</span> <strong id="downloadReadout">not ready</strong></span>
+          <span class="exportStatus" role="status" aria-label="Export status" hidden><strong id="downloadReadout">not ready</strong></span>
           <button id="downloadButton" type="button" disabled title="Up to 5 min · Stereo · 48 kHz / 24-bit WAV.">Download WAV</button>
         </div>
       </header>
@@ -75,21 +75,36 @@
           </div>
         </div>
 
-        <section class="valueStrip" aria-label="Parameter values at playback position">
-          <span id="valueBasis" class="valueBasis" title="While playing: values reported by the preview engine. While stopped: curve values at the output playhead, before engine smoothing.">At playhead</span>
-          <span class="compactValue">Speed <strong id="stretchReadout">1.00 x</strong></span>
-          <span class="compactValue">Pitch <strong id="pitchReadout">0 cents</strong></span>
-          <span class="compactValue">Pan <strong id="panReadout">center</strong></span>
-          <details class="valueDetails">
-            <summary>Details</summary>
-            <div class="valueDetailsBody">
-              <span>Editing <strong id="modeReadout">Speed</strong></span>
-              <span>Points <strong id="pointsReadout">2</strong></span>
-              <span>Engine <strong>Transform</strong></span>
-              <span title="Last source position reported by playback; this is not the source edit cursor.">Source playback <strong id="sourceReadout">0.00 s</strong></span>
-            </div>
-          </details>
-        </section>
+        <div class="panel currentValues">
+          <div class="readout">
+            <span>Curve</span>
+            <strong id="modeReadout">Speed</strong>
+          </div>
+          <div class="readout">
+            <span>Points</span>
+            <strong id="pointsReadout">2</strong>
+          </div>
+          <div class="readout">
+            <span>Engine</span>
+            <strong>Transform</strong>
+          </div>
+          <div class="readout">
+            <span>Speed</span>
+            <strong id="stretchReadout">1.00 x</strong>
+          </div>
+          <div class="readout">
+            <span>Pitch</span>
+            <strong id="pitchReadout">0 cents</strong>
+          </div>
+          <div class="readout">
+            <span>Pan</span>
+            <strong id="panReadout">center</strong>
+          </div>
+          <div class="readout">
+            <span>Source</span>
+            <strong id="sourceReadout">0.00 s</strong>
+          </div>
+        </div>
         <section id="sourceEditPanel" class="sourceEditPanel" aria-label="Editable audio">
           <div class="sourceEditToolbar"><strong>EDIT AUDIO</strong><span id="editStatus" role="status">Drag to select · Delete to join · Corner handles fade · Auto-applied</span><span id="editCursor" title="Source edit cursor">0.000 s</span><button id="editZoomOut" type="button" aria-label="Zoom out source" title="Zoom out (−)"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><span>−</span></button><button id="editZoomIn" type="button" aria-label="Zoom in source" title="Zoom in (+)"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><span>+</span></button><button id="editZoomFit" type="button" title="Show entire source">Fit · 1×</button><button id="editUndo" type="button" disabled>Undo</button><button id="editRedo" type="button" disabled>Redo</button><button id="editDelete" type="button" disabled>Delete</button></div>
           <div class="sourceNavigator"><div id="editPan" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Source overview navigation" title="Full source · Click or drag to center the visible region"><span class="sourceViewport"></span></div></div>
@@ -150,7 +165,7 @@
     </div>
 
     <script src="src/file-help.js?v=20261014-family1" type="module"></script>
-    <script src="src/app.js?v=20261015-surfaces1" type="module"></script>
+    <script src="src/app.js?v=20261015-status1" type="module"></script>
     <div id="stretchHelp" class="parameterHelp" role="tooltip" hidden><strong>Speed · −2× to +2×</strong><span>Change source playback speed. Negative values reverse the sound; zero freezes the source position.</span></div>
     <div id="pitchHelp" class="parameterHelp" role="tooltip" hidden><strong>Pitch · −2400 to +2400 cents</strong><span>Shift pitch down or up by as much as two octaves. 1200 cents = one octave.</span></div>
     <div id="panHelp" class="parameterHelp" role="tooltip" hidden><strong>Pan · Left / Right</strong><span>Move sound across the stereo field. Top = Left · Center = Center · Bottom = Right.</span></div>

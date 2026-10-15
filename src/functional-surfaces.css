@@ -17,3 +17,9 @@
 .canvasFrame { background: var(--audio-surface-curve); border-top-color: #111519; }
 .curveTimeLabel { background: var(--audio-surface-curve); border-bottom-color: #30363e; }
 .playbackBar { background: var(--audio-surface-transport); border-top-color: #4a525e; }
+
+/* Restore pre-density readouts in the unified upper surface. */
+.currentValues { background:#373b43; border:0; }
+ .sourceEditPanel { border-top:0; }
+
+.exportStatus[hidden] { display:none; }

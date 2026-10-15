@@ -288,9 +288,9 @@ function markDownloadStale() {
   updateDurationNotice();
   if (fileNotice.textContent.startsWith("WAV ready.")) fileNotice.textContent = "";
   clearDownload();
-  if (!buffer) { downloadReadout.textContent = "empty audio"; return; }
-  downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
-    ? "export limit: 5 min output" : "needs export";
+  if (!buffer) { setExportStatus("empty audio"); return; }
+  setExportStatus(estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
+    ? "export limit: 5 min output" : "needs export");
 }
 
 function clearDownload() {
@@ -492,7 +492,7 @@ function loadGeneratedExample() {
   sourceEditor?.load(buffer);
   workletBufferLoaded = false;
   clearDownload();
-  downloadReadout.textContent = "ready";
+  setExportStatus("ready");
   fileStatus.textContent = `White noise intervals - ${buffer.duration.toFixed(2)} s`;
   playheadSeconds = 0;
   sourcePlayheadSeconds = 0;
@@ -789,7 +789,6 @@ function draw() {
   const displaySpeed = isPlaying ? currentSpeed : effectiveSpeedAt(curves.stretch, valueProgress, transformSettings.globalDirection);
   const displayCents = isPlaying ? currentCents : centsFromNorm(valueAt(curves.pitch, valueProgress));
   const displayPan = isPlaying ? currentPan : panFromNorm(valueAt(curves.pan, valueProgress));
-  document.getElementById("valueBasis").textContent = isPlaying ? "Playback" : "At playhead";
   stretchReadout.textContent = `${displaySpeed.toFixed(2)} x`;
   pitchReadout.textContent = `${Math.round(displayCents)} cents`;
   panReadout.textContent = formatPan(displayPan);
@@ -890,7 +889,7 @@ async function loadAudioFile(file) {
   }
   setTransportBusy(true);
   fileStatus.textContent = `Loading ${file.name}...`;
-  downloadReadout.textContent = "loading";
+  setExportStatus("loading");
   playButton.textContent = "Play";
   isPlaying = false;
   const stopToken = nextPlaybackToken();
@@ -914,8 +913,8 @@ async function loadAudioFile(file) {
     const longFileNote = buffer.duration > largeFileSeconds ? " - long file" : "";
     fileStatus.textContent = `${file.name} - ${buffer.duration.toFixed(2)} s${longFileNote}`;
     clearDownload();
-    downloadReadout.textContent = estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
-      ? "export limit: 5 min output" : "ready";
+    setExportStatus(estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds
+      ? "export limit: 5 min output" : "ready");
     playheadSeconds = 0;
     sourcePlayheadSeconds = 0;
     resetCurrentReadouts();
@@ -923,7 +922,7 @@ async function loadAudioFile(file) {
   } catch (error) {
     console.error(error);
     fileStatus.textContent = previousStatus;
-    downloadReadout.textContent = previousDownloadStatus;
+    setExportStatus(previousDownloadStatus);
     fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."} Previous audio remains available.`;
   } finally {
     setTransportBusy(false);
@@ -1035,7 +1034,7 @@ downloadButton.addEventListener("click", async () => {
 
   renderAbortController = new AbortController();
   setRenderBusy(true);
-  downloadReadout.textContent = "creating 0%";
+  setExportStatus("creating 0%");
   downloadButton.textContent = "Cancel";
   clearDownload();
 
@@ -1048,7 +1047,7 @@ downloadButton.addEventListener("click", async () => {
       settings: getSettings(),
       signal: renderAbortController.signal,
       onProgress: (progress) => {
-        downloadReadout.textContent = `creating ${Math.round(progress * 100)}%`;
+        setExportStatus(`creating ${Math.round(progress * 100)}%`);
       }
     });
 
@@ -1058,18 +1057,18 @@ downloadButton.addEventListener("click", async () => {
     // Keep a direct user-click save path when an automatic download is blocked.
     saveWavLink.click();
     fileNotice.textContent = "WAV ready. If saving did not start, click Save WAV. Browser download permissions may require approval.";
-    downloadReadout.textContent = rendered.truncated
+    setExportStatus(rendered.truncated
       ? `${rendered.duration.toFixed(1)} s, capped`
-      : `${rendered.duration.toFixed(1)} s`;
+      : `${rendered.duration.toFixed(1)} s`);
   } catch (error) {
     if (error.name === "AbortError") {
-      downloadReadout.textContent = "cancelled";
+      setExportStatus("cancelled");
     } else if (error.code === "EXPORT_DURATION_LIMIT") {
       fileNotice.textContent = error.message;
-      downloadReadout.textContent = "output exceeds 5 min";
+      setExportStatus("output exceeds 5 min");
     } else {
       console.error(error);
-      downloadReadout.textContent = "export failed";
+      setExportStatus("export failed");
       fileNotice.textContent = "Could not create WAV. Try a shorter excerpt and stop playback/rendering in other Lab windows.";
     }
   } finally {
@@ -1361,3 +1360,10 @@ sourceEditor = createSourceEditor({
   }
 });
 sourceEditor.load(buffer);
+
+// Idle readiness is conveyed by the Download control; retain actionable feedback.
+function setExportStatus(message) {
+  const output = document.getElementById("downloadReadout");
+  output.textContent = message;
+  output.parentElement.hidden = ["", "ready", "not ready", "needs export"].includes(message);
+}
