@@ -1,0 +1,179 @@
+/* Audio-only studio pilot. Geometry, hit targets and DSP remain unchanged. */
+:root {
+  --cl-bg-deep: #383b43;
+  --cl-bg: #26292f;
+  --cl-surface: #353941;
+  --cl-surface-raised: #444a54;
+  --cl-surface-hover: #515966;
+  --cl-surface-active: #5a6572;
+  --cl-border: #484e58;
+  --cl-border-strong: #67717e;
+  --cl-text: #e4e7eb;
+  --cl-text-secondary: #c3cad3;
+  --cl-text-muted: #b3bdc9;
+  --cl-radius-md: 4px;
+  --cl-radius-lg: 6px;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--cl-bg); }
+.topbar { background: var(--cl-bg-deep); border-color: var(--cl-border); }
+.brand h1 { font-weight: 600; letter-spacing: -.025em; }
+.brandAccent { color: var(--cl-text-secondary); }
+button, .fileButton { font-weight: 500; background: linear-gradient(#4e5560, #444a54); border-color: #626c79; box-shadow: inset 0 1px #ffffff06; }
+button:hover, .fileButton:hover { background: #59626f; border-color: #8b98a8; }
+button:active:not(:disabled), .fileButton:active { background: #363d47; }
+#downloadButton { background: #315777; border-color: #6c9dcb; color: #e4efff; }
+#downloadButton:hover { background: #3c6a91; border-color: var(--cl-accent); }
+.legend, .panel { background: var(--cl-surface); }
+.curveMode { background: #424852; border-color: #626c79; }
+#stretchMode.active { background: #253b35; border-color: #5b9a87; color: #a6ead7; }
+#pitchMode.active { background: #3d2c31; border-color: #ad646b; color: #f3b1b6; }
+#panMode.active { background: #352f42; border-color: #8c74ac; color: #d0b8ed; }
+.toolToggle, .legend .toolToggle button + button { border-color: #626c79; }
+.legend .toolToggle button { background: #353b44; color: #c3cad3; }
+.legend .toolToggle button.active { background: #5c6978; color: #f1f3f5; }
+#clearCurveButton, #resetButton { background: #444a54; color: #e0e5eb; border-color: #626c79; font-weight: 500; }
+#clearCurveButton:hover, #resetButton:hover { background: #59626f; border-color: #8b98a8; }
+.readout strong { font-weight: 500; }
+.readout:not(:last-child)::after { background: #484e58; }
+.canvasFrame, .sourceWaveFrame, .outputWaveFrame { background: #191c20; border-color: #56616e; }
+.curveTimeLabel { color: #a9b1bb; border-color: #484e58; font-weight: 500; }
+.sourceEditPanel { background: #363d47; border-color: #56616e; }
+.sourceEditToolbar strong { color: #e2e8ef; letter-spacing: .035em; font-weight: 600; }
+#editStatus { color: #c1ccd8; }
+#editCursor { color: #d4dae2; }
+#editPan { background: #15181b; border-color: #444c55; }
+.sourceViewport { background: #b4bec529; border-color: #8e9ba9; }
+.fadeHandle { color: #d7e4f3; background: #293744; border-color: #6d8aaa; box-shadow: none; }
+.bottomTransport { background: #292f37; border-color: #596472; }
+.bottomTransport button { background: transparent; box-shadow: none; }
+.bottomTransport button:hover { background: #343a42; }
+#playButton[aria-pressed="true"] { background: #5c6978; color: #eef1f4; }
+#rewindButton { border-right-color: #596472; }
+.playbackBar { background: var(--cl-surface); border-color: var(--cl-border); }
+.fileHelpPanel, .parameterHelp, .confirmDialog { background: #363e49; color: #e0e6ee; border-color: #718196; }
+.fileHelpPanel dt, .fileHelpPanel p, .parameterHelp .helpState { color: #c2cedc; }
+.fileHelpPanel > strong, .parameterHelp strong { color: #eef1f5; }
+
+/* Selection is persistent; focus is an outside ring; hover never implies selection. */
+button, .fileButton { color: #e0e6ed; }
+.curveMode { position: relative; }
+.curveMode.active::after {
+  content: ""; position: absolute; left: 25%; right: 25%; bottom: 3px;
+  height: 2px; border-radius: 1px; background: currentColor; pointer-events: none;
+}
+.legend .toolToggle button.active { box-shadow: inset 0 -2px #d3dbe5; }
+#clearCurveButton:hover:not(:disabled), #resetButton:hover:not(:disabled) {
+  background: #59626f; border-color: #8b98a8; color: #eef1f5;
+}
+#clearCurveButton:active:not(:disabled), #resetButton:active:not(:disabled) { background: #363d47; }
+#playButton:hover, #stopButton:hover, #rewindButton:hover { background: #343a42; color: #eef1f4; border-color: #596472; }
+button:focus-visible, .fileButton:focus-within {
+  outline: 2px solid #a9cfff; outline-offset: 2px;
+}
+.legend .toolToggle button:focus-visible { outline: 2px solid #a9cfff; outline-offset: -2px; }
+button:disabled, #clearCurveButton:disabled, #resetButton:disabled {
+  opacity: 1; background: #353b44; color: #949eac; border-color: #495360;
+  box-shadow: none; cursor: default;
+}
+
+/* 0.3: brighter cool-grey console surfaces, recessed dark editing canvas. */
+.brandAccent { color: #d6dce5; }
+.topbar { background: linear-gradient(#41444e, #383b43); }
+.legend { background: linear-gradient(#3d424c, #353941); }
+.panel { background: #30353d; }
+.sourceEditToolbar { background: #3a414c; border-radius: 5px 5px 0 0; }
+.curveTimeLabel { background: #303741; color: #c3cedb; }
+.sourceNavigator { background: transparent; }
+#editPan { background: #232a32; border-color: #677586; }
+.sourceViewport { background: #a8c6e338; border-color: #aec9e3; }
+#stretchMode.active { background: #304e48; border-color: #82b9aa; color: #c4f4e6; }
+#pitchMode.active { background: #573b44; border-color: #ca8b94; color: #ffced4; }
+#panMode.active { background: #493f5e; border-color: #ac94ce; color: #e6d5ff; }
+
+/* 0.5: restore the original continuous meter colors; frame without resizing. */
+.playbackBar .meterTrack {
+  box-shadow: 0 0 0 1px #788492;
+}
+.playbackBar .meterHold { background: #f4f7fb; }
+.playbackBar .meterChannelLabel { color: #d1dbe7; }
+.playbackBar .meterClip:not(.clipped) {
+  color: #b3becc; background: #262e38; border-color: #5c6878;
+}
+.playbackBar .meterClip:not(.clipped):hover {
+  color: #eef3fa; background: #3b4654;
+}
+
+/* 0.6: one continuous workspace, separated by horizontal rules, not cards. */
+.app { background: #353941; }
+.topbar { background: #3b3f48; border-bottom-color: #464d58; }
+.editor { gap: 0; padding: 0; background: #353941; }
+.legend, .panel, .sourceEditPanel, .canvasFrame,
+.sourceEditPanel .sourceWaveFrame, .playbackBar {
+  border-radius: 0;
+  box-shadow: none;
+}
+.legend { border: 0; background: #3b3f48; padding-inline: 20px; }
+.panel {
+  border: 0; border-top: 1px solid #4a515d;
+  background: #343941; padding-inline: 20px;
+}
+.sourceEditPanel { border: 0; border-top: 1px solid #4a515d; }
+.sourceEditToolbar { border-radius: 0; background: #343941; padding-inline: 20px; }
+.canvasFrame { border: 0; border-top: 1px solid #505a68; }
+.curveTimeLabel { background: #303741; }
+.playbackBar {
+  margin: 0; border: 0; border-top: 1px solid #505a68;
+  background: #353941; padding-inline: 20px;
+}
+@media (min-width: 900px) {
+  .editor { gap: 0; padding: 0; }
+  .legend { padding-block: 6px; }
+  .panel { padding-block: 7px; }
+  .playbackBar { margin: 0; padding: 8px 20px; }
+}
+@media (max-width: 600px) {
+  .legend, .panel, .sourceEditToolbar, .playbackBar { padding-inline: 10px; }
+}
+
+/* 0.7: narrow/reflow views must never hide an editor under a fixed transport. */
+@media (max-width: 899px) {
+  .app { padding-bottom: 0; }
+  .playbackBar { position: static; inset: auto; margin: 0; }
+  .tagline { display: none; }
+  .sourceEditToolbar { row-gap: 6px; padding-block: 6px; }
+  #editStatus { white-space: normal; overflow-wrap: anywhere; }
+}
+@media (min-width: 640px) and (max-width: 899px) {
+  .panel { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .readout:nth-child(2n)::after { display: block; }
+  .readout:nth-child(4n)::after { display: none; }
+}
+@media (max-width: 639px) {
+  .panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .statusLine { overflow-wrap: anywhere; }
+}
+
+/* 0.8: uninterrupted header, clearer text without a bright white glare. */
+.topbar { border-bottom-color: transparent; }
+:root {
+  --cl-text: #f0f3f7;
+  --cl-text-secondary: #d5dce5;
+  --cl-text-muted: #c3cdd9;
+}
+.topbar, .legend { background: #353a44; }
+button, .fileButton { color: #f0f3f7; background: linear-gradient(#444c58, #39414c); }
+button:hover, .fileButton:hover { color: #ffffff; background: #4b5665; }
+#clearCurveButton, #resetButton { color: #edf1f6; background: #39414c; }
+.sourceEditToolbar strong { color: #edf1f6; }
+#editStatus { color: #d3dce7; }
+.brandAccent { color: #e3e9f1; }
+.statusLine { color: #d3dce7; }
+
+/* 0.9: deeper text-bearing surfaces; preserve the continuous shell. */
+.app, .editor, .playbackBar { background: #292f38; }
+.topbar, .legend { background: #292f38; }
+.panel, .sourceEditPanel, .sourceEditToolbar { background: #252c35; }
+.curveTimeLabel { background: #222a34; }
+button, .fileButton { background: linear-gradient(#363f4b, #2d3540); }
+#clearCurveButton, #resetButton { background: #2d3540; }
+.fileHelpPanel, .parameterHelp, .confirmDialog { background: #252e39; }

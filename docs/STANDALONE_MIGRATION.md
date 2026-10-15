@@ -319,3 +319,10 @@ Arrow keys move 5% of source length (Shift: 1%); Home/End navigate to boundaries
 Zoom centers on the selected range midpoint when a selection exists, otherwise
 the edit cursor. Near source boundaries the viewport is clamped to avoid empty space.
 Transport order is Return to start, Play, Pause, with neutral same-color icons.
+
+
+## 2026-10-15 — Audio Studio UI pilot
+
+Audio-only local graphite/typography/control-surface pilot, preserving layout and DSP.
+Shared web/native semantic roles; native materials require separate measurement.
+Pending visual review; no sibling rollout or deployment. See [STUDIO_UI_PILOT.md](STUDIO_UI_PILOT.md).

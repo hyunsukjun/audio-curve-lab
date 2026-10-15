@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="src/curve-actions.css?v=20261014-family1">
     <link rel="stylesheet" href="src/file-help.css?v=20261014-family1">
     <link rel="stylesheet" href="src/parameter-help.css?v=20261014-family1">
+    <link rel="stylesheet" href="src/studio-theme.css?v=20261015-studio9">
   </head>
   <body>
     <main class="app">
@@ -52,9 +53,9 @@
       <section class="editor">
         <div class="legend">
           <div class="modeButtons">
-            <button id="stretchMode" aria-describedby="stretchHelp" data-parameter-help class="active curveMode" type="button">Speed</button>
-            <button id="pitchMode" aria-describedby="pitchHelp" data-parameter-help class="curveMode" type="button">Pitch</button>
-            <button id="panMode" aria-describedby="panHelp" data-parameter-help class="curveMode" type="button">Pan</button>
+            <button id="stretchMode" aria-pressed="true" aria-describedby="stretchHelp" data-parameter-help class="active curveMode" type="button">Speed</button>
+            <button id="pitchMode" aria-pressed="false" aria-describedby="pitchHelp" data-parameter-help class="curveMode" type="button">Pitch</button>
+            <button id="panMode" aria-pressed="false" aria-describedby="panHelp" data-parameter-help class="curveMode" type="button">Pan</button>
             <div class="toolToggle" role="group" aria-label="Curve editing tool">
               <button id="penTool" class="active" type="button" aria-label="Pen" aria-pressed="true" title="Pen: add or move points">
                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>
@@ -164,7 +165,7 @@
     </div>
 
     <script src="src/file-help.js?v=20261014-family1" type="module"></script>
-    <script src="src/app.js?v=20261014-keyboard2" type="module"></script>
+    <script src="src/app.js?v=20261015-studio5" type="module"></script>
     <div id="stretchHelp" class="parameterHelp" role="tooltip" hidden><strong>Speed · −2× to +2×</strong><span>Change source playback speed. Negative values reverse the sound; zero freezes the source position.</span></div>
     <div id="pitchHelp" class="parameterHelp" role="tooltip" hidden><strong>Pitch · −2400 to +2400 cents</strong><span>Shift pitch down or up by as much as two octaves. 1200 cents = one octave.</span></div>
     <div id="panHelp" class="parameterHelp" role="tooltip" hidden><strong>Pan · Left / Right</strong><span>Move sound across the stereo field. Top = Left · Center = Center · Bottom = Right.</span></div>

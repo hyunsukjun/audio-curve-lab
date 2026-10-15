@@ -441,3 +441,10 @@ Static parameter descriptions are available on the relevant buttons using the Au
 
 ## 2026-10-14 — Reset modal focus
 Reset 확인창의 Tab/Shift+Tab은 Cancel과 Reset All 사이에서 순환한다. Escape 취소와 닫은 뒤 Reset All 포커스 복귀는 유지한다. 확인창 뒤의 버튼을 키보드로 우발 작동하지 않도록 보완하며 리셋 대상과 음향 처리는 변경하지 않는다.
+
+
+## 2026-10-15 — Audio Studio UI pilot
+
+Audio-only local graphite/typography/control-surface pilot, preserving layout and DSP.
+Shared web/native semantic roles; native materials require separate measurement.
+Pending visual review; no sibling rollout or deployment. See [STUDIO_UI_PILOT.md](STUDIO_UI_PILOT.md).

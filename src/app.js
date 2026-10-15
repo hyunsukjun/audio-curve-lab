@@ -1,6 +1,6 @@
 import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
-import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261013-source8";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-studio1";
 let sourceEditor = null;
 let sourceDisplayPeak = 1;
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
@@ -536,8 +536,8 @@ function drawParameterScale() {
   ctx.save();
   ctx.font = "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(170, 188, 204, 0.78)";
-  ctx.strokeStyle = "rgba(72, 111, 143, 0.28)";
+  ctx.fillStyle = "rgba(185, 193, 203, 0.9)";
+  ctx.strokeStyle = "rgba(139, 149, 162, 0.18)";
   ctx.lineWidth = 1;
   for (const tick of getParameterTicks()) {
     const y = screenY(activeCurve, tick.y) * height;
@@ -545,8 +545,8 @@ function drawParameterScale() {
     ctx.font = tick.emphasis
       ? "750 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
       : "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-    ctx.fillStyle = tick.emphasis ? "rgba(232, 240, 246, 0.96)" : "rgba(170, 188, 204, 0.78)";
-    ctx.strokeStyle = tick.emphasis ? "rgba(95, 141, 177, 0.6)" : "rgba(72, 111, 143, 0.28)";
+    ctx.fillStyle = tick.emphasis ? "rgba(232, 240, 246, 0.96)" : "rgba(185, 193, 203, 0.9)";
+    ctx.strokeStyle = tick.emphasis ? "rgba(160, 170, 182, 0.35)" : "rgba(139, 149, 162, 0.18)";
     ctx.lineWidth = tick.emphasis ? 1.6 : 1;
     ctx.fillText(tick.label, left - 9, textY);
     ctx.beginPath();
@@ -554,7 +554,7 @@ function drawParameterScale() {
     ctx.lineTo(left + width, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "rgba(104, 145, 178, 0.62)";
+  ctx.strokeStyle = "rgba(160, 170, 182, 0.4)";
   ctx.beginPath();
   ctx.moveTo(left, 0);
   ctx.lineTo(left, height);
@@ -587,7 +587,7 @@ function drawCurve(curve, color, width, fillPoints, curveName) {
       ctx.arc(left + (point.x * w), screenY(curveName, point.y) * h, 6, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
-      ctx.strokeStyle = "#06111c";
+      ctx.strokeStyle = "#191c20";
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -600,9 +600,9 @@ function drawCurves() {
   for (const name of curveOrder) {
     if (name === activeCurve) continue;
     if (!editedCurves[name]) continue;
-    drawCurve(curves[name], curveColors[name], 2.1, false, name);
+    drawCurve(curves[name], curveColors[name], 1.5, false, name);
   }
-  drawCurve(curves[activeCurve], curveColors[activeCurve], 4.8, true, activeCurve);
+  drawCurve(curves[activeCurve], curveColors[activeCurve], 2.8, true, activeCurve);
 }
 
 function roundedRectPath(x, y, width, height, radius) {
@@ -708,7 +708,7 @@ function drawOutputWaveform() {
   const duration=getPlaybackDuration(),progress=duration?Math.max(0,Math.min(1,playheadSeconds/duration)):0;
   const scale=window.devicePixelRatio||1,w=outputWaveCanvas.getBoundingClientRect().width,left=8,right=8,span=Math.max(1,w-left-right);
   outputWaveCtx.setTransform(scale,0,0,scale,0,0);outputWaveCtx.clearRect(0,0,w,34);
-  outputWaveCtx.fillStyle='#223a50';outputWaveCtx.fillRect(left,14,span,6);
+  outputWaveCtx.fillStyle='#8290a1';outputWaveCtx.fillRect(left,14,span,6);
   outputWaveCtx.fillStyle='#459bff';outputWaveCtx.fillRect(left,14,span*progress,6);
   if(outputHoverProgress!==null){outputWaveCtx.fillStyle='#8fbfff';outputWaveCtx.fillRect(left+span*outputHoverProgress,11,1,12);}
   outputWaveCtx.fillStyle='#fff';outputWaveCtx.fillRect(left+span*progress-1.5,10,3,14);
@@ -723,10 +723,10 @@ function draw() {
   const { left, width: w, height: h } = getPlotBounds();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.clearRect(0, 0, canvasWidth, h);
-  ctx.fillStyle = "#0c1f31";
+  ctx.fillStyle = "#191c20";
   ctx.fillRect(0, 0, canvasWidth, h);
 
-  ctx.strokeStyle = "rgba(63, 101, 132, 0.12)";
+  ctx.strokeStyle = "rgba(139, 149, 162, 0.08)";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 40; i += 1) {
     if (i % 4 === 0) continue;
@@ -745,7 +745,7 @@ function draw() {
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(79, 121, 155, 0.28)";
+  ctx.strokeStyle = "rgba(139, 149, 162, 0.18)";
   for (let i = 0; i <= 10; i += 1) {
     const x = left + ((i / 10) * w);
     ctx.beginPath();
@@ -1147,6 +1147,9 @@ function setActiveCurve(name) {
   stretchMode.classList.toggle("active", name === "stretch");
   pitchMode.classList.toggle("active", name === "pitch");
   panMode.classList.toggle("active", name === "pan");
+  stretchMode.setAttribute("aria-pressed", String(name === "stretch"));
+  pitchMode.setAttribute("aria-pressed", String(name === "pitch"));
+  panMode.setAttribute("aria-pressed", String(name === "pan"));
   draw();
 }
 

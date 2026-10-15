@@ -13,15 +13,15 @@ export function peakOf(peaks){let peak=0;for(const lane of peaks)for(const p of 
 export function visualGain(referencePeak){return 1/Math.max(.00001,referencePeak);}
 export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],duration=0,referencePeak=1,color='#8bc9ff',title='',hint='',position=0,hover=null,timeOffset=0}) {
   const scale=globalThis.devicePixelRatio||1,w=Math.max(1,width-left-right),top=24,bottom=height-19;
-  ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#0c1f31';ctx.fillRect(0,0,width,height);
-  const divisions=w<680?4:10;ctx.strokeStyle='rgba(79,121,155,.25)';ctx.lineWidth=1;
+  ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#191c20';ctx.fillRect(0,0,width,height);
+  const divisions=w<680?4:10;ctx.strokeStyle='rgba(139,149,162,.18)';ctx.lineWidth=1;
   for(let i=0;i<=divisions;i++){const x=left+w*i/divisions;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();}
-  ctx.fillStyle='#9bb4c9';ctx.font='10px system-ui';ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(title,10,12);
+  ctx.fillStyle='#a9b1bb';ctx.font='10px system-ui';ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(title,10,12);
   if(w>550)ctx.fillText(hint,Math.max(left+150,ctx.measureText(title).width+24),12);
   const gain=visualGain(referencePeak),laneHeight=(bottom-top)/2,amplitude=laneHeight*.44;
   for(let channel=0;channel<2;channel++){
     const lane=peaks[channel]||peaks[0],mid=top+laneHeight*(channel+.5);
-    ctx.fillStyle='#9bb4c9';ctx.fillText(channel?'R':'L',12,mid);
+    ctx.fillStyle='#a9b1bb';ctx.fillText(channel?'R':'L',12,mid);
     ctx.strokeStyle='rgba(146,171,190,.25)';ctx.beginPath();ctx.moveTo(left,mid);ctx.lineTo(left+w,mid);ctx.stroke();
     if(!lane?.length)continue;ctx.fillStyle=color;
     for(let x=0;x<w;x++){
@@ -31,7 +31,7 @@ export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],dur
       const h=Math.min(amplitude,peak*gain*amplitude);if(h>0)ctx.fillRect(left+x,mid-h,1,Math.max(.75,h*2));
     }
   }
-  ctx.fillStyle='#9bb4c9';
+  ctx.fillStyle='#a9b1bb';
   for(let i=0;i<=divisions;i++){ctx.textAlign=i===0?'left':i===divisions?'right':'center';ctx.fillText(`${(timeOffset+duration*i/divisions).toFixed(duration<10?3:2)} s`,left+w*i/divisions,height-7);}
   ctx.textAlign='left';
   if(hover!==null){ctx.save();ctx.setLineDash([3,4]);ctx.strokeStyle='#b4e4ff';ctx.beginPath();ctx.moveTo(left+w*hover,top);ctx.lineTo(left+w*hover,bottom);ctx.stroke();ctx.restore();}
