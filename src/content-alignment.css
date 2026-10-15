@@ -16,3 +16,6 @@
 
 /* The removed inline legend must not leave an empty final grid column. */
 @media(min-width:900px) { .legend > .curveActions { grid-column:2 / -1; } }
+
+/* Import/export notices share the content rails at every viewport width. */
+.app > .fileNotice { margin:8px var(--lab-content-inset); font-size:13px; line-height:1.45; }

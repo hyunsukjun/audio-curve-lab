@@ -497,3 +497,6 @@ Audio source/edit waveform, edit toolbar and navigator backdrop now use #191C20,
 
 ### COMMON CANDIDATE — compact current-value spacing (2026-10-15, approved)
 Below 900 CSS px, current-value strip vertical padding 8→6px, row gap 12→8px, label/value gap 4→2px. Retain label 11px/14px and value 14px/18px typography, existing column counts, wrapping exceptions and all semantic values. No fields hidden, no Details controls introduced. Desktop spacing unchanged.
+
+### COMMON CANDIDATE — inline processing notices
+Import/export notices follow the shared content inset (20px desktop, 10px at <=600px), with 13px text and 1.45 line-height. Preserve wrapping, alert semantics, message text, and empty-state hiding. Error feedback must align with the same rails as normal controls; do not create a new panel or change audio/file behavior.
