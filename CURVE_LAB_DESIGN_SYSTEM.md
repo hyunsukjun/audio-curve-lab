@@ -494,3 +494,6 @@ Transport clocks use mm:ss.hh, rounded before splitting minutes/seconds (59.999 
 - Verified clock rollover at 59.999 and 3599.999 s, zero/negative/non-finite fallback, and 10-minute display. Layout checked at 1280/900/390 CSS px. Audio transform-parity test passed; Granular duration control min/max and Audio transport smoke checked. Listening and cross-browser export are not revalidated by this display-only pass.
 
 Audio source/edit waveform, edit toolbar and navigator backdrop now use #191C20, matching the curve canvas. Waveform/selection/fade drawing and contrast are retained.
+
+### COMMON CANDIDATE — compact current-value spacing (2026-10-15, approved)
+Below 900 CSS px, current-value strip vertical padding 8→6px, row gap 12→8px, label/value gap 4→2px. Retain label 11px/14px and value 14px/18px typography, existing column counts, wrapping exceptions and all semantic values. No fields hidden, no Details controls introduced. Desktop spacing unchanged.

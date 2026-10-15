@@ -28,3 +28,9 @@
   line-height:18px;
   border-radius:4px;
 }
+
+/* Compact stacked readouts without reducing type size or hiding values. */
+@media (max-width:899px) {
+  .panel.currentValues { padding-block:6px; row-gap:8px; }
+  .currentValues > .readout { row-gap:2px; }
+}
