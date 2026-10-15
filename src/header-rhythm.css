@@ -1,0 +1,8 @@
+/* Audio header rhythm; retain file/engine status and local-processing notice. */
+.topbar { padding-block:9px; gap:12px; }
+.topbar .statusLine { display:flex; flex-wrap:wrap; gap:4px 12px; line-height:1.35; }
+.topbar .statusLine > span { min-width:0; overflow-wrap:anywhere; }
+@media(min-width:900px) { .topbar .tagline { display:none; } }
+@media(max-width:899px) {
+  .topbar .tagline { display:block; margin-top:0 !important; font-size:12px; line-height:1.35; }
+}
