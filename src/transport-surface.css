@@ -1,0 +1,21 @@
+/* Family transport surface: controls keep their separate neutral capsule. */
+body,.app { background:#373b43; }
+.app > .playbackBar,.app > .playbackDock,.playbackDock > .playbackBar {
+ background:#373b43; border:0; border-radius:0; box-shadow:none; margin:0; left:0; right:0; bottom:0;
+}
+.app > .playbackBar,.playbackDock > .playbackBar { min-height:56px; padding-block:8px; }
+.app > .playbackDock { padding:0; }
+.playbackBar #playbackScrubber { background:linear-gradient(to right,var(--cl-accent,#459bff) 0% var(--progress,0%),#8290a1 var(--progress,0%) 100%) center / 100% 6px no-repeat; }
+@media(max-width:1180px) {
+ .app > .playbackBar,.app > .playbackDock { position:static; inset:auto; }
+ .app { padding-bottom:0; }
+}
+
+@media(min-width:1181px) {
+ .playbackBar { grid-template-columns:auto minmax(100px,1fr) auto minmax(200px,25%); }
+ .playbackBar .outputMeter { grid-column:auto; grid-row:auto; }
+}
+@media(min-width:601px) and (max-width:1180px) {
+ .playbackBar { grid-template-columns:auto minmax(100px,1fr) auto; }
+ .playbackBar .outputMeter { grid-column:1/-1; grid-row:2; }
+}
