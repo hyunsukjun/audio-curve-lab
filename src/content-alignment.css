@@ -1,0 +1,18 @@
+/* Shared content rails. Layout only; retain each Lab's approved colors. */
+:root { --lab-content-inset:20px; }
+.topbar,.editor > .legend,.editor > .effectBar,.editor > .parameterBar,
+.editor > .currentValues,.editor > .durationPanel,.editor > .roomControls,
+.editor > .sourceBand,.editor > .controlBand,.editor > .impulseBand,
+.editor > .modulationInfo,.editor > .chainDiagram {
+ padding-inline:var(--lab-content-inset); border-left-width:0; border-right-width:0;
+}
+.currentValues .readout:first-child { padding-left:0; }
+.currentValues .readout:last-child { padding-right:0; }
+.app > .playbackBar { left:0; right:0; margin-inline:0; padding-inline:var(--lab-content-inset); border-left-width:0; border-right-width:0; }
+.editor { background:#373b43; }
+@media(max-width:600px) { :root { --lab-content-inset:10px; } }
+ .editor > .sourceEditPanel,.editor > .canvasFrame { margin-inline:var(--lab-content-inset); }
+.sourceEditToolbar { padding-inline:0; }
+
+/* The removed inline legend must not leave an empty final grid column. */
+@media(min-width:900px) { .legend > .curveActions { grid-column:2 / -1; } }

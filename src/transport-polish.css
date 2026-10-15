@@ -1,0 +1,7 @@
+/* Neutral, equal-cell transport. Audio palette; isolated from generic buttons. */
+.playbackBar .bottomTransport { display:flex; align-items:center; gap:4px; padding:3px; border:1px solid #596472; border-radius:6px; background:#292f37; }
+.playbackBar .bottomTransport :is(#rewindButton,#playButton,#stopButton) { box-sizing:border-box; flex:0 0 38px; display:grid; place-items:center; width:38px; min-width:38px; max-width:38px; height:32px; min-height:32px; margin:0; padding:0; border:0; border-radius:3px !important; background:transparent !important; color:#d2dce5; box-shadow:none; font-size:0 !important; line-height:0; }
+.playbackBar .bottomTransport :is(#rewindButton,#playButton,#stopButton)::before { display:block; position:absolute; width:16px; height:16px; left:50%; top:50%; transform:translate(-50%,-50%); margin:0; }
+.playbackBar .bottomTransport :is(#rewindButton,#playButton,#stopButton):hover:not(:disabled) { background:#343a42 !important; color:#eef1f4; }
+.playbackBar .bottomTransport #playButton[aria-pressed="true"] { background:#5c6978 !important; color:#eef1f4; }
+.playbackBar .bottomTransport :is(#rewindButton,#playButton,#stopButton):disabled { opacity:.35; }
