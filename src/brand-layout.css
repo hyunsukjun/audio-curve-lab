@@ -1,0 +1,22 @@
+/* Audio Curve Lab is the family title/mark geometry reference. */
+.topbar .brand {
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.topbar .brandMark { display:block; width:38px; height:38px; object-fit:contain; }
+.topbar .brandCopy { min-width:0; }
+.topbar .brand h1 {
+  margin:0;
+  font-size:23px;
+  font-weight:600;
+  line-height:1.1;
+  letter-spacing:-.025em;
+}
+@media(max-width:899px) {
+  .topbar .brand { grid-template-columns:40px minmax(0,1fr); gap:12px; }
+  .topbar .brandMark { width:40px; height:40px; }
+  .topbar .brand h1 { font-size:22px; }
+}
