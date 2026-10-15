@@ -448,3 +448,29 @@ Reset 확인창의 Tab/Shift+Tab은 Cancel과 Reset All 사이에서 순환한�
 Audio-only local graphite/typography/control-surface pilot, preserving layout and DSP.
 Shared web/native semantic roles; native materials require separate measurement.
 Pending visual review; no sibling rollout or deployment. See [STUDIO_UI_PILOT.md](STUDIO_UI_PILOT.md).
+
+
+## Audio typography pilot — 2026-10-15
+COMMON CANDIDATE, local review only. Implements the CSS-text stage of the family typography contract in src/typography.css.
+Preserve title23/600, main controls13/500, readout labels11/400 and values14/500.
+Use12px regular edit instructions,11px/600 section labels,13px/600 transport time (previous680),10px/600 CLIP and channel labels.
+File/parameter actions use12px horizontal padding; editing helpers8px; parameter group gap8px. Keep existing heights, color semantics, focus, CSS transport icons and fade handles.
+Canvas-rendered text remains a separate follow-up: do not claim full Canvas token migration. No JavaScript, DSP, source/export or interaction changes.
+
+Validation: actual CSS1280x800,900x600,390x640 no horizontal overflow/button clipping. Native Brave125%(DPR2.5,1189x609) and150%(DPR3,990x508) no button clipping or curve/transport overlap;100% restored. Narrow screens retain natural vertical scrolling.
+Browser Pitch/Speed, source zoom/Fit, Play/Pause/rewind, point add(2→3) and Clear Current(3→2) passed; error log empty. This is control-state/visual proof, not comparison listening or a new WAV regression.
+Native confirmation keyboard and comparative listening remain deferred. No commit/deployment.
+
+
+## Canvas typography pilot — 2026-10-15
+COMMON CANDIDATE. src/canvas-typography.js provides display-only role fonts: axis/time ticks11/400, emphasized tick11/500, section11/600, instruction12/400, point tooltip12/500, channel10/600. Font stack matches the system sans-serif family.
+Waveform time divisions are capped by measured endpoint-label width plus16px clearance; waveform, normalized curves, timing, hit regions and sample summaries are unchanged. The existing optional inline instruction is shown only when its measured width fits; equivalent persistent toolbar/accessible instruction remains. Tooltip box retains26px height and8px horizontal padding.
+Validation: required four syntax checks and transform parity passed;390 CSS px Pitch points/ticks visibly fit, actual Brave125%(1189x609,DPR2.5) and150%(990x508,DPR3) checked;100% restored. Point addition/Clear Current, all three mode selection, source zoom/Fit, playback/pause/rewind observed; console errors none. Drag attempt created another point rather than proving point relocation, so relocation is not counted as a new test pass. No interaction code changed.
+Evidence: shared QA evidence/audio-canvas-type-390.png, audio-canvas-type-150.png, audio-canvas-type-pilot.png. Canvas screenshots are visual evidence, not pixel-level font metric certification or comparison listening.
+Local review only; earlier CSS pilot remains uncommitted. Native dialog keyboard and comparative listening deferred.
+
+
+## Restrained type and control treatment — Audio local candidate
+2026-10-15: supersedes the earlier Audio pilot's weight choices only. Keep type sizes and text colors; ordinary buttons/current values400, section labels500, transport time500. Use title/sentence case for readout labels and Edit Audio / Curves / Output Time, including waveform heading/instruction. Short technical abbreviations L/R/CLIP remain.
+Remove decorative button highlights; active parameter lower bevel3px→1px. Preserve parameter colors, disabled styling, hover edge and focus rules. Explicit ID-bearing role group is necessary to override the legacy high-specificity !important state selector; computed-style confirmed inactive shadow none / active1px.
+390px no horizontal overflow; selection/help and playback/pause/rewind checked; console errors none. Required JS syntax and transform parity passed. This refinement did not repeat native125/150% checks from preceding canvas pilot. Audio-only, no commit or deployment; native confirmation keyboard and comparison listening remain deferred.

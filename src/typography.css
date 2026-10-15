@@ -1,0 +1,93 @@
+/* COMMON CANDIDATE: Audio pilot of the family typography contract.
+   CSS text only; canvas text and transport/fade glyph geometry stay independent. */
+:root {
+  --cl-type-control: 13px;
+  --cl-type-caption: 11px;
+  --cl-type-body: 12px;
+  --cl-type-value: 14px;
+  --cl-weight-regular: 400;
+  --cl-weight-medium: 500;
+  --cl-weight-emphasis: 600;
+  --cl-control-inset: 12px;
+  --cl-helper-inset: 8px;
+}
+.fileButton, #downloadButton,
+button.curveMode, #clearCurveButton, #resetButton {
+  padding-inline: var(--cl-control-inset);
+  font-size: var(--cl-type-control) !important;
+  font-weight: var(--cl-weight-medium);
+}
+.modeButtons { gap:8px; }
+.sourceEditToolbar button:not(.fadeHandle) {
+  padding-inline:var(--cl-helper-inset);
+  font-weight:var(--cl-weight-medium);
+  line-height:14px;
+}
+.currentValues > .readout > span,
+.currentValues > .readout > label {
+  font-size:var(--cl-type-caption);
+  font-weight:var(--cl-weight-regular);
+  line-height:14px;
+}
+.currentValues > .readout > strong {
+  font-size:var(--cl-type-value);
+  font-weight:var(--cl-weight-medium);
+  line-height:18px;
+  font-variant-numeric:tabular-nums;
+}
+.sourceEditToolbar > strong, .curveTimeLabel {
+  font-size:var(--cl-type-caption);
+  font-weight:var(--cl-weight-emphasis);
+  line-height:14px;
+}
+#editStatus {
+  font-size:var(--cl-type-body);
+  font-weight:var(--cl-weight-regular);
+  line-height:18px;
+}
+#editCursor { font-size:var(--cl-type-caption); font-weight:500; }
+#timeStatus {
+  font-size:var(--cl-type-control);
+  font-weight:var(--cl-weight-emphasis);
+  line-height:16px;
+  font-variant-numeric:tabular-nums;
+}
+.playbackBar #meterClipButton {
+  font-size:10px;
+  font-weight:var(--cl-weight-emphasis);
+  line-height:12px;
+}
+.playbackBar .meterChannelLabel { font-size:10px; font-weight:600; }
+.parameterHelp { font-size:var(--cl-type-body); font-weight:400; line-height:1.55; }
+.parameterHelp strong { font-weight:600; }
+.parameterHelp .helpState { font-weight:400; }
+
+
+/* Audio refinement: reduce competing emphasis, retain sizes and text contrast. */
+.fileButton, #downloadButton, button.curveMode, #clearCurveButton, #resetButton,
+.sourceEditToolbar button:not(.fadeHandle) { font-weight:400; letter-spacing:0; }
+.currentValues > .readout > strong { font-weight:400; }
+.currentValues > .readout > span, .currentValues > .readout > label {
+  text-transform:none; letter-spacing:0;
+}
+.sourceEditToolbar > strong, .curveTimeLabel {
+  font-weight:500; text-transform:none; letter-spacing:0;
+}
+#timeStatus { font-weight:500; }
+/* ID-bearing role group outranks the legacy multi-state !important selector. */
+:is(.fileButton,#downloadButton,#stretchMode,#pitchMode,#panMode,#clearCurveButton,#resetButton,
+#editZoomIn,#editZoomOut,#editZoomFit,#editUndo,#editRedo,#editDelete) {
+  box-shadow:none !important;
+}
+:is(.fileButton,#downloadButton,#stretchMode,#pitchMode,#panMode,#clearCurveButton,#resetButton,
+#editZoomIn,#editZoomOut,#editZoomFit,#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not([aria-pressed="true"]) {
+  border-color:#5d6672 !important;
+  background:linear-gradient(#353d48,#303741) !important;
+}
+:is(.fileButton,#downloadButton,#stretchMode,#pitchMode,#panMode,#clearCurveButton,#resetButton,
+#editZoomIn,#editZoomOut,#editZoomFit,#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not([aria-pressed="true"]):hover {
+  border-color:#8796a8 !important; background:#444f5e !important;
+}
+:is(#stretchMode,#pitchMode,#panMode):is(.active,[aria-pressed="true"]) {
+  box-shadow:inset 0 -1px #00000055 !important;
+}

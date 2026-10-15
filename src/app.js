@@ -1,6 +1,7 @@
+import { canvasType } from "./canvas-typography.js?v=20261015-1";
 import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
-import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-surface2?v=20261015-surfaces1";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-type1";
 let sourceEditor = null;
 let sourceDisplayPeak = 1;
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
@@ -534,7 +535,7 @@ function getParameterTicks() {
 function drawParameterScale() {
   const { left, width, height } = getPlotBounds();
   ctx.save();
-  ctx.font = "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.font = canvasType.tick;
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(185, 193, 203, 0.9)";
   ctx.strokeStyle = "rgba(139, 149, 162, 0.18)";
@@ -543,8 +544,8 @@ function drawParameterScale() {
     const y = screenY(activeCurve, tick.y) * height;
     const textY = Math.max(9, Math.min(height - 7, y + 4));
     ctx.font = tick.emphasis
-      ? "750 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-      : "600 11px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ? canvasType.majorTick
+      : canvasType.tick;
     ctx.fillStyle = tick.emphasis ? "rgba(232, 240, 246, 0.96)" : "rgba(185, 193, 203, 0.9)";
     ctx.strokeStyle = tick.emphasis ? "rgba(160, 170, 182, 0.35)" : "rgba(139, 149, 162, 0.18)";
     ctx.lineWidth = tick.emphasis ? 1.6 : 1;
@@ -639,7 +640,7 @@ function drawPointTooltip(curveName, point) {
   const boxHeight = 26;
 
   ctx.save();
-  ctx.font = "650 13px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.font = canvasType.point;
   const boxWidth = Math.ceil(ctx.measureText(text).width + (paddingX * 2));
   const boxX = Math.max(left + 8, Math.min(left + w - boxWidth - 8, px - (boxWidth / 2)));
   let boxY = py - 36;
@@ -676,7 +677,7 @@ function drawSourceWaveform() {
   }else sourceViewCache=null;
   const geom=paintWaveform(sourceWaveCtx,{width:canvasCssWidth,height:waveformHeight,
     peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:sourceDisplayPeak,
-    title:'EDIT AUDIO / SOURCE TIME',hint:'CLICK: PLAYBACK START · DRAG: SELECT · + / −: ZOOM',
+    title:'Edit Audio / Source Time',hint:'Click: playback start · Drag: select · + / −: zoom',
     position:-1});
   const x=frame=>geom.left+(frame-range.start)/span*geom.width;
   sourceWaveCtx.save();sourceWaveCtx.beginPath();sourceWaveCtx.rect(geom.left,geom.top,geom.width,geom.bottom-geom.top);sourceWaveCtx.clip();

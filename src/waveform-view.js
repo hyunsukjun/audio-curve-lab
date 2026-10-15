@@ -1,3 +1,4 @@
+import { canvasType } from "./canvas-typography.js?v=20261015-1";
 // Display-only summaries and scaling. Never write into the audio channels.
 export function summarizeChannels(channels, buckets=4000) {
   return channels.map(channel=>{
@@ -14,10 +15,16 @@ export function visualGain(referencePeak){return 1/Math.max(.00001,referencePeak
 export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],duration=0,referencePeak=1,color='#8bc9ff',title='',hint='',position=0,hover=null,timeOffset=0}) {
   const scale=globalThis.devicePixelRatio||1,w=Math.max(1,width-left-right),top=24,bottom=height-19;
   ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#191c20';ctx.fillRect(0,0,width,height);
-  const divisions=w<680?4:10;ctx.strokeStyle='rgba(139,149,162,.18)';ctx.lineWidth=1;
+  ctx.font=canvasType.tick;
+  const timeLabel=i=>`${(timeOffset+duration*i).toFixed(duration<10?3:2)} s`;
+  const labelWidth=Math.max(ctx.measureText(timeLabel(0)).width,ctx.measureText(timeLabel(1)).width);
+  const divisions=Math.max(1,Math.min(w<680?4:10,Math.floor(w/(labelWidth+16))));ctx.strokeStyle='rgba(139,149,162,.18)';ctx.lineWidth=1;
   for(let i=0;i<=divisions;i++){const x=left+w*i/divisions;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();}
-  ctx.fillStyle='#a9b1bb';ctx.font='10px system-ui';ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(title,10,12);
-  if(w>550)ctx.fillText(hint,Math.max(left+150,ctx.measureText(title).width+24),12);
+  ctx.fillStyle='#a9b1bb';ctx.font=canvasType.section;ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(title,10,12);
+  const hintX=Math.max(left+150,ctx.measureText(title).width+24);
+  ctx.font=canvasType.hint;
+  if(w>550 && hintX+ctx.measureText(hint).width<=width-right)ctx.fillText(hint,hintX,12);
+  ctx.font=canvasType.channel;
   const gain=visualGain(referencePeak),laneHeight=(bottom-top)/2,amplitude=laneHeight*.44;
   for(let channel=0;channel<2;channel++){
     const lane=peaks[channel]||peaks[0],mid=top+laneHeight*(channel+.5);
@@ -31,7 +38,7 @@ export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],dur
       const h=Math.min(amplitude,peak*gain*amplitude);if(h>0)ctx.fillRect(left+x,mid-h,1,Math.max(.75,h*2));
     }
   }
-  ctx.fillStyle='#a9b1bb';
+  ctx.fillStyle='#a9b1bb';ctx.font=canvasType.tick;
   for(let i=0;i<=divisions;i++){ctx.textAlign=i===0?'left':i===divisions?'right':'center';ctx.fillText(`${(timeOffset+duration*i/divisions).toFixed(duration<10?3:2)} s`,left+w*i/divisions,height-7);}
   ctx.textAlign='left';
   if(hover!==null){ctx.save();ctx.setLineDash([3,4]);ctx.strokeStyle='#b4e4ff';ctx.beginPath();ctx.moveTo(left+w*hover,top);ctx.lineTo(left+w*hover,bottom);ctx.stroke();ctx.restore();}
