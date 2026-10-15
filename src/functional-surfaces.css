@@ -4,7 +4,7 @@
   --audio-surface-controls: var(--audio-surface-file);
   --audio-surface-values: var(--audio-surface-file);
   --audio-surface-edit: var(--audio-surface-wave);
-  --audio-surface-wave: #252c32;
+  --audio-surface-wave: #191c20;
   --audio-surface-curve: #191c20;
   --audio-surface-transport: #30343c;
 }

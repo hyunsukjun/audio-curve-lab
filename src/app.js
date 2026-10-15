@@ -1,6 +1,6 @@
 import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
-import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-surfaces1";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-surface2?v=20261015-surfaces1";
 let sourceEditor = null;
 let sourceDisplayPeak = 1;
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
