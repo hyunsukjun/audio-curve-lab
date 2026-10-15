@@ -783,9 +783,16 @@ function draw() {
     ? `${formatClock(playheadSeconds)} / ${formatClock(getPlaybackDuration())}${estimateOutputDuration(buffer.duration, curves.stretch) > largeFileSeconds ? " · preview limit" : ""}`
     : "00:00.00 / 00:00.00";
   sourceReadout.textContent = formatTime(sourcePlayheadSeconds);
-  stretchReadout.textContent = `${currentSpeed.toFixed(2)} x`;
-  pitchReadout.textContent = `${Math.round(currentCents)} cents`;
-  panReadout.textContent = formatPan(currentPan);
+  // Stopped readouts follow the output playhead, not stale worklet telemetry.
+  const valueProgress = buffer && getPlaybackDuration() > 0
+    ? Math.max(0, Math.min(1, playheadSeconds / getPlaybackDuration())) : 0;
+  const displaySpeed = isPlaying ? currentSpeed : effectiveSpeedAt(curves.stretch, valueProgress, transformSettings.globalDirection);
+  const displayCents = isPlaying ? currentCents : centsFromNorm(valueAt(curves.pitch, valueProgress));
+  const displayPan = isPlaying ? currentPan : panFromNorm(valueAt(curves.pan, valueProgress));
+  document.getElementById("valueBasis").textContent = isPlaying ? "Playback" : "At playhead";
+  stretchReadout.textContent = `${displaySpeed.toFixed(2)} x`;
+  pitchReadout.textContent = `${Math.round(displayCents)} cents`;
+  panReadout.textContent = formatPan(displayPan);
   modeReadout.textContent = curveLabels[activeCurve];
   pointsReadout.textContent = String(curves[activeCurve].length);
   drawSourceWaveform();

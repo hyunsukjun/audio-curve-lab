@@ -457,3 +457,6 @@ Available off/bypassed: Audio reference gradient #363F4B → #2D3540, text #F0F3
 
 ## Current precedence
 See `docs/SHARED_VISUAL_CONTRACT.md` for the accepted shared baseline and resolution of older pilot conflicts. Newer role/state rules supersede old underline and 30px compact-button guidance.
+
+## Audio-only information density pilot (unreleased)
+Speed/Pitch/Pan share one compact strip. Editing target, point count, engine and source playback position remain available in collapsed Details, in document flow. WAV status moves next to Download WAV. Preserve all bound readout IDs. No sibling adoption until user visual review.

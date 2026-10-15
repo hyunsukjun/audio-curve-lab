@@ -317,3 +317,6 @@ Static parameter descriptions are available on the relevant buttons using the Au
 
 ## 2026-10-14 — Reset modal focus
 Reset 확인창의 Tab/Shift+Tab은 Cancel과 Reset All 사이에서 순환한다. Escape 취소와 닫은 뒤 Reset All 포커스 복귀는 유지한다. 확인창 뒤의 버튼을 키보드로 우발 작동하지 않도록 보완하며 리셋 대상과 음향 처리는 변경하지 않는다.
+
+## Parameter readout basis — Audio density pilot, 2026-10-15
+Previously readouts retained worklet telemetry or reset-to-start values while stopped. The strip now labels live engine telemetry as Playback. While stopped, At playhead evaluates curves at clamped output playhead / capped playback duration; Speed includes global direction. These stopped values are curve targets before engine smoothing. Hover and selected-point tooltip remain separate and do not drive the strip. Source playback in Details remains the last reported source playback position, not the source editing cursor. Display-only change; no DSP/seek/curve mutation.
