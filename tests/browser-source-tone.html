@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Source tone display benchmark</title><pre id="result">Running display-only benchmark…</pre><canvas id="wave" width="2800" height="256" style="width:1400px;height:128px"></canvas>
+<script type="module">
+import {summarizeChannels,paintWaveform,peakOf} from '../src/waveform-view.js?v=20261015-source-tone1';
+import {analyzeSourceColors} from '../src/source-colors.js';
+const samples=new Float32Array(48000*300);for(let i=0;i<samples.length;i++)samples[i]=.5*Math.sin(i*.03);
+const buffer={length:samples.length,numberOfChannels:2,sampleRate:48000,getChannelData:()=>samples};
+let t=performance.now();const peaks=summarizeChannels([samples,samples]);const summaryMs=performance.now()-t;
+let gaps=[],last=performance.now(),running=true;function frame(now){gaps.push(now-last);last=now;if(running)requestAnimationFrame(frame);}requestAnimationFrame(frame);
+t=performance.now();let packingMs=0;const colors=await new Promise(resolve=>{analyzeSourceColors(buffer,resolve);packingMs=performance.now()-t;});const analysisElapsedMs=performance.now()-t;
+const ctx=document.querySelector('canvas').getContext('2d');t=performance.now();paintWaveform(ctx,{width:1400,peaks,colors,duration:300,referencePeak:peakOf(peaks)});const rasterMs=performance.now()-t;
+const cache=document.createElement('canvas');cache.width=2800;cache.height=256;cache.getContext('2d').drawImage(ctx.canvas,0,0);t=performance.now();for(let i=0;i<120;i++){ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(cache,0,0);}const cachedCopyMeanMs=(performance.now()-t)/120;running=false;
+document.querySelector('#result').textContent=JSON.stringify({durationSeconds:300,summaryMs,packingMs,analysisElapsedMs,rasterMs,cachedCopyMeanMs,animationFramesDuringAnalysis:gaps.length,maxFrameGapMs:Math.max(...gaps),devicePixelRatio},null,2);
+</script>

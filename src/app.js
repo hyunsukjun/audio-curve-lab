@@ -1,7 +1,8 @@
+import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
 import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
-import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-type1";
+import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261015-source-tone1";
 let sourceEditor = null;
 let sourceDisplayPeak = 1;
 import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
@@ -660,6 +661,7 @@ function drawPointTooltip(curveName, point) {
 }
 
 let sourceViewCache=null;
+let sourceColors=null,sourceRaster=null;
 function drawSourceWaveform() {
   const state=sourceEditor?.state;
   const count=buffer?.length||0;
@@ -671,14 +673,22 @@ function drawSourceWaveform() {
   if(buffer&&(range.start>0||range.end<count)){
     const key=`${range.start}:${range.end}:${canvasCssWidth}`;
     if(sourceViewCache?.buffer!==buffer||sourceViewCache.key!==key){
-      sourceViewCache={buffer,key,peaks:summarizeChannels([buffer.getChannelData(0).subarray(range.start,range.end),buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1)).subarray(range.start,range.end)],Math.ceil(canvasCssWidth*2))};
+      sourceViewCache={buffer,key,peaks:summarizeChannels([buffer.getChannelData(0).subarray(range.start,range.end),buffer.getChannelData(Math.min(1,buffer.numberOfChannels-1)).subarray(range.start,range.end)],Math.ceil(canvasCssWidth*(window.devicePixelRatio||1)*2))};
     }
     peaks=sourceViewCache.peaks;
   }else sourceViewCache=null;
-  const geom=paintWaveform(sourceWaveCtx,{width:canvasCssWidth,height:waveformHeight,
-    peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:sourceDisplayPeak,
-    title:'Edit Audio / Source Time',hint:'Click: playback start · Drag: select · + / −: zoom',
-    position:-1});
+  const rasterKey=`${range.start}:${range.end}:${canvasCssWidth}:${sourceWaveCanvas.width}:${sourceWaveCanvas.height}:${sourceDisplayPeak}`;
+  if(!sourceRaster||sourceRaster.peaks!==peaks||sourceRaster.colors!==sourceColors||sourceRaster.key!==rasterKey){
+    const image=document.createElement('canvas');image.width=sourceWaveCanvas.width;image.height=sourceWaveCanvas.height;
+    const geom=paintWaveform(image.getContext('2d'),{width:canvasCssWidth,height:waveformHeight,
+      peaks,duration:count?span/rate:0,timeOffset:range.start/rate,referencePeak:sourceDisplayPeak,
+      colors:sourceColors,colorStart:range.start/Math.max(1,count),colorEnd:range.end/Math.max(1,count),
+      title:'Edit Audio / Source Time',hint:'Click: start · Drag: select · + / −: zoom',position:-1});
+    sourceRaster={key:rasterKey,peaks,colors:sourceColors,image,geom};
+  }
+  sourceWaveCtx.setTransform(1,0,0,1,0,0);sourceWaveCtx.clearRect(0,0,sourceWaveCanvas.width,sourceWaveCanvas.height);sourceWaveCtx.drawImage(sourceRaster.image,0,0);
+  const dpr=window.devicePixelRatio||1;sourceWaveCtx.setTransform(dpr,0,0,dpr,0,0);
+  const geom=sourceRaster.geom;
   const x=frame=>geom.left+(frame-range.start)/span*geom.width;
   sourceWaveCtx.save();sourceWaveCtx.beginPath();sourceWaveCtx.rect(geom.left,geom.top,geom.width,geom.bottom-geom.top);sourceWaveCtx.clip();
   const selection=sourceEditor?.selection;
@@ -800,6 +810,8 @@ function draw() {
 }
 
 function buildWaveform(audioBuffer) {
+  sourceColors=null;sourceRaster=null;
+  analyzeSourceColors(audioBuffer,colors=>{if(buffer===audioBuffer){sourceColors=colors;drawSourceWaveform();}});
   waveform=audioBuffer?summarizeChannels([audioBuffer.getChannelData(0),audioBuffer.getChannelData(Math.min(1,audioBuffer.numberOfChannels-1))]):[];
 }
 

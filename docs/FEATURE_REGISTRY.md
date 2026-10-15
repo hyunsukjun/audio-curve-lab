@@ -440,3 +440,14 @@ Static parameter descriptions are available on the relevant buttons using the Au
 
 ## 2026-10-14 — Reset modal focus
 Reset 확인창의 Tab/Shift+Tab은 Cancel과 Reset All 사이에서 순환한다. Escape 취소와 닫은 뒤 Reset All 포커스 복귀는 유지한다. 확인창 뒤의 버튼을 키보드로 우발 작동하지 않도록 보완하며 리셋 대상과 음향 처리는 변경하지 않는다.
+
+## Source tone waveform pilot — 2026-10-15 (PROJECT-SPECIFIC, review pending)
+- Audio source editing waveform only. Color encodes an approximate per-channel magnitude spectral centroid of the current editable source before Speed/Pitch/Pan; it is not pitch, clipping, output analysis, or an audio effect. Source deletion/fades/Undo trigger a refreshed estimate. The original file is unchanged.
+- Palette: blue (lower centroid) → teal → gold → peach (higher centroid). Log mapping150–8000Hz, clamped; neutral gray-blue for negligible spectral magnitude. These are provisional visual parameters, not musical thresholds or a Freesound palette reproduction. Header legend and Edit Audio title explain source scope.
+- Signed min/max envelope retains peaks and asymmetry, with16000 overview bins and physical-pixel polygon drawing. No cosmetic waveform smoothing that hides transients. Zoom resummarizes the visible source at device-pixel-aware resolution.
+- Analysis: bounded1024 windows×1024samples per channel, at most2channels/8MiB copied to a dedicated worker. Long files are sampled, not exhaustively analyzed; short events between windows may be missed. Thus colors are a broad timbre guide, not a spectral measurement tool. Worker failure falls back to the existing blue display. New source/edit terminates the previous worker; stale results are ignored.
+- Static waveform raster is cached across playback/selection redraws. Cache invalidates for buffer/viewport/device-pixel ratio/visual gain/colors changes. No added dependency or audio engine change.
+- Verification: centroid tones187.5/1500/6000Hz and silence, source immutability, signed transient envelope; required transform parity and source editor/output edit suites pass. Browser sample import, selection deletion, Undo, fade handles via keyboard, zoom/Fit, Play/Pause, WAV download pass. Saved WAV:10s/48k/24bit/stereo. No observed console error. No listening approval.
+- Current Mac browser display benchmark, synthetic300s stereo: summary19.4ms, bounded window copy1.6ms, worker elapsed57.6ms, raster4.5ms;5 animation frames during analysis, max gap16.7ms. Canvas copy timings measure command submission, not completed GPU work. Not a low-spec or long-session guarantee.
+- Small viewport forcing did not affect the target tab in this session (actual1092×1318); do not claim390px verification. Small-screen/actual zoom review remains pending.
+- No commit/deployment/freeze. DSP remains Curve Lab DSP; this pilot only reads source samples for visualization.
