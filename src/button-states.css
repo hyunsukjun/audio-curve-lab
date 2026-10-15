@@ -1,0 +1,85 @@
+/* Shared button-state contract. Local copies intentionally identical across six Labs.
+   Presentation only: preserve parameter-specific active colors and semantic states. */
+:root {
+  --cl-button-rest: linear-gradient(#363f4b, #2d3540);
+  --cl-button-text: #f0f3f7;
+  --cl-button-edge: #626c79;
+}
+/* Off means available but not selected; bypassed effects remain editable. */
+button:not(.active):not(.enabled):not(.editing):not(.clipped):not([aria-pressed="true"]):not(:disabled),
+button.bypassed:not(:disabled), .fileButton {
+  background: var(--cl-button-rest) !important;
+  color: var(--cl-button-text) !important;
+  border-color: var(--cl-button-edge) !important;
+  box-shadow: inset 0 1px #ffffff06 !important;
+}
+button:not(.active):not(.enabled):not(.editing):not(.clipped):not([aria-pressed="true"]):not(:disabled):hover,
+button.bypassed:not(:disabled):hover, .fileButton:hover {
+  background: #444f5e !important;
+  border-color: #8796a8 !important;
+}
+/* A full-width dark lower bevel replaces text underlines; no size/layout change. */
+button:is(.active,.editing,[aria-pressed="true"]):not(:disabled):not(.clipped) {
+  box-shadow: inset 0 1px #ffffff0a, inset 0 -3px #00000055 !important;
+}
+.curveMode.active::after { content: none !important; }
+/* Unavailable is distinct from an available off button. */
+button:disabled {
+  opacity: 1 !important;
+  background: #353b44 !important;
+  color: #949eac !important;
+  border-color: #495360 !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+/* Role-based dimensions. Do not apply text metrics to transport glyphs or fade handles. */
+:root {
+  --cl-control-font: 13px;
+  --cl-control-radius: 4px;
+  --cl-control-height: 34px;
+}
+button:is(.curveMode,.effectModule,.parameterButton,.waveformButton,.chainBlock),
+.soundModes button, #clearCurveButton, #resetButton, #analyzeButton,
+#cancelResetButton, #confirmResetButton {
+  box-sizing: border-box;
+  font-size: var(--cl-control-font) !important;
+  font-weight: 500;
+  line-height: 18px !important;
+  height: var(--cl-control-height) !important;
+  min-height: var(--cl-control-height) !important;
+  border-radius: var(--cl-control-radius) !important;
+  padding-block: 0 !important;
+}
+.fileButton, #openAudioButton, #downloadButton {
+  box-sizing: border-box;
+  font-size: var(--cl-control-font) !important;
+  font-weight: 500;
+  line-height: 18px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  border-radius: var(--cl-control-radius) !important;
+}
+.toolToggle { border-radius: var(--cl-control-radius) !important; }
+.toolToggle button {
+  box-sizing: border-box;
+  height: 32px !important; min-height: 32px !important;
+  border-radius: 0 !important;
+}
+/* Transport keeps its existing zero-size text and CSS icon construction. */
+#rewindButton, #playButton, #stopButton {
+  box-sizing: border-box;
+  height: 32px !important; min-height: 32px !important;
+  border-radius: 3px !important;
+}
+#rewindButton { border-radius: 3px 0 0 3px !important; }
+.sourceEditToolbar button:not(.fadeHandle) {
+  font-size: 11px !important;
+  height: 26px !important; min-height: 26px !important;
+  border-radius: var(--cl-control-radius) !important;
+}
+#editZoomIn, #editZoomOut { font-size: 14px !important; }
+/* Secondary information shares a hierarchy without changing content or order. */
+.statusLine, .tagline { font-size: 12px; }
+.readout > span, .readout > label { font-size: 11px; }
+.readout > strong { font-size: 14px; }

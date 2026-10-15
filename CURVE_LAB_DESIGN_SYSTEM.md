@@ -439,3 +439,21 @@ transport now #292F38; readout/source toolbar #252C35; curve label #222A34;
 neutral buttons #363F4B to #2D3540; help/dialog #252E39. Preserve text,
 selected parameter fills, focus cues, plot background, meter and geometry.
 CSS-only visual adjustment, local review; no commit or deployment.
+
+## Common button states — 2026-10-15
+
+`src/button-states.css` is the identical six-Lab contract, loaded after studio-theme.
+Available off/bypassed: Audio reference gradient #363F4B → #2D3540, text #F0F3F7, edge #626C79. Unavailable: #353B44 / #949EAC / #495360 at full opacity. Selected: preserve existing parameter-specific fill, text and border colors, replace text underline with a full-width dark lower inset bevel (3 px). Focus remains independent. No hit-target, state, DSP or timing changes.
+
+### Common role dimensions — 2026-10-15
+
+- Main text buttons: 13px, weight 500, line-height 18px; 4px corner radius.
+- Open/Download/Save: 38px high. Parameter/effect/waveform/synthesis mode/chain/action/dialog buttons: 34px.
+- Pen/Eraser: 32px with shared 4px outer group; joined inner edges remain square. Transport: 32px, existing 3px corners and CSS glyphs retained.
+- Audio edit helpers: 26px, 11px text; zoom symbols 14px. Fade handles are excluded.
+- Secondary status text 12px; readout labels 11px, strong values 14px. Parameter colors and state semantics unchanged.
+- Verified all six at 1422px and 640px CSS widths: no document horizontal overflow or measured button text clipping. Representative mode switching passed; Timbre Flanger expanded controls inspected, Audio Pen/Eraser and zoom/Fit exercised. Keyboard regression and diff whitespace checks passed.
+- This is CSS-only verification, not fresh audio/export or listening certification. Local changes remain unpublished.
+
+## Current precedence
+See `docs/SHARED_VISUAL_CONTRACT.md` for the accepted shared baseline and resolution of older pilot conflicts. Newer role/state rules supersede old underline and 30px compact-button guidance.
