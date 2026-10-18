@@ -33,7 +33,7 @@ export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],dur
     const lane=peaks[channel]||peaks[0],mid=top+laneHeight*(channel+.5);
     ctx.fillStyle='#a9b1bb';ctx.fillText(channel?'R':'L',12,mid);
     ctx.strokeStyle='rgba(146,171,190,.25)';ctx.beginPath();ctx.moveTo(left,mid);ctx.lineTo(left+w,mid);ctx.stroke();
-    if(!lane?.length)continue;
+    if(!lane?.length || !colors)continue;
     const spectrum=colors?.[channel]||colors?.[0];
     if(spectrum?.length){
       const gradient=ctx.createLinearGradient(left,0,left+w,0);

@@ -537,3 +537,14 @@ Remove decorative button highlights; active parameter lower bevel3px→1px. Pres
 - Current Mac browser display benchmark, synthetic300s stereo: summary19.4ms, bounded window copy1.6ms, worker elapsed57.6ms, raster4.5ms;5 animation frames during analysis, max gap16.7ms. Canvas copy timings measure command submission, not completed GPU work. Not a low-spec or long-session guarantee.
 - Small viewport forcing did not affect the target tab in this session (actual1092×1318); do not claim390px verification. Small-screen/actual zoom review remains pending.
 - No commit/deployment/freeze. DSP remains Curve Lab DSP; this pilot only reads source samples for visualization.
+
+## Canvas grid contract — 2026-10-18 (local review)
+- General decorative grid: 32 CSS px minor, 128 CSS px major, 1 px strokes; density independent of canvas aspect ratio. No snap or change to normalized musical coordinates.
+- Semantic value ticks remain parameter-specific; frequency axes preserve existing logarithmic mapping, use shared 1/2/5-per-decade candidates plus endpoints, Hz/kHz units and 24 px minimum label separation.
+- Source envelope waits for asynchronous source-color data; no initial legacy blue waveform. On worker failure, neutral gray source shape remains available. No audio samples or processing modified.
+- Oscillator partial monitor is retained in source but hidden in the web UI; curve editor reuses freed height.
+- Browser verification pending; no commit/deployment or listening approval implied.
+- Tick text: 11 px regular, emphasized ticks 11 px medium; point/hover text: 12 px medium. Absolute frequency axes share labels; frequency offsets (e.g. Spectral Shift) retain their signed linear meaning.
+- Verified locally: grid/log-label/worker-error tests, source-color tests, keyboard tests, JS syntax; browser initial load and Play/Pause (Granular with 8-second WAV). Independent app tabs reported no console errors. 600 px iframe inspection: all six document widths match their viewport (583 px after scrollbar), minimum curve height about 220 px and transport retained through vertical scrolling. This is not a new native browser zoom or listening certification.
+
+- Release check 2026-10-18: native Brave 125% and 150% reviewed across the family; curve point add/move/Command-delete verified in every Lab. Small viewport checks retained separately. Canvas-grid, source-colors, transport-keyboard and syntax checks passed. Listening/DSP and native confirmation-dialog checks remain separate.

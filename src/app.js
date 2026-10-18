@@ -1,3 +1,4 @@
+import {drawEditorGrid, frequencyTicks, frequencyLabel, spacedMarks, canvasLabelFont} from "./canvas-grid.js";
 import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
 import { createSourceEditor } from "./source-editor.js?v=20261013-navigator1";
@@ -553,7 +554,7 @@ function drawParameterScale() {
     ctx.fillText(tick.label, left - 9, textY);
     ctx.beginPath();
     ctx.moveTo(left - 5, y);
-    ctx.lineTo(left + width, y);
+    ctx.lineTo(tick.emphasis ? left + width : left, y);
     ctx.stroke();
   }
   ctx.strokeStyle = "rgba(160, 170, 182, 0.4)";
@@ -737,40 +738,7 @@ function draw() {
   ctx.fillStyle = "#191c20";
   ctx.fillRect(0, 0, canvasWidth, h);
 
-  ctx.strokeStyle = "rgba(139, 149, 162, 0.08)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 40; i += 1) {
-    if (i % 4 === 0) continue;
-    const x = left + ((i / 40) * w);
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
-    ctx.stroke();
-  }
-  for (let i = 1; i < 8; i += 1) {
-    if (i % 2 === 0) continue;
-    const y = (i / 8) * h;
-    ctx.beginPath();
-    ctx.moveTo(left, y);
-    ctx.lineTo(left + w, y);
-    ctx.stroke();
-  }
-
-  ctx.strokeStyle = "rgba(139, 149, 162, 0.18)";
-  for (let i = 0; i <= 10; i += 1) {
-    const x = left + ((i / 10) * w);
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
-    ctx.stroke();
-  }
-  for (let i = 1; i < 4; i += 1) {
-    const y = (i / 4) * h;
-    ctx.beginPath();
-    ctx.moveTo(left, y);
-    ctx.lineTo(left + w, y);
-    ctx.stroke();
-  }
+  drawEditorGrid(ctx, left, 0, w, h);
 
   drawParameterScale();
   drawCurves();

@@ -4,6 +4,7 @@ let worker=null;
 export function analyzeSourceColors(buffer,done) {
   worker?.terminate();worker=null;
   if(!buffer)return;
+  const fallback=()=>done(Array.from({length:Math.min(2,buffer.numberOfChannels)},()=>new Float32Array([0])));
   const size=1024,count=Math.max(1,Math.min(1024,Math.ceil(buffer.length/size)));
   const lanes=[];
   for(let c=0;c<Math.min(2,buffer.numberOfChannels);c++){
@@ -17,9 +18,9 @@ export function analyzeSourceColors(buffer,done) {
   try {
     const job=new Worker(new URL('./source-color-worker.js',import.meta.url),{type:'module'});worker=job;
     job.onmessage=({data})=>{if(worker!==job)return;job.terminate();worker=null;done(data);};
-    job.onerror=()=>{job.terminate();if(worker===job)worker=null;};
+    job.onerror=()=>{if(worker!==job)return;job.terminate();worker=null;fallback();};
     job.postMessage({lanes,size,count,rate:buffer.sampleRate},lanes.map(a=>a.buffer));
-  }catch{worker?.terminate();worker=null;} // Single-color fallback preserves editing.
+  }catch{worker?.terminate();worker=null;fallback();} // Neutral fallback preserves editing.
 }
 export function toneColor(hz){
   if(!(hz>0))return '#8399ac';

@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {frequencyTicks, frequencyLabel, spacedMarks, drawEditorGrid} from '../src/canvas-grid.js';
+assert.deepEqual(frequencyTicks(40,18000),[18000,10000,5000,2000,1000,500,200,100,50,40]);
+assert.equal(frequencyLabel(1000),'1 kHz');assert.equal(frequencyLabel(50),'50 Hz');
+const marks=spacedMarks([{y:0},{y:10},{y:30},{y:50},{y:60}]);
+assert.deepEqual(marks.map(x=>x.y),[0,30,60]);
+let lines=[],start; const ctx={save(){},restore(){},beginPath(){},moveTo(x,y){start=[x,y];},lineTo(x,y){lines.push([...start,x,y]);},stroke(){}};
+drawEditorGrid(ctx,60,10,100,70);assert.equal(lines.length,7);assert.deepEqual(lines[1],[92,10,92,80]);
+lines=[];drawEditorGrid(ctx,60,10,100,70,{frequency:true});assert.equal(lines.length,4);
+const jobs=[];globalThis.Worker=class {constructor(){jobs.push(this)}terminate(){}postMessage(){}};
+const {analyzeSourceColors}=await import('../src/source-colors.js');
+const buffer={length:1024,sampleRate:48000,numberOfChannels:1,getChannelData:()=>new Float32Array(1024)};
+let result='pending',stale=false;analyzeSourceColors(buffer,()=>stale=true);analyzeSourceColors(buffer,x=>result=x);
+jobs[0].onerror();assert.equal(stale,false);assert.equal(result,'pending');
+jobs[1].onerror();assert.equal(result[0][0],0);
+console.log('Grid density, log ticks, spacing, pending and stale-worker fallback PASS');
