@@ -10,7 +10,7 @@
 #sourceWaveCanvas{cursor:crosshair}
 .fadeHandle{position:absolute;top:22px;transform:translateX(-50%);width:24px;min-width:24px;height:20px;padding:2px;color:#d0e7ff;border:1px solid #579ce7;background:#172c44;touch-action:none;cursor:ew-resize;border-radius:3px;z-index:2}
 .fadeHandle svg{display:block;width:100%;height:100%;fill:currentColor}
-#fadeInHandle{left:54px}#fadeOutHandle{left:calc(100% - 8px)}
+#fadeInHandle{left:64px}#fadeOutHandle{left:calc(100% - 8px)}
 #sourceWaveCanvas:focus-visible,.fadeHandle:focus-visible{outline:2px solid #e2f1ff;outline-offset:-2px}
 @media(min-width:900px){
  .app{height:100dvh;min-height:700px;padding:0;grid-template-rows:auto auto auto minmax(0,1fr) auto}
@@ -81,7 +81,7 @@
 #rewindButton{margin-left:0;margin-right:7px;border-left:0;border-right:1px solid #344655;border-radius:3px 0 0 3px}
 .bottomTransport button:hover{background:#26394c;color:#d2dce5}
 /* The full overview track aligns exactly with the waveform's time axis. */
-.sourceNavigator{margin:0 8px 0 54px;padding:3px 0}
+.sourceNavigator{margin:0 8px 0 64px;padding:3px 0}
 #editPan{position:relative;display:block;width:100%;height:18px;margin:0;padding:0;
  background:#142332;border:1px solid #344858;border-radius:3px;box-sizing:border-box;
  cursor:crosshair;touch-action:none;overflow:hidden}

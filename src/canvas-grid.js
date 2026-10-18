@@ -1,4 +1,5 @@
 // Curve Lab canvas contract 2026-10-18. Presentation only; no curve snapping.
+export const canvasAxisWidth = 64;
 export const canvasLabelFont = '400 11px system-ui, -apple-system, sans-serif';
 export function drawEditorGrid(ctx,left,top,width,height,{frequency=false}={}) {
   ctx.save(); ctx.lineWidth=1;

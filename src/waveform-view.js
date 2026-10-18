@@ -1,3 +1,4 @@
+import {canvasAxisWidth} from './canvas-grid.js';
 import { toneColor } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
 // Display-only summaries and scaling. Never write into the audio channels.
@@ -14,7 +15,7 @@ export function summarizeChannels(channels, buckets=16000) {
 }
 export function peakOf(peaks){let peak=0;for(const lane of peaks)for(const p of lane)peak=Math.max(peak,p);return peak;}
 export function visualGain(referencePeak){return 1/Math.max(.00001,referencePeak);}
-export function paintWaveform(ctx,{width,height=128,left=54,right=8,peaks=[],duration=0,referencePeak=1,color='#8bc9ff',title='',hint='',position=0,hover=null,timeOffset=0,colors=null,colorStart=0,colorEnd=1}) {
+export function paintWaveform(ctx,{width,height=128,left=canvasAxisWidth,right=8,peaks=[],duration=0,referencePeak=1,color='#8bc9ff',title='',hint='',position=0,hover=null,timeOffset=0,colors=null,colorStart=0,colorEnd=1}) {
   const scale=globalThis.devicePixelRatio||1,w=Math.max(1,width-left-right),top=24,bottom=height-19;
   ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,width,height);ctx.fillStyle='#191c20';ctx.fillRect(0,0,width,height);
   ctx.font=canvasType.tick;

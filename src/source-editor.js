@@ -1,3 +1,4 @@
+import {canvasAxisWidth} from './canvas-grid.js';
 import {initialEdit, lengthOf, deleteRange, setFade, materialize} from './output-edit-core.js?v=20261013-source3';
 
 // Edits own a working source; the original arrays are immutable Undo references.
@@ -89,7 +90,7 @@ export function createSourceEditor({createBuffer, apply, stop, busyChanged, repa
   const redoEdit=()=>redo.length&&commit(redo.at(-1),'redo');
   const remove=()=>selection&&commit(deleteRange(state,...selection));
   el('editUndo').onclick=undo;el('editRedo').onclick=redoEdit;el('editDelete').onclick=remove;
-  function frameAt(event){const r=canvas.getBoundingClientRect(),left=54,width=Math.max(1,r.width-left-8);return Math.round(Math.max(0,Math.min(1,(event.clientX-r.left-left)/width))*(view().end-view().start)+view().start);}
+  function frameAt(event){const r=canvas.getBoundingClientRect(),left=canvasAxisWidth,width=Math.max(1,r.width-left-8);return Math.round(Math.max(0,Math.min(1,(event.clientX-r.left-left)/width))*(view().end-view().start)+view().start);}
   function down(event,kind){
     if(busy||!available||!state||!lengthOf(state)||event.button!==0)return;
     const anchor=getSeekAnchor();
