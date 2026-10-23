@@ -738,7 +738,11 @@ function draw() {
   ctx.fillStyle = "#191c20";
   ctx.fillRect(0, 0, canvasWidth, h);
 
+  // Audio-only visual trial: soften background grid without dimming curves or labels.
+  ctx.save();
+  ctx.globalAlpha *= 0.65;
   drawEditorGrid(ctx, left, 0, w, h);
+  ctx.restore();
 
   drawParameterScale();
   drawCurves();

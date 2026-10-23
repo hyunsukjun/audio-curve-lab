@@ -553,3 +553,6 @@ Remove decorative button highlights; active parameter lower bevel3px→1px. Pres
 - Curve and source waveform plot starts use canvasAxisWidth = 64 CSS px. Audio fade handle/navigator and source pointer conversion share the same gutter. Normalized curve points, timing and DSP remain unchanged. Absolute frequency axes retain their logarithmic scale.
 
 Verification: 600px layout and actual Brave 125%/150% checked. Pointer add/move/modifier-delete checked across all six labs; Audio source edit lifecycle passed. Oscillator imported 8-second WAV overview aligns with the curve axis. This is UI evidence, not DSP/listening certification.
+
+## Audio quiet UI trial — 2026-10-23
+PROJECT-SPECIFIC, uncommitted review candidate. Layout, dimensions, labels, hit targets, selected parameter colors and curve data remain unchanged. Resting command buttons use a flat #303740 surface and #48515c edge; hover/focus remain explicit. Secondary labels use #adb6c2 / #aab4c0, while current values remain unchanged. Background grid opacity is multiplied by 0.65 within a saved canvas state; axes, labels, points, waveform and playhead stay unchanged. No DSP changes. This does not replace the frozen family baseline until reviewed.

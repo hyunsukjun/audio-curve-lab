@@ -1,0 +1,20 @@
+/* Audio-only visual trial: geometry, hit targets, selected colors and focus retained. */
+:is(.fileButton,#downloadButton,#stretchMode,#pitchMode,#panMode,#clearCurveButton,#resetButton,
+#editZoomIn,#editZoomOut,#editZoomFit,#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not([aria-pressed="true"]) {
+  background:#303740 !important;
+  border-color:#48515c !important;
+  box-shadow:none !important;
+}
+:is(.fileButton,#downloadButton,#stretchMode,#pitchMode,#panMode,#clearCurveButton,#resetButton,
+#editZoomIn,#editZoomOut,#editZoomFit,#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not([aria-pressed="true"]):hover {
+  background:#404a56 !important;
+  border-color:#7a899b !important;
+}
+:is(.fileButton,button):focus-visible { outline:2px solid #a9cfff !important; outline-offset:2px; }
+.currentValues > .readout > :is(span,label) { color:#adb6c2; }
+.readout:not(:last-child)::after { background:#454b54; }
+#editStatus { color:#aab4c0; }
+.curveTimeLabel { color:#aab4c0; }
+.sourceEditToolbar > strong { color:#c4ccd6; }
+.toolToggle { border-color:#48515c !important; }
+/* No opacity on parents: values, waveforms, points and active controls stay crisp. */
