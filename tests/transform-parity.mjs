@@ -102,11 +102,12 @@ const neutralRender = await renderOffline({
   settings
 });
 
-let smoothGain = 0;
+let smoothGain = settings.outputGain;
 for (let i = 0; i < neutralRender.left.length; i += 1) {
   smoothGain += (settings.outputGain - smoothGain) * 0.0015;
   const expectedSource = i < left.length - 3 ? left[i] : 0;
-  const expected = Math.fround(Math.tanh(expectedSource * smoothGain));
+  const boundary = Math.min(1, i / 480, (neutralRender.left.length - 1 - i) / 480);
+  const expected = Math.fround(Math.fround(Math.tanh(expectedSource * smoothGain)) * boundary);
   assert.ok(Math.abs(neutralRender.left[i] - expected) < 1e-7, "neutral render changed the direct signal path");
   assert.equal(neutralRender.left[i], neutralRender.right[i]);
 }

@@ -1,3 +1,4 @@
+import { boundaryGain, fadeOutput } from "./playback-boundary.js";
 export const WAV_SAMPLE_RATE = 48000;
 const TAPS = 96;
 const HALF = TAPS / 2;
@@ -35,12 +36,13 @@ function makeKernel(sourceRate) {
 // A centered, DC-normalized Blackman-windowed sinc compensates filter delay.
 // Optional onBlock is synchronous and must consume/copy views before returning.
 // Its buffers are reused; omitting it preserves the full-PCM diagnostic API.
-export async function prepareWavChannels(left, right, sourceRate, signal, onBlock) {
+export async function prepareWavChannels(left, right, sourceRate, signal, onBlock, boundary = false) {
   if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
   if (!left.length || left.length !== right.length || !Number.isInteger(sourceRate) || sourceRate <= 0) {
     throw new Error("Invalid stereo output for WAV conversion");
   }
   if (sourceRate === WAV_SAMPLE_RATE) {
+    if (boundary) fadeOutput([left, right], WAV_SAMPLE_RATE);
     if (!onBlock) return { left, right, sampleRate: WAV_SAMPLE_RATE };
     for (let start = 0; start < left.length; start += BLOCK_FRAMES) {
       if (signal?.aborted) throw new DOMException("Render cancelled", "AbortError");
@@ -75,8 +77,9 @@ export async function prepareWavChannels(left, right, sourceRate, signal, onBloc
         l += left[index] * weight;
         r += right[index] * weight;
       }
-      outL[onBlock ? frame - start : frame] = l;
-      outR[onBlock ? frame - start : frame] = r;
+      const gain = boundary ? boundaryGain(frame, frameCount, WAV_SAMPLE_RATE) : 1;
+      outL[onBlock ? frame - start : frame] = l * gain;
+      outR[onBlock ? frame - start : frame] = r * gain;
     }
     if (onBlock) onBlock(outL.subarray(0, end - start), outR.subarray(0, end - start));
     // Yield between blocks so cancellation and browser UI remain responsive.

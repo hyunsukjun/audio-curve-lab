@@ -1,7 +1,7 @@
 import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
-import { exportWav } from "./wav-export.js?v=20261006-stream-01";
+import { exportWav } from "./wav-export.js?v=20261025-fade10";
 import { encodeWav } from "./wav-encoder.js?v=20261006-stream-01";
-import { prepareWavChannels } from "./wav-output.js?v=20261006-stream-01";
+import { prepareWavChannels } from "./wav-output.js?v=20261025-fade10";
 import {
   TRANSFORM_CONSTANTS,
   alignedGrainStart,
@@ -47,7 +47,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   let lastYield = performance.now();
 
   if (directMode) {
-    let smoothGain = 0;
+    let smoothGain = settings.outputGain;
     let smoothPan = panFromNorm(valueAt(curves.pan, 0));
     const initialDirection = initialPlaybackDirection(curves.stretch, globalDirection);
     let sourceFrame = initialDirection < 0 ? left.length - 3 : 0;
@@ -94,7 +94,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   let sourceFrame = initialDirection < 0 ? left.length - 3 : 0;
   let smoothSpeed = effectiveSpeedAt(curves.stretch, 0, globalDirection);
   let smoothRate = Math.pow(2, centsFromNorm(valueAt(curves.pitch, 0)) / 1200);
-  let smoothGain = 0;
+  let smoothGain = settings.outputGain;
   let smoothPan = panFromNorm(valueAt(curves.pan, 0));
   let previousGrain = null;
 
@@ -151,7 +151,7 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
   }
 
   let peak = 0;
-  let postGain = 0;
+  let postGain = settings.outputGain;
   for (let i = 0; i < outLength; i += 1) {
     postGain += (settings.outputGain - postGain) * TRANSFORM_CONSTANTS.gainSmoothing;
     const freezePart = overlapEnvelope[i] > 1e-6 ? freezeEnvelope[i] / overlapEnvelope[i] : 0;
@@ -171,13 +171,13 @@ export async function renderOffline({ audioBuffer, curves, settings, signal, onP
 }
 
 async function finishWav(left, right, sourceRate, truncated, signal, onProgress, includePCM, pcmOnly) {
-  if (pcmOnly) return prepareWavChannels(left, right, sourceRate, signal);
+  if (pcmOnly) return prepareWavChannels(left, right, sourceRate, signal, undefined, true);
   if (!includePCM) {
-    const result = await exportWav(left, right, sourceRate, signal);
+    const result = await exportWav(left, right, sourceRate, signal, true);
     onProgress?.(1);
     return { ...result, truncated };
   }
-  const output = await prepareWavChannels(left, right, sourceRate, signal);
+  const output = await prepareWavChannels(left, right, sourceRate, signal, undefined, true);
   const blob = await encodeWav(output.left, output.right, output.sampleRate, signal);
   onProgress?.(1);
   return { ...output, duration: output.left.length / output.sampleRate, blob, truncated };

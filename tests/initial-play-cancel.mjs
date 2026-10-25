@@ -7,7 +7,7 @@ const pick=name=>{const match=new RegExp(`(?:async )?function ${name}\\(`).exec(
 const actions=['stopAudio','forceStopAudio','loadAudioFile'].filter(n=>source.includes('function '+n+'('));
 for(const action of actions){
  let ready;const gate=new Promise(resolve=>ready=resolve),messages=[];
- const c={sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],peakOf:()=>1,readAudioFile,buffer:{duration:8},node:null,playbackToken:0,isPlaying:false,workletBufferLoaded:false,playheadSeconds:0,sourcePlayheadSeconds:0,isScrubbing:false,
+ const c={setExportStatus(){},sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],peakOf:()=>1,readAudioFile,buffer:{duration:8},node:null,playbackToken:0,isPlaying:false,workletBufferLoaded:false,playheadSeconds:0,sourcePlayheadSeconds:0,isScrubbing:false,
  playButton:{disabled:false,textContent:'Play'},resetDialog:{hidden:true},spectrogram:{cancel(){},invalidate(){}},fileStatus:{},fileNotice:{},downloadReadout:{},readouts:{download:{}},renderAbortController:null, audioContext:{sampleRate:48000}, curves:{stretch:[]}, settings:()=>({durationSeconds:20}), checkFileSize(){}, preflightWav:async()=>{}, checkPCM(){}, updateDurationNotice(){}, estimateOutputDuration:()=>2, resetSourceWindowToMinimum(){}, sendSettings(){}, setBusy:x=>c.playButton.disabled=x,
  ensureAudio:async()=>{await gate;c.node={port:{postMessage:m=>messages.push(m)}}},ensureAudioContext:async()=>{},getPlaybackDuration:()=>8,
  setTransportBusy:x=>c.playButton.disabled=x,decodeAudioFile:async()=>({duration:2,numberOfChannels:1}),buildWaveform(){},sendBufferToWorklet(){},clearDownload(){},largeFileSeconds:300,resetCurrentReadouts(){},draw(){},console};

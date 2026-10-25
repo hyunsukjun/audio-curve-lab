@@ -1,3 +1,4 @@
+import { PlaybackBoundary } from "./playback-boundary.js";
 import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261007-5min1";
 import {
   TRANSFORM_CONSTANTS,
@@ -24,6 +25,8 @@ import {
 class AudioTransformProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
+    this.boundary = new PlaybackBoundary(sampleRate);
+    this.pendingPause = null;
     this.left = null;
     this.right = null;
     this.sampleRateSource = sampleRate;
@@ -39,7 +42,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.positionUpdateInterval = Math.max(1, Math.round(sampleRate / 30));
     this.smoothSpeed = 1;
     this.smoothRate = 1;
-    this.smoothGain = 0;
+    this.smoothGain = this.settings?.outputGain ?? 0.95;
     this.smoothPan = 0;
     this.lastReadDirection = 1;
     this.nextRandom = createSeededRandom();
@@ -58,6 +61,17 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
 
     this.port.onmessage = (event) => {
       const data = event.data;
+      if (data.type === "play" || data.type === "seek" || data.type === "buffer") {
+        this.pendingPause = null;
+        this.boundary.start();
+      }
+      if (data.type === "stop" && !data.reset && !data.boundaryComplete && this.settings.playing) {
+        this.token = data.token ?? this.token;
+        this.pendingPause = data;
+        this.boundary.release();
+        return;
+      }
+      if (data.type === "stop") this.pendingPause = null;
       if (data.type === "buffer") {
         this.left = data.left;
         this.right = data.right || data.left;
@@ -153,7 +167,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     this.smoothSpeed = effectiveSpeedAt(this.stretchCurve, norm, this.settings.globalDirection);
     this.smoothRate = Math.pow(2, cents / 1200);
     this.smoothPan = panFromNorm(valueAt(this.panCurve, norm));
-    this.smoothGain = 0;
+    this.smoothGain = this.settings?.outputGain ?? 0.95;
   }
 
   spawnGrain(grainSamples, rate, sourceFrame, randomSamples, freeze) {
@@ -179,6 +193,7 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
     const outR = out[1] || out[0];
 
     for (let i = 0; i < outL.length; i += 1) {
+      const boundaryGain = this.settings.playing && this.left ? this.boundary.next(this.outputDurationFrames() - this.outputFrame) : 0;
       let l = 0;
       let r = 0;
       let grainEnvelopeSum = 0;
@@ -272,8 +287,13 @@ class AudioTransformProcessor extends AudioWorkletProcessor {
         this.positionFramesUntilUpdate -= 1;
       }
 
-      outL[i] = Math.tanh(l);
-      outR[i] = Math.tanh(r);
+      outL[i] = Math.tanh(l) * boundaryGain;
+      outR[i] = Math.tanh(r) * boundaryGain;
+      if (this.pendingPause && this.boundary.done) {
+        const pause = this.pendingPause;
+        this.pendingPause = null;
+        this.port.onmessage({ data: { ...pause, boundaryComplete: true } });
+      }
     }
 
     return true;

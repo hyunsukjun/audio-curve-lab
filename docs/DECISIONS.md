@@ -485,3 +485,8 @@ Remove decorative button highlights; active parameter lower bevel3px→1px. Pres
 - Current Mac browser display benchmark, synthetic300s stereo: summary19.4ms, bounded window copy1.6ms, worker elapsed57.6ms, raster4.5ms;5 animation frames during analysis, max gap16.7ms. Canvas copy timings measure command submission, not completed GPU work. Not a low-spec or long-session guarantee.
 - Small viewport forcing did not affect the target tab in this session (actual1092×1318); do not claim390px verification. Small-screen/actual zoom review remains pending.
 - No commit/deployment/freeze. DSP remains Curve Lab DSP; this pilot only reads source samples for visualization.
+
+
+## 10 ms playback boundary candidate — 2026-10-25
+
+The current local candidate supersedes earlier automatic transport-boundary durations with the [10 ms playback/WAV contract](PLAYBACK_BOUNDARY.md). Source/effect envelopes are separate. See that contract for pause-state retention, existing tail-length limits and verification status. Uncommitted; listening acceptance pending.
