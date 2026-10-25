@@ -9,7 +9,7 @@ export function drawEditorGrid(ctx,left,top,width,height,{frequency=false}={}) {
     const length=axis===0?width:height;
     for(let i=0;i*32<=length;i++) {
       const p=i*32;
-      ctx.strokeStyle=i%4===0?'rgba(139,149,162,.18)':'rgba(139,149,162,.08)';
+      ctx.strokeStyle=i%4===0?'rgba(139,149,162,.18)':'rgba(139,149,162,.065)';
       ctx.beginPath();
       if(axis===0){ctx.moveTo(left+p,top);ctx.lineTo(left+p,top+height);}
       else {ctx.moveTo(left,top+p);ctx.lineTo(left+width,top+p);}

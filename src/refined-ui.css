@@ -1,0 +1,103 @@
+/* Curve Lab graphite contract v1 — 2026-10-26.
+   Paint only: retain dimensions, typography metrics, hit targets and musical colors.
+   Identical in all six Labs; portable roles are documented in INTERFACE_GRAPHITE_CONTRACT.md. */
+:root {
+  --cl-surface-shell: #2d3138;
+  --cl-surface-canvas: #191c20;
+  --cl-surface-control: #363c45;
+  --cl-surface-hover: #444d59;
+  --cl-surface-popover: #272c33;
+  --cl-ink-primary: #e5e9ef;
+  --cl-ink-secondary: #b6bec9;
+  --cl-ink-caption: #aab4c0;
+  --cl-edge-rest: #505a67;
+  --cl-edge-hover: #7d8796;
+  --cl-edge-divider: #424952;
+  --cl-focus-ring: #a9cfff;
+  --audio-surface-file: var(--cl-surface-shell);
+  --audio-surface-controls: var(--cl-surface-shell);
+  --audio-surface-values: var(--cl-surface-shell);
+  --audio-surface-transport: var(--cl-surface-shell);
+  --family-header: var(--cl-surface-shell);
+  --family-transport: var(--cl-surface-shell);
+}
+body, .app, .editor,
+.topbar, .legend, .effectBar, .parameterBar, .controlBand, .sourceBand,
+.impulseBand, .durationPanel, .roomControls, .voiceDetails, .modulationInfo,
+.panel.currentValues, .chainDiagram,
+.app > .playbackBar, .app > .playbackDock, .playbackDock > .playbackBar {
+  background: var(--cl-surface-shell) !important;
+}
+body, .app, .topbar, .topbar h1 { color: var(--cl-ink-primary); }
+
+/* Available/off is separate from enabled, currently edited, unavailable and clipped. */
+:is(.fileButton,#openAudioButton,#downloadButton,.curveMode,.effectModule,
+.parameterButton,.waveformButton,.chainBlock,#resynthesisMode,#convolutionButton,
+#clearCurveButton,#resetButton,#editZoomIn,#editZoomOut,#editZoomFit,
+#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not(.enabled):not(.editing):not(.clipped):not([aria-pressed="true"]) {
+  background: var(--cl-surface-control) !important;
+  color: var(--cl-ink-primary) !important;
+  border-color: var(--cl-edge-rest) !important;
+  box-shadow: none !important;
+}
+:is(.fileButton,#openAudioButton,#downloadButton,.curveMode,.effectModule,
+.parameterButton,.waveformButton,.chainBlock,#resynthesisMode,#convolutionButton,
+#clearCurveButton,#resetButton,#editZoomIn,#editZoomOut,#editZoomFit,
+#editUndo,#editRedo,#editDelete):not(:disabled):not(.active):not(.enabled):not(.editing):not(.clipped):not([aria-pressed="true"]):hover {
+  background: var(--cl-surface-hover) !important;
+  border-color: var(--cl-edge-hover) !important;
+}
+:is(.fileButton,button,select):focus-visible {
+  outline: 2px solid var(--cl-focus-ring) !important;
+  outline-offset: 2px;
+}
+.topbar select, .compactField select, .synthesisGroup select,
+.resynthesisControls select, .modulationGroup select {
+  background-color: var(--cl-surface-control);
+  color: var(--cl-ink-primary);
+  border-color: var(--cl-edge-rest);
+}
+.toolToggle { border-color: var(--cl-edge-rest) !important; }
+.toolToggle svg { stroke-width: 1.75; }
+
+/* Semantic content remains visible; no opacity is applied to a container. */
+.currentValues > .readout > :is(span,label) { color: var(--cl-ink-secondary); }
+.currentValues > .readout > strong { color: var(--cl-ink-primary); }
+.currentValues > .primaryReadout > strong { color: #f1f4f8; }
+.currentValues > .referenceReadout > strong { color: var(--cl-ink-secondary); }
+.readout:not(:last-child)::after { background: var(--cl-edge-divider); }
+.privacyNote, .tagline { color: var(--cl-ink-secondary); }
+#editStatus, .curveTimeLabel { color: var(--cl-ink-caption); }
+.sourceEditToolbar > strong { color: #c6ced8; }
+#timeStatus, #durationValue { color: var(--cl-ink-primary); }
+.playbackBar .bottomTransport {
+  background: #252a31;
+  border-color: #56616f;
+}
+.playbackBar .bottomTransport :is(#rewindButton,#playButton,#stopButton) {
+  color: var(--cl-ink-primary);
+}
+
+/* Transient panels share a neutral surface; position, size and text metrics stay intact. */
+.parameterHelp, .fileHelpPanel {
+  background: var(--cl-surface-popover);
+  color: var(--cl-ink-primary);
+  border-color: #626d7b;
+  box-shadow: 0 6px 18px #0004;
+}
+.parameterHelp strong, .fileHelpPanel > strong { color: #f1f4f8; }
+.parameterHelp .helpState, .fileHelpPanel dt, .fileHelpPanel p {
+  color: var(--cl-ink-secondary);
+}
+.fileHelpPanel p { border-top-color: var(--cl-edge-divider); }
+.spatialPanel { border-color: #38414a; }
+.spatialHeader > span { color: var(--cl-ink-secondary); }
+
+/* Long output/seek clocks must remain readable on a narrow transport. */
+@media (max-width: 600px) {
+  .playbackBar #timeStatus {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

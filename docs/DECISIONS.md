@@ -490,3 +490,8 @@ Remove decorative button highlights; active parameter lower bevel3px→1px. Pres
 ## 10 ms playback boundary candidate — 2026-10-25
 
 The current local candidate supersedes earlier automatic transport-boundary durations with the [10 ms playback/WAV contract](PLAYBACK_BOUNDARY.md). Source/effect envelopes are separate. See that contract for pause-state retention, existing tail-length limits and verification status. Uncommitted; listening acceptance pending.
+
+
+## 2026-10-26 — Common graphite presentation revision
+
+User-authorized six-Lab application and commit of the researched dark interface direction. Use a deeper neutral continuous shell, shallow available controls, role-based secondary information and slightly quieter minor grid lines. Preserve all layout/type metrics, module state colors, musical data and audio behavior. Store the portable contract and manifest for future Standalone work. This narrowly revises the visual baseline; it does not reopen DSP or certify listening/native behavior. See [INTERFACE_GRAPHITE_CONTRACT.md](INTERFACE_GRAPHITE_CONTRACT.md).

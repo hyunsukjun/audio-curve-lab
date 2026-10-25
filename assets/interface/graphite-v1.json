@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "date": "2026-10-26",
+  "scope": "shared presentation roles; no DSP or interaction change",
+  "colors": {
+    "shell": "#2D3138",
+    "canvas": "#191C20",
+    "control": "#363C45",
+    "hover": "#444D59",
+    "popover": "#272C33",
+    "primaryText": "#E5E9EF",
+    "secondaryText": "#B6BEC9",
+    "captionText": "#AAB4C0",
+    "restEdge": "#505A67",
+    "hoverEdge": "#7D8796",
+    "divider": "#424952",
+    "focus": "#A9CFFF"
+  },
+  "webMetrics": {
+    "controlFontPx": 13,
+    "valueFontPx": 14,
+    "captionFontPx": 11,
+    "auxiliarySelectorFontPx": 12,
+    "modeHeightPx": 34,
+    "fileHeightPx": 38,
+    "toolHeightPx": 32,
+    "axisWidthPx": 64,
+    "gridMinorPx": 32,
+    "gridMajorPx": 128,
+    "gridMajorAlpha": 0.18,
+    "gridMinorAlpha": 0.065,
+    "toolSvgStroke": 1.75,
+    "narrowClockWrapMaxWidthPx": 600
+  },
+  "nativeMapping": "Use semantic color/text/state roles; validate native metrics independently. No automatic CSS-px-to-native-point conversion.",
+  "moduleOwned": [
+    "identity",
+    "parameterColors",
+    "enabledEditingStates",
+    "waveformSourceTone",
+    "meterColors",
+    "clipState",
+    "progressTrack",
+    "curveMapping",
+    "pointerTargets",
+    "DSP"
+  ]
+}

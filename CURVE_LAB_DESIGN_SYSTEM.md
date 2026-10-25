@@ -556,3 +556,8 @@ Verification: 600px layout and actual Brave 125%/150% checked. Pointer add/move/
 
 ## Audio quiet UI trial — 2026-10-23
 PROJECT-SPECIFIC, uncommitted review candidate. Layout, dimensions, labels, hit targets, selected parameter colors and curve data remain unchanged. Resting command buttons use a flat #303740 surface and #48515c edge; hover/focus remain explicit. Secondary labels use #adb6c2 / #aab4c0, while current values remain unchanged. Background grid opacity is multiplied by 0.65 within a saved canvas state; axes, labels, points, waveform and playhead stay unchanged. No DSP changes. This does not replace the frozen family baseline until reviewed.
+
+
+## Graphite role system v1 — 2026-10-26
+
+COMMON CANDIDATE / STANDALONE ASSET. The user approved the six-Lab visual refinement. [Graphite interface contract](docs/INTERFACE_GRAPHITE_CONTRACT.md) and [portable roles](assets/interface/graphite-v1.json) supersede earlier neutral shell/control/text and minor-grid emphasis values only. `src/refined-ui.css` is the common implementation. Keep all musical colors, state meanings, font metrics, layout and interaction geometry. The earlier no-underline and continuous functional-surface rules remain. Current runtime/UI verification is recorded in the shared Graphite review evidence; listening/native approval is separate.
