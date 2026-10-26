@@ -456,3 +456,10 @@ Reset 확인창의 Tab/Shift+Tab은 Cancel과 Reset All 사이에서 순환한�
 ## 10 ms playback boundary candidate — 2026-10-25
 
 The current local candidate supersedes earlier automatic transport-boundary durations with the [10 ms playback/WAV contract](PLAYBACK_BOUNDARY.md). Source/effect envelopes are separate. See that contract for pause-state retention, existing tail-length limits and verification status. Uncommitted; listening acceptance pending.
+
+## Current-value basis and source-selection readout — 2026-10-27 (local review)
+PROJECT-SPECIFIC. Existing always-visible readouts identify Editing, Curve points and Source playhead. Musical captions distinguish paused playhead targets from live playback telemetry; the value sources are unchanged. The existing source toolbar readout displays either source edit position or source selection start/end/length, in seconds with three decimals. This display reads the existing source frames/rate and never seeks, applies audio, changes selection or replaces the output clock. No new disclosure, button, hit target or DSP control.
+
+## Readout context family release — 2026-10-27
+
+Existing current-value captions now identify their basis. Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.

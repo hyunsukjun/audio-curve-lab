@@ -331,3 +331,12 @@ Idle WAV ready/not ready/needs export badges are hidden. The Download control re
 ## 10 ms playback boundary candidate — 2026-10-25
 
 The current local candidate supersedes earlier automatic transport-boundary durations with the [10 ms playback/WAV contract](PLAYBACK_BOUNDARY.md). Source/effect envelopes are separate. See that contract for pause-state retention, existing tail-length limits and verification status. Uncommitted; listening acceptance pending.
+
+## Readout context and source selection — 2026-10-27 (local review)
+PROJECT-SPECIFIC. The always-visible panel retains all IDs/values. Editing and Curve points identify the edit target. Speed/Pitch/Pan captions use `playhead` when stopped (existing curve targets before smoothing) and `playback` while running (existing live telemetry). Point tooltips remain independent. Source playhead reports the existing source playback position.
+
+The source toolbar's existing editCursor displays `Edit position · 0.000 s` without a range, or `Selection · 1.600–3.200 s · Length 1.600 s` for a nonzero range. The range uses existing sorted source-frame endpoints/sample rate, not output time. Reverse drag, cancellation, zoom/navigation, deletion and Undo keep their prior behavior. Display formatting adds no seek/play/apply call. Existing source gestures may stop/reset playback as before; range selection does not acquire new audition behavior. Selection clearing restores edit-position text. The output transport clock is unchanged.
+
+## Readout context family release — 2026-10-27
+
+Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. No new gesture, seeking, point selection, transport command or audio mutation is introduced by displaying these values. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.

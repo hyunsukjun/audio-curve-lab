@@ -28,7 +28,8 @@
 }
 @media(max-width:899px){.sourceEditToolbar{flex-wrap:wrap}#editStatus{flex-basis:65%}.editor{grid-template-rows:auto}}
 
-#editCursor{font-variant-numeric:tabular-nums;white-space:nowrap;color:#d0e7ff;font-size:11px}
+/* Source range text stays readable in the existing toolbar when it wraps. */
+#editCursor{font-variant-numeric:tabular-nums;white-space:normal;color:#d0e7ff;font-size:11px;min-width:0;max-width:100%;overflow-wrap:anywhere}
 #editPan{display:block;width:calc(100% - 24px);height:12px;margin:0 12px;accent-color:#459bff;padding:0}
 #editPan:disabled{opacity:.3}
 

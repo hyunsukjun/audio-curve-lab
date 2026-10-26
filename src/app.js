@@ -1,7 +1,7 @@
 import {canvasAxisWidth, drawEditorGrid, frequencyTicks, frequencyLabel, spacedMarks, canvasLabelFont} from "./canvas-grid.js?v=20261026-graphite1";
 import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
-import { createSourceEditor } from "./source-editor.js?v=20261018-axis64";
+import { createSourceEditor } from "./source-editor.js?v=20261027-selection1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
 import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261018-axis64";
 let sourceEditor = null;
@@ -47,6 +47,11 @@ const panMode = document.getElementById("panMode");
 const stretchReadout = document.getElementById("stretchReadout");
 const pitchReadout = document.getElementById("pitchReadout");
 const panReadout = document.getElementById("panReadout");
+const parameterReadoutLabels = [
+  [document.getElementById("stretchReadoutLabel"), "Speed"],
+  [document.getElementById("pitchReadoutLabel"), "Pitch"],
+  [document.getElementById("panReadoutLabel"), "Pan"]
+];
 const downloadReadout = document.getElementById("downloadReadout");
 const modeReadout = document.getElementById("modeReadout");
 const pointsReadout = document.getElementById("pointsReadout");
@@ -767,6 +772,11 @@ function draw() {
     : "00:00.00 / 00:00.00";
   sourceReadout.textContent = formatTime(sourcePlayheadSeconds);
   // Stopped readouts follow the output playhead, not stale worklet telemetry.
+  const valueBasis = isPlaying ? "playback" : "playhead";
+  for (const [label, name] of parameterReadoutLabels) {
+    const caption = `${name} · ${valueBasis}`;
+    if (label.textContent !== caption) label.textContent = caption;
+  }
   const valueProgress = buffer && getPlaybackDuration() > 0
     ? Math.max(0, Math.min(1, playheadSeconds / getPlaybackDuration())) : 0;
   const displaySpeed = isPlaying ? currentSpeed : effectiveSpeedAt(curves.stretch, valueProgress, transformSettings.globalDirection);

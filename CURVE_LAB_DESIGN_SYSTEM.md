@@ -561,3 +561,12 @@ PROJECT-SPECIFIC, uncommitted review candidate. Layout, dimensions, labels, hit 
 ## Graphite role system v1 — 2026-10-26
 
 COMMON CANDIDATE / STANDALONE ASSET. The user approved the six-Lab visual refinement. [Graphite interface contract](docs/INTERFACE_GRAPHITE_CONTRACT.md) and [portable roles](assets/interface/graphite-v1.json) supersede earlier neutral shell/control/text and minor-grid emphasis values only. `src/refined-ui.css` is the common implementation. Keep all musical colors, state meanings, font metrics, layout and interaction geometry. The earlier no-underline and continuous functional-surface rules remain. Current runtime/UI verification is recorded in the shared Graphite review evidence; listening/native approval is separate.
+
+## Value context and source range — 2026-10-27 (local review)
+Keep existing Graphite colors, type sizes, readout columns, focus, axes and control geometry. Existing captions distinguish Editing / Curve points / Source playhead; musical labels say playhead or playback according to the existing value source. Keep point-tooltip context separate.
+
+The existing source toolbar position field becomes source-selection start/end/length only while a nonzero selection exists. Keep seconds and existing millisecond precision; restore edit-position text otherwise. Text can wrap inside the existing toolbar on narrow screens without clipping. There is no new icon, button, disclosure, semantic hue or hit-area change. Local review only; no release or listening acceptance inferred.
+
+## Readout context family release — 2026-10-27
+
+Reuse existing Graphite colors/type and controls. Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. No hidden readouts or Details disclosure, and no hit-target change. Metadata can wrap without clipping on narrow screens. See `docs/READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.

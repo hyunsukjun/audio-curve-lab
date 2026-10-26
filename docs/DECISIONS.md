@@ -495,3 +495,12 @@ The current local candidate supersedes earlier automatic transport-boundary dura
 ## 2026-10-26 — Common graphite presentation revision
 
 User-authorized six-Lab application and commit of the researched dark interface direction. Use a deeper neutral continuous shell, shallow available controls, role-based secondary information and slightly quieter minor grid lines. Preserve all layout/type metrics, module state colors, musical data and audio behavior. Store the portable contract and manifest for future Standalone work. This narrowly revises the visual baseline; it does not reopen DSP or certify listening/native behavior. See [INTERFACE_GRAPHITE_CONTRACT.md](INTERFACE_GRAPHITE_CONTRACT.md).
+
+## Distinguish edited points, playhead values and source selection — 2026-10-27
+PROJECT-SPECIFIC / LOCAL REVIEW. User approved two small visual/read-only improvements with silent cross-checks; no commit/deployment approval. A selected Pitch point can show +1201 cents while the output playhead still reports0 cents. Both values are valid and must not be conflated. Existing labels name their basis; value computations and all visible readouts remain. No Details disclosure is reintroduced.
+
+The source selection's endpoints and length were only implicit in shading. Show existing frame data in the existing toolbar position field rather than adding new editable controls or seeking to selection. Reuse typography/colors/spacing; allow range text to wrap. Invisible hit-area enlargement and keyboard point editing remain outside this change. Evidence: coordinating `qa/audio-context-selection-20261027/` including before baseline,149 identical lifecycle callback/model records, focused tests, paired layout fixtures and actual Brave zoom. UI evidence is not listening or product-wide acceptance.
+
+## Readout context family release — 2026-10-27
+
+User approved the Audio pilot and sequential six-Lab rollout/commit/verification/deployment. Apply shared semantics selectively: Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. Preserve per-Lab behavior instead of forcing Audio calculations or adding nonexistent selection features. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.

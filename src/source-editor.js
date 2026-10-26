@@ -62,7 +62,15 @@ export function createSourceEditor({createBuffer, apply, stop, busyChanged, repa
     navigator.setAttribute('aria-valuenow',String(Math.round(navPoint/Math.max(1,countOf())*100)));
     navigator.setAttribute('style',`--view-left:${range.start/Math.max(1,countOf())*100}%;--view-width:${(range.end-range.start)/Math.max(1,countOf())*100}%;--nav-point:${navPoint/Math.max(1,countOf())*100}%`);
     navigator.setAttribute('aria-valuetext',state?`Visible ${(range.start/state.rate).toFixed(3)} to ${(range.end/state.rate).toFixed(3)} seconds of ${(countOf()/state.rate).toFixed(3)}`:'No audio');
-    el('editCursor').textContent=state?`${(cursor/state.rate).toFixed(3)} s`: '0.000 s';
+    // Presentation only: read existing source frames; never seek or change the selection.
+    const editReadout=el('editCursor');
+    const hasSelection=state&&selection&&selection[1]>selection[0];
+    editReadout.textContent=hasSelection
+      ? `Selection · ${(selection[0]/state.rate).toFixed(3)}–${(selection[1]/state.rate).toFixed(3)} s · Length ${((selection[1]-selection[0])/state.rate).toFixed(3)} s`
+      : `Edit position · ${state?(cursor/state.rate).toFixed(3):'0.000'} s`;
+    editReadout.title=hasSelection
+      ? 'Selected source range and length. This is not the output playback position.'
+      : 'Source edit position, separate from the output playback position.';
     if(paint)repaint();
   };
   function load(buffer) {

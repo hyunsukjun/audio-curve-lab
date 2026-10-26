@@ -342,3 +342,12 @@ The current local candidate supersedes earlier automatic transport-boundary dura
 ## Graphite interface roles v1 — 2026-10-26
 
 STANDALONE ASSET. Preserve the role hierarchy and state distinctions in [INTERFACE_GRAPHITE_CONTRACT.md](INTERFACE_GRAPHITE_CONTRACT.md), with machine-readable roles in [graphite-v1.json](../assets/interface/graphite-v1.json). Web styles are a visual reference, not a native framework dependency. Validate native type metrics, system focus and appearance settings independently. This is a presentation revision; DSP, curves and transport semantics are unchanged.
+
+## Read-only value context and selection metadata — 2026-10-27
+STANDALONE ASSET / WEB LOCAL REVIEW. Preserve semantic separation among editing target, point tooltip, stopped playhead target, playing telemetry, source edit position, source selection and output audition position. Range labels observe native source frames/sample rate; painting them must not mutate transport, audio or selection. Preserve output-cache freshness independently.
+
+Use platform text/accessibility/spacing roles and expose the range as readable metadata; do not automatically translate current CSS pixels into native points or add an announcement on every drag sample. Test identical data and sizes, selection cancellation, reverse selection, zoom, Delete/Undo and transport before adoption. Native implementation and physical touch acceptance are not implied by this web pilot.
+
+## Readout context family release — 2026-10-27
+
+STANDALONE ASSET. Preserve editing-target, point-value, playhead/Preview-value, source-range and audition/output distinctions. Adopt native typography/accessibility/input conventions; web pixels are not native point specifications. No native implementation or listening acceptance implied. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.

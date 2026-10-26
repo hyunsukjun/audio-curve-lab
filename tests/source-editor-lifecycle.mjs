@@ -67,3 +67,31 @@ assert.deepEqual(Array.from(linked.selection),[9600,28800],'overview does not al
 el('editZoomOut').onclick();
 assert.equal((linked.viewport.start+linked.viewport.end)/2,19200,'zoom returns to selected region center');
 console.log('PASS selection-centered zoom and full-source overview navigation');
+
+// Numeric source selection is a read-only view, separate from audition seeking.
+assert.equal(el('editCursor').textContent,'Selection · 0.200–0.600 s · Length 0.400 s');
+const selectionBefore=Array.from(linked.selection),seeksBefore=seeks.length;
+linked.followPlayback(45000);
+assert.deepEqual(Array.from(linked.selection),selectionBefore);
+assert.equal(el('editCursor').textContent,'Selection · 0.200–0.600 s · Length 0.400 s');
+target.listeners.pointerdown(event(canvasAxisWidth+100));
+target.listeners.pointermove(event(canvasAxisWidth+300));
+await target.listeners.pointercancel(event(canvasAxisWidth+300,target,'pointercancel'));
+assert.deepEqual(Array.from(linked.selection),selectionBefore);
+assert.equal(el('editCursor').textContent,'Selection · 0.200–0.600 s · Length 0.400 s');
+assert.equal(seeks.length,seeksBefore,'display/follow/cancel must not seek');
+for(const rate of [44100,48000,96000]){
+  linked.load(make(2,rate,rate));
+  assert.equal(el('editCursor').textContent,'Edit position · 0.000 s');
+  const seekCount=seeks.length;
+  await select(canvasAxisWidth+600,canvasAxisWidth+200);
+  assert.deepEqual(Array.from(linked.selection),[rate/4,rate*3/4]);
+  assert.equal(el('editCursor').textContent,'Selection · 0.250–0.750 s · Length 0.500 s');
+  assert.equal(seeks.length,seekCount,'reverse range selection only displays source frames');
+  await select(canvasAxisWidth+400,canvasAxisWidth+400);
+  assert.equal(linked.selection,null);
+  assert.equal(el('editCursor').textContent,'Edit position · 0.500 s');
+  assert.equal(seeks.length,seekCount+1,'single click retains the existing audition seek');
+  assert.equal(seeks.at(-1)[0],rate/2);
+}
+console.log('PASS source selection readout native rates, reverse drag, cancel restore, playback follow, click clearing and unchanged seek calls');
