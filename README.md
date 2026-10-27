@@ -103,3 +103,8 @@ Final output: up to5minutes after Speed processing; stereo48kHz/24bit WAV. The U
 AIFF (.aif/.aiff), mono/stereo 16/24-bit PCM, is converted locally on import.
 AIFF-C is not supported by this importer; use PCM WAV instead. Original files
 are unchanged. See [support scope and limits](docs/AIFF_IMPORT.md).
+
+
+### Source volume
+
+Hold Command over the 256px source waveform to edit linked volume points, or toggle Volume. Range: mute to +6dB, default 0dB. Option-click removes interior points; Reset volume and Undo/Redo affect the source edit. Applying an edit uses the existing stopped-source lifecycle and the same working source for Preview and WAV. See [source volume](docs/SOURCE_VOLUME.md).

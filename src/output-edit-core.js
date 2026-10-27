@@ -1,9 +1,10 @@
+import {sourceVolumeReader, volumeAfterDelete} from './source-volume.js?v=20261027-volume2';
 // Immutable PCM pieces: history keeps references, never full-buffer snapshots.
 export const CROSSFADE_SECONDS = 0.005;
 export const lengthOf = state => state.pieces.reduce((sum, p) => sum + p.end - p.start, 0);
 export function initialEdit(left, right, rate = 48000) {
   if (left.length !== right.length || !left.length || !Number.isFinite(rate) || rate < 8000 || rate > 192000) throw new Error('Expected matched non-empty PCM at 8–192 kHz');
-  return { pieces: [{ channels: [left, right], start: 0, end: left.length }], rate, fadeIn: 0, fadeOut: 0 };
+  return { pieces: [{ channels: [left, right], start: 0, end: left.length }], rate, fadeIn: 0, fadeOut: 0, volume: [] };
 }
 export function slicePieces(pieces, start, end) {
   const result = []; let offset = 0;
@@ -38,6 +39,7 @@ export function deleteRange(state, start, end) {
   pieces.push(...slicePieces(state.pieces,end+join,length));
   const next={...state,pieces}; const n=lengthOf(next);
   next.fadeIn=Math.min(state.fadeIn,n); next.fadeOut=Math.min(state.fadeOut,n-next.fadeIn);
+  next.volume=volumeAfterDelete(state,length,start,end,join,n);
   return next;
 }
 export function setFade(state, side, frames) {
@@ -53,12 +55,13 @@ export function fadeGain(i,length,fadeIn,fadeOut) {
 }
 export async function materialize(state, channels, signal) {
   const length=lengthOf(state); let at=0;
+  const volume=sourceVolumeReader(state.volume);
   if(channels.length!==2 || channels.some(c=>c.length!==length)) throw new Error('Invalid edit output');
   for(const p of state.pieces) {
     for(let base=p.start;base<p.end;base+=32768) {
       if(signal?.aborted) throw new DOMException('Edit cancelled','AbortError');
       const end=Math.min(p.end,base+32768);
-      for(let i=base;i<end;i++,at++) {const gain=fadeGain(at,length,state.fadeIn,state.fadeOut);channels[0][at]=p.channels[0][i]*gain;channels[1][at]=p.channels[1][i]*gain;}
+      for(let i=base;i<end;i++,at++) {const gain=fadeGain(at,length,state.fadeIn,state.fadeOut)*volume(at);channels[0][at]=p.channels[0][i]*gain;channels[1][at]=p.channels[1][i]*gain;}
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   }

@@ -349,3 +349,8 @@ initialization is retained; interpolation, gain, pitch and export are unchanged.
 ## 10 ms playback boundary candidate — 2026-10-25
 
 The current local candidate supersedes earlier automatic transport-boundary durations with the [10 ms playback/WAV contract](PLAYBACK_BOUNDARY.md). Source/effect envelopes are separate. See that contract for pause-state retention, existing tail-length limits and verification status. Uncommitted; listening acceptance pending.
+
+
+## Source volume — 2026-10-27
+
+PROJECT-SPECIFIC / explicitly approved gain processing. Materialize immutable source pieces with source-volume gain multiplied by existing source fade gain, then pass the one complete working buffer to unchanged Preview/Render. Unity remains neutral; gain is linked and unclipped in working float PCM up to +6dB. Existing transform saturation, maps, time/channel logic, output fades and WAV conversion are unchanged. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md) for ordering, deletion rebasing and limits.

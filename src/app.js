@@ -1,7 +1,8 @@
 import {canvasAxisWidth, drawEditorGrid, frequencyTicks, frequencyLabel, spacedMarks, canvasLabelFont} from "./canvas-grid.js?v=20261026-graphite1";
 import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
-import { createSourceEditor } from "./source-editor.js?v=20261027-selection1";
+import { createSourceEditor } from "./source-editor.js?v=20261027-volume2";
+import { paintSourceVolume } from "./source-volume-view.js?v=20261027-volume2";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
 import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261018-axis64";
 let sourceEditor = null;
@@ -121,7 +122,7 @@ const meterDisplay = meterRows.map(() => ({
   hold: 0,
   holdUntil: 0
 }));
-const waveformHeight = 128;
+const waveformHeight = 256;
 const parameterScaleWidth = canvasAxisWidth;
 const plotRightPadding = 8;
 
@@ -150,6 +151,15 @@ const curveLabels = {
 };
 
 function resizeCanvas() {
+  // Reserve actual wrapped controls + a 222px curve, independently of bitmap size.
+  // A fixed window may scroll, but the editor must never overflow onto transport.
+  const app=document.querySelector('.app');
+  if(window.matchMedia('(min-width:900px)').matches){
+    const appRect=app.getBoundingClientRect(),frameRect=canvas.parentElement.getBoundingClientRect();
+    const footerTop=document.querySelector('.playbackBar').getBoundingClientRect().top;
+    const minimum=Math.max(828,Math.ceil(appRect.height-footerTop+frameRect.top+241));
+    if(app.style.getPropertyValue('--source-editor-min-height')!==`${minimum}px`)app.style.setProperty('--source-editor-min-height',`${minimum}px`);
+  }else app.style.removeProperty('--source-editor-min-height');
   const frameRect = canvas.parentElement.getBoundingClientRect();
   const targetWidth = Math.max(1, Math.floor(frameRect.width - 2));
   canvas.style.width = `${targetWidth}px`;
@@ -728,9 +738,10 @@ function drawSourceWaveform() {
     sourceWaveCtx.strokeStyle='#b9dcff';sourceWaveCtx.lineWidth=1;sourceWaveCtx.stroke();
   }
   sourceWaveCtx.restore();
+  paintSourceVolume(sourceWaveCtx,state,count,range,geom,sourceEditor?.volumeView||{visible:false});
   paintSourceCursors(sourceWaveCtx,geom,range,isPlaying?null:(sourceEditor?.cursor||0),playbackFrame);
   for(const [id,frame] of [['fadeInHandle',fadeIn],['fadeOutHandle',count-fadeOut]]){
-    const handle=document.getElementById(id);handle.hidden=!count||frame<range.start||frame>range.end;
+    const handle=document.getElementById(id);handle.hidden=sourceEditor?.volumeView.editing||!count||frame<range.start||frame>range.end;
     handle.style.left=`${Math.max(12,Math.min(canvasCssWidth-12,x(frame)))}px`;
   }
 }

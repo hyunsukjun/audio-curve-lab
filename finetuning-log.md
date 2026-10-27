@@ -151,3 +151,8 @@ PROJECT-SPECIFIC, local screen review pending. User approved Option-click erase 
 
 ### Audio gesture release verification follow-up
 User confirmed actual Brave Shift group motion: affected points move vertically with X fixed. Native Option-click removed one interior point; left/right endpoints resisted deletion; ordinary native drag still changed both axes for only one point. Focused checks14/14 rerun passed. User authorized Audio-only commit and deployment; DSP and sibling Labs are unchanged. Exact commit, Pages result and public/local parity are recorded outside the source tree in the shared audio-shift-release-20261027 QA folder. No new listening/Windows/touch/native acceptance.
+
+
+## Audio source volume — 2026-10-27
+
+PROJECT-SPECIFIC provisional interaction tuning: source256px, dB display -60..+6 plus exact mute, 12px screen-space point acquisition versus 3.2px visible points; same interpolation feeds audio and graph. Numerical and browser checks are recorded separately from new listening/native acceptance. Preserve the shared transaction model as a Standalone asset; pixel dimensions are web trial values.

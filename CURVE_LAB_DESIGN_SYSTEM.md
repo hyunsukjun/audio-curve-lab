@@ -574,3 +574,12 @@ Reuse existing Graphite colors/type and controls. Stopped playhead / running tel
 ## Audio group-edit feedback — 2026-10-27
 
 Reuse existing active-parameter colors, 12px point-tooltip role, point size and hit tolerance. Shift preview/drag shows a vertical cursor and thin rings around affected points; add only a member count/vertical arrow to the existing value tooltip. Preserve axes, plot gutter, musical mappings and normal mode states. Keep endpoint rings inside the existing canvas bounds. Put shortcut guidance in existing tool help and the canvas accessible label, without a competing native canvas title popup. [Gesture contract](docs/CURVE_GESTURE_CONTRACT.md) is Audio-only approved web behavior and a potential standalone asset, not family rollout approval.
+
+## Source waveform 256px trial — 2026-10-27
+
+LOCAL REVIEW / Audio only. Source waveform viewport256px; transport output timeline remains34px. Match raster/paint height to the display height rather than stretching a128px bitmap. Keep typography,64px plot gutter, control/handle geometry, source-tone colors and shared L/R display gain. Desktop minimum total height828px protects lower curve space; narrow/short layouts retain vertical scrolling. This trial does not roll out to sibling Labs or add a volume mode.
+
+
+## Source volume overlay — 2026-10-27
+
+Audio-only source editor remains 256px. Reuse existing 11/12px canvas roles, 64px axis gutter, quiet blue line, white selected point, focus rings and toolbar button states. Pencil appears only in source-volume mode; dB scale replaces lane labels there. Waveform/selection stay visible behind the gain line. A thin non-unity line remains outside editing. Volume toggle supports discoverability and keyboard access; transient Reset volume stays in the same toolbar. See [source-volume contract](docs/SOURCE_VOLUME.md).

@@ -126,3 +126,7 @@ Arrow keys move 5% of source length (Shift: 1%); Home/End navigate to boundaries
 Zoom centers on the selected range midpoint when a selection exists, otherwise
 the edit cursor. Near source boundaries the viewport is clamped to avoid empty space.
 Transport order is Return to start, Play, Pause, with neutral same-color icons.
+
+## Source waveform 256px trial — 2026-10-27
+
+CURRENT LOCAL CANDIDATE (supersedes earlier source-height descriptions only): Edit Audio / Source Time canvas is256 CSS px with matching high-DPI paint height; bottom output-time canvas remains34px. Source PCM, native-frame time/selection mapping, shared L/R display scale, fade data, deletion/Undo, output clock and Preview/WAV processing are unchanged. Desktop min-height is828px; narrow/short windows scroll to the transport. No Command-volume display or gain envelope was added. New native125%/150% zoom and real-file-picker evidence must be distinguished from layout/viewport simulations; see the scoped local QA record before publication.

@@ -344,3 +344,8 @@ The source toolbar's existing editCursor displays `Edit position · 0.000 s` wit
 ## Readout context family release — 2026-10-27
 
 Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. No new gesture, seeking, point selection, transport command or audio mutation is introduced by displaying these values. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.
+
+
+## Source volume — 2026-10-27
+
+Command temporarily opens the source-volume pencil; Volume toggles a persistent editing mode. Point click/drag, Option erase, protected endpoints, keyboard selection/gain and one-gesture/one-source-Undo are defined in [SOURCE_VOLUME.md](SOURCE_VOLUME.md). Normal source selection/seek and lower-curve Shift/Option gestures remain independent. Gain editing preserves the stored source cursor/selection; applying uses the existing stopped source-edit lifecycle.

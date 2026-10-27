@@ -355,3 +355,12 @@ STANDALONE ASSET. Preserve editing-target, point-value, playhead/Preview-value, 
 ## Vertical suffix edit transaction — Audio local pilot, 2026-10-27
 
 STANDALONE ASSET / COMMON CANDIDATE. Preserve active-curve ordered-suffix membership, fixed normalized X, original-grab delta, shared bounds and per-gesture cancellation. Keep source selection, audition position and render freshness independent. Mac Option temporary erase replaces Command in the Audio pilot; other platforms retain Ctrl pending separate platform review. Native cursor/hit targets/modifier handling and native Undo require independent design and implementation. See [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md); local web evidence does not reopen native implementation or certify physical touch/listening.
+
+## Source waveform 256px trial — 2026-10-27
+
+STANDALONE ASSET / LOCAL WEB TRIAL. Allocate vertical space independently to source editing, musical curves and transport. Increasing waveform height must not rescale time coordinates, control text/hit geometry or audio samples. Preserve minimum usable curve space and an accessible transport in shorter windows.256/828 CSS px are web trial values, not required native point sizes. No native or volume-envelope implementation is implied.
+
+
+## Source volume transaction — 2026-10-27
+
+STANDALONE ASSET. Preserve native-source-frame gain, linked stereo, neutral default, approved mute..+6dB range, one transaction/Undo, cancellation, complete-source publication and render freshness. Keep source edit/selection, audition head and output timeline distinct. Native touch/keyboard/Undo/persistence and control sizes require native design. Web implementation and numerical verification do not approve native audio or listening. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).

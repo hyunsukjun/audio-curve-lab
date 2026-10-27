@@ -508,3 +508,12 @@ User approved the Audio pilot and sequential six-Lab rollout/commit/verification
 ## Audio vertical suffix gesture — 2026-10-27 (local candidate)
 
 PROJECT-SPECIFIC. User approved keeping normal point add/free movement, moving Mac temporary erase to Option-click, and adding Shift-drag of the clicked point and following points vertically only. Use one group delta and common bounds, rather than individual clamping; X values and DSP mappings remain unchanged. Gesture membership is fixed at press, with Esc/cancellation restoration. The user's specific authorization supersedes the older Command-click preservation rule for this Audio pilot only. Existing Windows Ctrl and Eraser tool remain. No general curve Undo or sibling/native rollout is authorized by this change. See [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md).
+
+## Source waveform 256px trial — 2026-10-27
+
+PROJECT-SPECIFIC. User approved only the Audio source-waveform height trial, preserving functions and stopping before commit for web review. A direct height-only trial left about101.5px for curves at900×640. Raise the existing desktop minimum layout by the same128px instead of shrinking typography, handles, axes or the requested256px source area. This preserves about229.5px of curve height there and the existing narrow-screen222px floor. Keep vertical scrolling for short screens. Command volume editing remains a separate proposal with no gain/DSP implementation.
+
+
+## Command source-volume release scope — 2026-10-27
+
+The user extended the height-only trial and authorized one combined Audio commit/deployment, approving +6dB boost. Keep gain as a source edit in existing atomic PCM/history rather than adding parallel realtime/WAV gain implementations. Use logarithmic display with shared linear-amplitude evaluation; preserve retained-time gain across deletions. Provide Volume/Reset volume within the existing toolbar and keep modified gain visible after Command release. Canonical contract: [SOURCE_VOLUME.md](SOURCE_VOLUME.md).

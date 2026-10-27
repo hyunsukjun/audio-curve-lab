@@ -192,3 +192,8 @@ Input guards remain independent provisional resource limits:128MiB file and192Mi
 ## Source editing and waveform revision (2026-10-13)
 
 Source end fades default to zero; their total cannot exceed working-source length. Handle keys adjust 10 ms. Delete overlap is at most 5 ms. Existing normalized curve points are unchanged; shortened source changes their absolute-time interpretation. No additional curve parameters. See [current contract](OUTPUT_EDIT.md).
+
+
+## Source volume — 2026-10-27
+
+PROJECT-SPECIFIC. New source-frame gain envelope: 0dB default; exact mute to +6dB. Logarithmic -60..+6dB visual scale with mute at bottom; finite linear-amplitude points/interpolation, shared L/R, native-frame endpoints. This adds no transform curve ID or change to stretch/pitch/pan ranges, smoothstep mappings or output time. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).

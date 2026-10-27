@@ -3,9 +3,11 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {canvasAxisWidth} from '../src/canvas-grid.js';
 import * as core from '../src/output-edit-core.js';
+import * as volume from '../src/source-volume.js';
+import * as volumeView from '../src/source-volume-view.js';
 const elements=new Map(), keys={};
 function el(id){if(!elements.has(id))elements.set(id,{id,listeners:{},setAttribute(){},getBoundingClientRect:()=>({left:0,width:id==='editPan'?862:canvasAxisWidth+808}),addEventListener(k,f){this.listeners[k]=f},focus(){},setPointerCapture(){},hasPointerCapture:()=>true,releasePointerCapture(){},contains:()=>true,matches:()=>false});return elements.get(id);}
-const sandbox={...core,canvasAxisWidth,document:{getElementById:el},window:{addEventListener:(k,f)=>keys[k]=f}};
+const sandbox={...core,...volume,...volumeView,canvasAxisWidth,document:{getElementById:el},window:{addEventListener:(k,f)=>keys[k]=f}};
 vm.createContext(sandbox);vm.runInContext(readFileSync(new URL('../src/source-editor.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function'),sandbox);
 let current, fail=false,plays=0;
 function make(c,n,rate){if(fail)throw Error('allocation');const data=Array.from({length:c},()=>new Float32Array(n));return{length:n,sampleRate:rate,duration:n/rate,numberOfChannels:c,getChannelData:c=>data[c]};}

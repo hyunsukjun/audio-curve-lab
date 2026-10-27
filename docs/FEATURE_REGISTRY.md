@@ -463,3 +463,12 @@ PROJECT-SPECIFIC. Existing always-visible readouts identify Editing, Curve point
 ## Readout context family release — 2026-10-27
 
 Existing current-value captions now identify their basis. Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.
+
+## Source waveform 256px trial — 2026-10-27
+
+PROJECT-SPECIFIC / IMPLEMENTED LOCAL REVIEW. Increase only Edit Audio / Source Time waveform height from128 to256 CSS px, with matching Canvas paint height/DPR backing size. Retain existing source selection, deletion, corner fades, zoom/navigation, Undo/Redo, curve/transport behavior and DSP. Desktop minimum app height becomes828px (700+128) to preserve the previous minimum curve workspace; low/narrow viewports use document scrolling with transport below content. No Command-volume graph was implemented. Commit/deployment are pending user review.
+
+
+## Audio source volume + height — 2026-10-27
+
+PROJECT-SPECIFIC. The approved 256px source editor now includes Command/pencil linked volume, unity to mute and up to +6dB, Volume toggle, Reset volume and existing source Undo/Redo. This supersedes the earlier height-only trial boundary. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md). Publication and listening evidence are separate.
