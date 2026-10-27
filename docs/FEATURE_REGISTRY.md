@@ -46,7 +46,7 @@ currently asserted by the automated test.
 time.
 
 **User behavior:** Select a parameter, add or drag points with Pen, remove interior
-points with Eraser, and inspect values by hover/drag tooltip.
+points with Eraser, and inspect values by hover/drag tooltip. The approved Audio gesture adds Shift-drag of a time-sorted suffix vertically with fixed X, and changes Mac temporary erase to Option-click; see [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md).
 
 **Data model:** Sorted arrays of normalized `{x, y}` points. Both axes are `0..1`.
 Interpolation is smoothstep between adjacent points.
@@ -66,7 +66,7 @@ change stored musical values.
 **Standalone notes:** Recreate gesture meaning and normalized model; native drawing
 APIs do not need to match Canvas internals.
 
-**Tests:** Interpolation is automated. Full pointer lifecycle is manual.
+**Tests:** Interpolation is automated. `tests/curve-gestures.mjs` covers the Audio gesture model and cancellation. The user confirmed actual Shift group movement; native Option/endpoint/ordinary-drag evidence is recorded separately from automated tests.
 
 ## ACL-AUD-001: Signed Speed Curve And Freeze
 

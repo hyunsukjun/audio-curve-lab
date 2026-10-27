@@ -70,10 +70,10 @@
             <button id="pitchMode" aria-pressed="false" aria-describedby="pitchHelp" data-parameter-help class="curveMode" type="button">Pitch</button>
             <button id="panMode" aria-pressed="false" aria-describedby="panHelp" data-parameter-help class="curveMode" type="button">Pan</button>
             <div class="toolToggle" role="group" aria-label="Curve editing tool">
-              <button id="penTool" class="active" type="button" aria-label="Pen" aria-pressed="true" title="Pen: add or move points">
+              <button id="penTool" class="active" type="button" aria-label="Pen" aria-pressed="true" title="Pen: add or move points. Shift-drag a point to move it and all points to its right vertically. Esc cancels the group drag.">
                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>
               </button>
-              <button id="eraserTool" type="button" aria-label="Eraser" aria-pressed="false" title="Eraser: click a point to delete. Mac: Command-click; PC: Ctrl-click">
+              <button id="eraserTool" type="button" aria-label="Eraser" aria-pressed="false" title="Eraser: click a point to delete. Mac: Option-click; PC: Ctrl-click">
                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4-4a2 2 0 0 1 0-3L13 4a2 2 0 0 1 3 0l6 6a2 2 0 0 1 0 3l-8 8"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
               </button>
             </div>
@@ -124,7 +124,7 @@
         </section>
         <div class="canvasFrame">
           <div class="curveTimeLabel">Curves / Output Time</div>
-          <canvas id="waveCanvas" width="1400" height="620"></canvas>
+          <canvas id="waveCanvas" width="1400" height="620" aria-label="Click to add or drag to move a point. Shift-drag a point and all points to its right vertically; X stays fixed. Esc cancels the group drag. Mac: Option-click to delete; PC: Ctrl-click."></canvas>
         </div>
 
 
@@ -174,7 +174,7 @@
     </div>
 
     <script src="src/file-help.js?v=20261014-family1" type="module"></script>
-    <script src="src/app.js?v=20261027-display1" type="module"></script>
+    <script src="src/app.js?v=20261027-shift1" type="module"></script>
     <div id="stretchHelp" class="parameterHelp" role="tooltip" hidden><strong>Speed · −2× to +2×</strong><span>Change source playback speed. Negative values reverse the sound; zero freezes the source position.</span></div>
     <div id="pitchHelp" class="parameterHelp" role="tooltip" hidden><strong>Pitch · −2400 to +2400 cents</strong><span>Shift pitch down or up by as much as two octaves. 1200 cents = one octave.</span></div>
     <div id="panHelp" class="parameterHelp" role="tooltip" hidden><strong>Pan · Left / Right</strong><span>Move sound across the stereo field. Top = Left · Center = Center · Bottom = Right.</span></div>

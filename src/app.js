@@ -63,7 +63,7 @@ const confirmResetButton = document.getElementById("confirmResetButton");
 const meterRows = Array.from(document.querySelectorAll("[data-meter-channel]"));
 const meterClipButton = document.getElementById("meterClipButton");
 const eraseModifier = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgentData?.platform || "")
-  ? "metaKey"
+  ? "altKey"
   : "ctrlKey";
 
 const transformSettings = {
@@ -96,6 +96,9 @@ let selectedTool = "pen";
 let selectedPoint = null;
 let hoverPoint = null;
 let dragging = false;
+let curvePointerId = null;
+let verticalDrag = null;
+let shiftHeld = false;
 let playheadSeconds = 0;
 let sourcePlayheadSeconds = 0;
 let currentSpeed = 1;
@@ -590,6 +593,7 @@ function drawCurve(curve, color, width, fillPoints, curveName) {
   ctx.stroke();
 
   if (fillPoints) {
+    const verticalPoints = new Set(getVerticalPoints());
     for (const point of curve) {
       ctx.beginPath();
       ctx.arc(left + (point.x * w), screenY(curveName, point.y) * h, 6, 0, Math.PI * 2);
@@ -598,6 +602,15 @@ function drawCurve(curve, color, width, fillPoints, curveName) {
       ctx.strokeStyle = "#191c20";
       ctx.lineWidth = 2;
       ctx.stroke();
+      if (verticalPoints.has(point)) {
+        ctx.beginPath();
+        // Keep the group ring inside the existing right plot padding.
+        const ringRadius = Math.max(1, Math.min(9, canvasCssWidth - (left + point.x * w) - 0.75));
+        ctx.arc(left + (point.x * w), screenY(curveName, point.y) * h, ringRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
+      }
     }
   }
   ctx.restore();
@@ -640,7 +653,8 @@ function getTooltipPoint() {
 function drawPointTooltip(curveName, point) {
   if (!point) return;
   const { left, width: w, height: h } = getPlotBounds();
-  const text = formatPointValue(curveName, point);
+  const groupCount = getVerticalPoints().length;
+  const text = formatPointValue(curveName, point) + (groupCount ? ` · ${groupCount} ${groupCount === 1 ? "point" : "points"} ↕` : "");
   const px = left + (point.x * w);
   const py = screenY(curveName, point.y) * h;
   const paddingX = 8;
@@ -1079,6 +1093,7 @@ function closeResetDialog() {
 }
 
 function applyResetAll() {
+  if (verticalDrag) finishCurveDrag(true);
   forceStopAudio();
   curves.stretch = defaultCurves.stretch();
   curves.pitch = defaultCurves.pitch();
@@ -1130,6 +1145,7 @@ window.addEventListener("keydown", (event) => {
 });
 
 clearCurveButton.addEventListener("click", () => {
+  if (verticalDrag) finishCurveDrag(true);
   forceStopAudio();
   curves[activeCurve] = defaultCurves[activeCurve]();
   editedCurves[activeCurve] = false;
@@ -1142,6 +1158,7 @@ clearCurveButton.addEventListener("click", () => {
 });
 
 function setActiveCurve(name) {
+  if (verticalDrag) finishCurveDrag(true);
   activeCurve = name;
   selectedPoint = null;
   hoverPoint = null;
@@ -1200,12 +1217,34 @@ function isErasing(event) {
 }
 
 function updateToolCursor(event) {
-  const erasing = isErasing(event);
+  if (event) shiftHeld = Boolean(event.shiftKey);
+  const erasing = !dragging && isErasing(event);
   canvas.classList.toggle("eraseMode", erasing);
-  canvas.style.cursor = erasing ? "" : hoverPoint ? "pointer" : "crosshair";
+  canvas.style.cursor = verticalDrag || (!dragging && shiftHeld && !erasing)
+    ? "ns-resize" : erasing ? "" : hoverPoint ? "pointer" : "crosshair";
+}
+
+function getVerticalPoints() {
+  if (verticalDrag) return verticalDrag.points.map(entry => entry.point);
+  if (dragging || !shiftHeld || canvas.classList.contains("eraseMode") || hoverPoint?.curveName !== activeCurve) return [];
+  return curves[activeCurve].slice(hoverPoint.pointIndex);
+}
+
+function finishCurveDrag(cancel = false) {
+  if (cancel && verticalDrag?.changed) {
+    for (const entry of verticalDrag.points) entry.point.y = entry.y;
+    editedCurves[verticalDrag.curveName] = verticalDrag.wasEdited;
+    sendCurves();
+  }
+  verticalDrag = null;
+  dragging = false;
+  const pointerId = curvePointerId;
+  curvePointerId = null;
+  if (pointerId != null && canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
 }
 
 function setTool(tool) {
+  if (verticalDrag) finishCurveDrag(true);
   selectedTool = tool;
   penTool.classList.toggle("active", tool === "pen");
   eraserTool.classList.toggle("active", tool === "eraser");
@@ -1228,7 +1267,7 @@ penTool.addEventListener("click", () => setTool("pen"));
 eraserTool.addEventListener("click", () => setTool("eraser"));
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || dragging) return;
   const p = pointerToPoint(event);
   const curve = curves[activeCurve];
   selectedPoint = findPointNearPointer(p);
@@ -1245,6 +1284,30 @@ canvas.addEventListener("pointerdown", (event) => {
     draw();
     return;
   }
+  if (event.shiftKey) {
+    event.preventDefault();
+    if (selectedPoint < 0) {
+      selectedPoint = null;
+      hoverPoint = null;
+      updateToolCursor(event);
+      draw();
+      return;
+    }
+    const points = curve.slice(selectedPoint).map(point => ({ point, y: point.y }));
+    verticalDrag = {
+      curveName: activeCurve, points, startY: p.y, delta: 0, changed: false,
+      wasEdited: editedCurves[activeCurve],
+      minDelta: points.reduce((limit, entry) => Math.max(limit, -entry.y), -1),
+      maxDelta: points.reduce((limit, entry) => Math.min(limit, 1 - entry.y), 1)
+    };
+    hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
+    dragging = true;
+    curvePointerId = event.pointerId;
+    canvas.setPointerCapture(event.pointerId);
+    updateToolCursor(event);
+    draw();
+    return;
+  }
   if (selectedPoint < 0) {
     curve.push(p);
     sortCurve(curve);
@@ -1253,15 +1316,29 @@ canvas.addEventListener("pointerdown", (event) => {
   hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
   editedCurves[activeCurve] = true;
   dragging = true;
+  curvePointerId = event.pointerId;
   canvas.setPointerCapture(event.pointerId);
   sendCurves();
   draw();
 });
 
 canvas.addEventListener("pointermove", (event) => {
+  if (dragging && event.pointerId !== curvePointerId) return;
   const p = pointerToPoint(event);
   if (!dragging || selectedPoint == null) {
     setHoverPoint(findPointNearPointer(p), event);
+    return;
+  }
+  if (verticalDrag) {
+    const delta = Math.max(verticalDrag.minDelta, Math.min(verticalDrag.maxDelta, p.y - verticalDrag.startY));
+    if (delta !== verticalDrag.delta) {
+      for (const entry of verticalDrag.points) entry.point.y = entry.y + delta;
+      verticalDrag.delta = delta;
+      verticalDrag.changed = true;
+      editedCurves[activeCurve] = true;
+      sendCurves();
+      draw();
+    }
     return;
   }
   const curve = curves[activeCurve];
@@ -1277,12 +1354,21 @@ canvas.addEventListener("pointermove", (event) => {
 });
 
 canvas.addEventListener("pointerup", (event) => {
-  dragging = false;
+  if (!dragging || event.pointerId !== curvePointerId) return;
+  finishCurveDrag();
   if (selectedPoint != null) hoverPoint = { curveName: activeCurve, pointIndex: selectedPoint };
-  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   updateToolCursor(event);
   draw();
 });
+
+function cancelCurvePointer(event) {
+  if (!dragging || event.pointerId !== curvePointerId) return;
+  finishCurveDrag(true);
+  updateToolCursor(event);
+  draw();
+}
+canvas.addEventListener("pointercancel", cancelCurvePointer);
+canvas.addEventListener("lostpointercapture", cancelCurvePointer);
 
 canvas.addEventListener("pointerleave", () => {
   if (dragging) return;
@@ -1293,9 +1379,33 @@ canvas.addEventListener("pointerleave", () => {
 
 canvas.addEventListener("pointerenter", updateToolCursor);
 
-window.addEventListener("keydown", updateToolCursor);
-window.addEventListener("keyup", updateToolCursor);
-window.addEventListener("blur", () => updateToolCursor());
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && verticalDrag) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    finishCurveDrag(true);
+    updateToolCursor(event);
+    draw();
+    return;
+  }
+  const previousShift = shiftHeld;
+  const previousErase = canvas.classList.contains("eraseMode");
+  updateToolCursor(event);
+  if (previousShift !== shiftHeld || previousErase !== canvas.classList.contains("eraseMode")) draw();
+});
+window.addEventListener("keyup", (event) => {
+  const previousShift = shiftHeld;
+  const previousErase = canvas.classList.contains("eraseMode");
+  updateToolCursor(event);
+  if (previousShift !== shiftHeld || previousErase !== canvas.classList.contains("eraseMode")) draw();
+});
+window.addEventListener("blur", () => {
+  finishCurveDrag(true);
+  shiftHeld = false;
+  hoverPoint = null;
+  updateToolCursor();
+  draw();
+});
 
 window.addEventListener("resize", resizeCanvas);
 if ("ResizeObserver" in window) {

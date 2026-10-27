@@ -35,6 +35,10 @@ value while maintaining time order. The tooltip shows the mapped musical value.
 **Precision:** No snapping or keyboard nudge is currently implemented. Hit testing uses
 a small screen-space region rather than exact pixels.
 
+## Shift: Move A Time-Sorted Suffix Vertically — Audio
+
+With Pen active, Shift-press an existing point and drag to move it and all following points on the active curve by the same Y delta; every X stays fixed. The whole group stops at its shared value boundary, retaining relative spacing. Empty Shift-click adds nothing. Group/mode membership is fixed at pointer-down; Esc cancels the gesture. Temporary Eraser takes priority. Cancellation, state/freshness limits and native portability are defined in [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md). Actual Shift movement was confirmed by the user; Option deletion and ordinary dragging were checked in Brave. Release authorization and publication evidence are tracked separately.
+
 ## Eraser: Delete A Point
 
 **Intent:** Remove one existing node without creating new data.  
@@ -46,8 +50,8 @@ deletion but are not hard-locked to exact timeline boundaries.
 ## Temporary Eraser Modifier
 
 **Intent:** Delete quickly without leaving Pen.  
-**Behavior:** Command-click on macOS/iOS-family platform detection, or Ctrl-click on
-other platforms, temporarily applies Eraser behavior. Releasing the modifier leaves the
+**Behavior (Audio, 2026-10-27):** Option-click on macOS/iOS-family platform detection, or Ctrl-click on
+other platforms, temporarily applies Eraser behavior. Mac Command-click no longer erases. Releasing the modifier leaves the
 selected tool unchanged. Empty-space clicks still do nothing.
 
 ## Tool Feedback

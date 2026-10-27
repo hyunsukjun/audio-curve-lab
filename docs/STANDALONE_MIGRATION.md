@@ -351,3 +351,7 @@ Use platform text/accessibility/spacing roles and expose the range as readable m
 ## Readout context family release — 2026-10-27
 
 STANDALONE ASSET. Preserve editing-target, point-value, playhead/Preview-value, source-range and audition/output distinctions. Adopt native typography/accessibility/input conventions; web pixels are not native point specifications. No native implementation or listening acceptance implied. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.
+
+## Vertical suffix edit transaction — Audio local pilot, 2026-10-27
+
+STANDALONE ASSET / COMMON CANDIDATE. Preserve active-curve ordered-suffix membership, fixed normalized X, original-grab delta, shared bounds and per-gesture cancellation. Keep source selection, audition position and render freshness independent. Mac Option temporary erase replaces Command in the Audio pilot; other platforms retain Ctrl pending separate platform review. Native cursor/hit targets/modifier handling and native Undo require independent design and implementation. See [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md); local web evidence does not reopen native implementation or certify physical touch/listening.

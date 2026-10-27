@@ -570,3 +570,7 @@ The existing source toolbar position field becomes source-selection start/end/le
 ## Readout context family release — 2026-10-27
 
 Reuse existing Graphite colors/type and controls. Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. No hidden readouts or Details disclosure, and no hit-target change. Metadata can wrap without clipping on narrow screens. See `docs/READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.
+
+## Audio group-edit feedback — 2026-10-27
+
+Reuse existing active-parameter colors, 12px point-tooltip role, point size and hit tolerance. Shift preview/drag shows a vertical cursor and thin rings around affected points; add only a member count/vertical arrow to the existing value tooltip. Preserve axes, plot gutter, musical mappings and normal mode states. Keep endpoint rings inside the existing canvas bounds. Put shortcut guidance in existing tool help and the canvas accessible label, without a competing native canvas title popup. [Gesture contract](docs/CURVE_GESTURE_CONTRACT.md) is Audio-only approved web behavior and a potential standalone asset, not family rollout approval.

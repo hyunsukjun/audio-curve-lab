@@ -504,3 +504,7 @@ The source selection's endpoints and length were only implicit in shading. Show 
 ## Readout context family release — 2026-10-27
 
 User approved the Audio pilot and sequential six-Lab rollout/commit/verification/deployment. Apply shared semantics selectively: Stopped playhead / running telemetry; source edit position and selection are distinct from Source playhead and output clock. Preserve per-Lab behavior instead of forcing Audio calculations or adding nonexistent selection features. See `READOUT_CONTEXT_CONTRACT.md` for basis, source-range rules, verification boundary and portability.
+
+## Audio vertical suffix gesture — 2026-10-27 (local candidate)
+
+PROJECT-SPECIFIC. User approved keeping normal point add/free movement, moving Mac temporary erase to Option-click, and adding Shift-drag of the clicked point and following points vertically only. Use one group delta and common bounds, rather than individual clamping; X values and DSP mappings remain unchanged. Gesture membership is fixed at press, with Esc/cancellation restoration. The user's specific authorization supersedes the older Command-click preservation rule for this Audio pilot only. Existing Windows Ctrl and Eraser tool remain. No general curve Undo or sibling/native rollout is authorized by this change. See [CURVE_GESTURE_CONTRACT.md](CURVE_GESTURE_CONTRACT.md).
