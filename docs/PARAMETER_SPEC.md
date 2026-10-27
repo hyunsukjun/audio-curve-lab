@@ -196,4 +196,4 @@ Source end fades default to zero; their total cannot exceed working-source lengt
 
 ## Source volume — 2026-10-27
 
-PROJECT-SPECIFIC. New source-frame gain envelope: 0dB default; exact mute to +6dB. Logarithmic -60..+6dB visual scale with mute at bottom; finite linear-amplitude points/interpolation, shared L/R, native-frame endpoints. This adds no transform curve ID or change to stretch/pitch/pan ranges, smoothstep mappings or output time. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).
+PROJECT-SPECIFIC. New source-frame gain envelope: 0dB default; exact mute to +6dB. Logarithmic -60..+6dB visual scale with mute at bottom; finite linear-amplitude point storage, straight dB-ordinate interpolation (2026-10-28 revision), shared L/R, native-frame endpoints. This adds no transform curve ID or change to stretch/pitch/pan ranges, smoothstep mappings or output time. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).

@@ -364,3 +364,8 @@ STANDALONE ASSET / LOCAL WEB TRIAL. Allocate vertical space independently to sou
 ## Source volume transaction — 2026-10-27
 
 STANDALONE ASSET. Preserve native-source-frame gain, linked stereo, neutral default, approved mute..+6dB range, one transaction/Undo, cancellation, complete-source publication and render freshness. Keep source edit/selection, audition head and output timeline distinct. Native touch/keyboard/Undo/persistence and control sizes require native design. Web implementation and numerical verification do not approve native audio or listening. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).
+
+
+## Source-volume interpolation refinement — 2026-10-28
+
+STANDALONE ASSET / APPROVED AUDIO WEB REVISION. Preserve straight dB/time segments as the source-volume interpolation policy, with exact control gains, finite-floor mute semantics, shared evaluation at zoom boundaries and the same evaluated source for Preview/WAV. Do not substitute a host toolkit default smoothing curve. Point storage, channel linkage, native source time and transaction/history rules remain unchanged.

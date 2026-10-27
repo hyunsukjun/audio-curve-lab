@@ -13,7 +13,7 @@ PROJECT-SPECIFIC / STANDALONE ASSET. Approved Audio-only source edit. The source
 
 ## Gain and audio contract
 
-The user approved **+6dB maximum**, 0dB default and exact mute. The graph uses a logarithmic -60..+6dB visual scale, with its bottom edge representing mute. Gain is stored as finite linear amplitude (0..10^(6/20)) at native source frames. Interpolation is linear amplitude; the graph samples this same function, so its dB appearance can curve between points. There is no claim of a preferred listening curve.
+The user approved **+6dB maximum**, 0dB default and exact mute. The graph uses a logarithmic -60..+6dB visual scale, with its bottom edge representing mute. Gain is stored as finite linear amplitude (0..10^(6/20)) at native source frames. Current approved revision (2026-10-28): connect points with straight segments in the displayed dB/time plane. Interpolate that same dB ordinate when materializing source gain. Storage remains linear-amplitude/native-frame points. Preserve exact point gains; mute stays exactly zero at its point and uses the existing -60dB display-floor anchor between points (constant mute stays zero). Viewport edges are evaluated with the same function, then connected directly to visible control points. This supersedes the released linear-amplitude interpolation that looked curved in dB. There is no claim of a preferred listening curve.
 
 Original immutable PCM pieces → existing deletion/join → source-volume gain × existing corner-fade gain → complete working source → unchanged Speed/Pitch/Pan Preview/Render engines → existing output conversion/boundary treatment.
 

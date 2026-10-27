@@ -1,8 +1,8 @@
 import {canvasAxisWidth, drawEditorGrid, frequencyTicks, frequencyLabel, spacedMarks, canvasLabelFont} from "./canvas-grid.js?v=20261026-graphite1";
 import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
-import { createSourceEditor } from "./source-editor.js?v=20261027-volume2";
-import { paintSourceVolume } from "./source-volume-view.js?v=20261027-volume2";
+import { createSourceEditor } from "./source-editor.js?v=20261028-volume-line1";
+import { paintSourceVolume } from "./source-volume-view.js?v=20261028-volume-line1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
 import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261018-axis64";
 let sourceEditor = null;

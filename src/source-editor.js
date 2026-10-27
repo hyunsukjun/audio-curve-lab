@@ -1,7 +1,7 @@
 import {canvasAxisWidth} from './canvas-grid.js';
-import {initialEdit, lengthOf, deleteRange, setFade, materialize} from './output-edit-core.js?v=20261027-volume2';
-import {volumePoints, volumeDb, volumeLabel, putVolumePoint, eraseVolumePoint, resetSourceVolume, hasSourceVolume} from './source-volume.js?v=20261027-volume2';
-import {volumePointer, volumeHit} from './source-volume-view.js?v=20261027-volume2';
+import {initialEdit, lengthOf, deleteRange, setFade, materialize} from './output-edit-core.js?v=20261028-volume-line1';
+import {volumePoints, volumeDb, volumeLabel, putVolumePoint, eraseVolumePoint, resetSourceVolume, hasSourceVolume} from './source-volume.js?v=20261028-volume-line1';
+import {volumePointer, volumeHit} from './source-volume-view.js?v=20261028-volume-line1';
 
 // Edits own a working source; the original arrays are immutable Undo references.
 export function createSourceEditor({createBuffer, apply, stop, busyChanged, repaint, primePlayback, play, seek=()=>true, getSeekAnchor=()=>0}) {

@@ -8,6 +8,13 @@ export const volumeLabel = gain => gain > 0 ? `${volumeDb(gain) > 0 ? '+' : ''}$
 export const volumeNorm = gain => gain <= 0 ? 0 : Math.max(0, Math.min(1, (volumeDb(gain) - VOLUME_MIN_DB) / (VOLUME_MAX_DB - VOLUME_MIN_DB)));
 export const gainFromVolumeNorm = norm => norm <= 0 ? 0 : 10 ** ((VOLUME_MIN_DB + Math.min(1, norm) * (VOLUME_MAX_DB - VOLUME_MIN_DB)) / 20);
 export const hasSourceVolume = state => !!state?.volume?.some(p => Math.abs(p.gain - 1) > 1e-10);
+// Interpolate the same ordinate used by the dB graph. Keep exact point gains,
+// including unity and mute; mute occupies the existing bottom (-60dB) anchor.
+function interpolateVolume(a, b, normA, normB, t) {
+  if (t <= 0 || a === b) return a;
+  if (t >= 1) return b;
+  return gainFromVolumeNorm(normA + (normB - normA) * t);
+}
 export function volumeGainAt(points, frame) {
   if (!points?.length) return 1;
   let lo = 0, hi = points.length - 1;
@@ -15,7 +22,7 @@ export function volumeGainAt(points, frame) {
   if (frame >= points[hi].frame) return points[hi].gain;
   while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (points[mid].frame <= frame) lo = mid; else hi = mid; }
   const a = points[lo], b = points[hi], t = (frame - a.frame) / (b.frame - a.frame);
-  return a.gain + (b.gain - a.gain) * t;
+  return interpolateVolume(a.gain,b.gain,volumeNorm(a.gain),volumeNorm(b.gain),t);
 }
 export function volumePoints(state, length) {
   return state.volume?.length ? state.volume : length > 1 ? [{frame:0,gain:1},{frame:length-1,gain:1}] : [{frame:0,gain:1}];
@@ -62,12 +69,13 @@ export function volumeAfterDelete(state, length, start, end, join, nextLength) {
 // Materialization reads increasing frames: amortized O(1), no per-sample search.
 export function sourceVolumeReader(points) {
   if (!points?.length) return () => 1;
+  const norms = points.map(p => volumeNorm(p.gain));
   let index = 0;
   return frame => {
     while (index < points.length-2 && frame > points[index+1].frame) index++;
     const a = points[index], b = points[index+1];
     if (!b || frame <= a.frame) return a.gain;
     if (frame >= b.frame) return b.gain;
-    return a.gain + (b.gain-a.gain) * (frame-a.frame)/(b.frame-a.frame);
+    return interpolateVolume(a.gain,b.gain,norms[index],norms[index+1],(frame-a.frame)/(b.frame-a.frame));
   };
 }

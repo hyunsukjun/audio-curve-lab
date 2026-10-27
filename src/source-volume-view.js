@@ -1,5 +1,5 @@
 import {canvasType} from './canvas-typography.js?v=20261015-1';
-import {volumeGainAt, volumeNorm, volumePoints, volumeLabel, gainFromVolumeNorm} from './source-volume.js?v=20261027-volume2';
+import {volumeGainAt, volumeNorm, volumePoints, volumeLabel, gainFromVolumeNorm} from './source-volume.js?v=20261028-volume-line1';
 export function volumeGeometry(rect) {
   return {left:64,width:Math.max(1,rect.width-72),top:24,bottom:Math.max(25,rect.height-19)};
 }
@@ -32,10 +32,13 @@ export function paintSourceVolume(ctx, state, length, range, geom, view) {
     }
   }
   ctx.strokeStyle='#8fc5f5';ctx.lineWidth=view.editing?1.7:1.1;ctx.beginPath();
-  const steps=Math.ceil(geom.width/2);
-  for(let i=0;i<=steps;i++){const frame=range.start+span*i/steps;const px=x(frame),py=y(volumeGainAt(state.volume,frame));if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+  const points=volumePoints(state,length);
+  const anchors=[{frame:range.start,gain:volumeGainAt(state.volume,range.start)},
+    ...points.filter(p=>p.frame>range.start&&p.frame<range.end),
+    {frame:range.end,gain:volumeGainAt(state.volume,range.end)}];
+  anchors.forEach((p,i)=>{if(i===0)ctx.moveTo(x(p.frame),y(p.gain));else ctx.lineTo(x(p.frame),y(p.gain));});
   ctx.stroke();
-  if(view.editing)volumePoints(state,length).forEach((p,i)=>{
+  if(view.editing)points.forEach((p,i)=>{
     if(p.frame<range.start||p.frame>range.end)return;
     ctx.beginPath();ctx.arc(x(p.frame),y(p.gain),i===view.selected?4.5:3.2,0,Math.PI*2);
     ctx.fillStyle=i===view.selected?'#edf4fb':'#8fc5f5';ctx.fill();

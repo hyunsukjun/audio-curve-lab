@@ -11,6 +11,28 @@ import {canvasAxisWidth} from '../src/canvas-grid.js';
 const read=async s=>{const out=[new Float32Array(lengthOf(s)),new Float32Array(lengthOf(s))];await materialize(s,out);return out;};
 const curves={stretch:[{x:0,y:.75},{x:1,y:.75}],pitch:[{x:0,y:.5},{x:1,y:.5}],pan:[{x:0,y:.5},{x:1,y:.5}]};
 const settings={globalDirection:1,outputGain:.95,grainSizeMs:140,density:5.5,randomness:.02};
+// Independent dB-space oracle: displayed straight segments and applied gain agree.
+for(const [dbA,dbB] of [[6,-6],[0,-24],[-48,6],[-12,-12]]){
+  const points=[{frame:100,gain:10**(dbA/20)},{frame:900,gain:10**(dbB/20)}],reader=sourceVolumeReader(points);
+  for(const t of [0,.125,.25,.5,.75,.875,1]){
+    const frame=100+800*t,expected=10**((dbA+(dbB-dbA)*t)/20);
+    assert(Math.abs(volumeGainAt(points,frame)-expected)<1e-12);
+    assert(Math.abs(reader(frame)-expected)<1e-12);
+  }
+}
+assert(Math.abs(volumeGainAt([{frame:0,gain:VOLUME_MAX_GAIN},{frame:100,gain:10**(-6/20)}],50)-1)<1e-12,'+6 to -6 has a 0dB midpoint');
+for(const points of [[{frame:0,gain:0},{frame:100,gain:1}],[{frame:0,gain:1},{frame:100,gain:0}]]){
+  assert.equal(volumeGainAt(points,0),points[0].gain);assert.equal(volumeGainAt(points,100),points[1].gain);
+  assert(Math.abs(volumeGainAt(points,50)-10**(-30/20))<1e-12,'mute uses the existing -60dB display anchor between points');
+  assert(volumeGainAt(points,points[0].gain===0?.0001:99.9999)<.001001,'mute-edge finite-floor step stays at -60dB or below');
+}
+let linePath=[],currentPath=[];
+const drawContext={save(){},restore(){},beginPath(){currentPath=[];},rect(){},clip(){},fillRect(){},moveTo(x,y){currentPath.push([x,y]);},lineTo(x,y){currentPath.push([x,y]);},stroke(){if(this.strokeStyle==='#8fc5f5')linePath=currentPath.slice();},arc(){},fill(){},fillText(){},measureText:()=>({width:100})};
+volumeView.paintSourceVolume(drawContext,{volume:[{frame:0,gain:VOLUME_MAX_GAIN},{frame:400,gain:.1},{frame:800,gain:1}],rate:48000},801,{start:100,end:700},{left:64,width:600,top:24,bottom:237},{visible:true,editing:false,selected:-1});
+assert.equal(linePath.length,3,'zoomed graph connects view edges and visible control point directly');
+assert.deepEqual(linePath.map(p=>p[0]),[64,364,664]);
+for(const [i,db] of [[0,-.5],[1,-20],[2,-5]])assert(Math.abs(linePath[i][1]-(237-(db+60)/66*213))<1e-10);
+console.log('PASS straight dB segments, geometric midpoint, finite-floor mute anchors and zoomed direct Canvas vertices');
 for(const rate of [44100,48000,96000]){
   const n=Math.round(rate*.12),left=Float32Array.from({length:n},(_,i)=>.1*Math.cos(i*.03)),right=left.map(x=>-x*.5),original=left.slice();
   const base=initialEdit(left,right,rate);assert.deepEqual((await read(base))[0],original);

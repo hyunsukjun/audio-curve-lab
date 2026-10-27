@@ -354,3 +354,8 @@ The current local candidate supersedes earlier automatic transport-boundary dura
 ## Source volume — 2026-10-27
 
 PROJECT-SPECIFIC / explicitly approved gain processing. Materialize immutable source pieces with source-volume gain multiplied by existing source fade gain, then pass the one complete working buffer to unchanged Preview/Render. Unity remains neutral; gain is linked and unclipped in working float PCM up to +6dB. Existing transform saturation, maps, time/channel logic, output fades and WAV conversion are unchanged. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md) for ordering, deletion rebasing and limits.
+
+
+## Source-volume dB segments — 2026-10-28
+
+APPROVED AUDIO REVISION / explicitly requested interpolation revision. Source gain now follows straight segments in displayed dB/time space instead of linear-amplitude ramps. Exact control gains and unity/mute remain; mute uses the -60dB visual floor for finite interpolation with exact zero at the mute point. Gain remains pre-transform and multiplied once with existing corner fades in the complete working source. Preview and WAV consume the same buffer; transform, channel/time maps, output boundaries and format are unchanged.

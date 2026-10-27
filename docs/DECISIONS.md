@@ -517,3 +517,8 @@ PROJECT-SPECIFIC. User approved only the Audio source-waveform height trial, pre
 ## Command source-volume release scope — 2026-10-27
 
 The user extended the height-only trial and authorized one combined Audio commit/deployment, approving +6dB boost. Keep gain as a source edit in existing atomic PCM/history rather than adding parallel realtime/WAV gain implementations. Use logarithmic display with shared linear-amplitude evaluation; preserve retained-time gain across deletions. Provide Volume/Reset volume within the existing toolbar and keep modified gain visible after Command release. Canonical contract: [SOURCE_VOLUME.md](SOURCE_VOLUME.md).
+
+
+## Straight source-volume connections — 2026-10-28
+
+PROJECT-SPECIFIC. User rejected the curved appearance of amplitude-linear interpolation on the logarithmic display and requested straight point connections. Change both dB ordinate evaluation and line drawing so visual interpolation matches applied source volume. Retain the existing linear-amplitude point storage and source-frame endpoints; add no project migration or alternate Preview gain path. After web review, the user explicitly approved committing/deploying this Audio revision following edit/playback/WAV checks.

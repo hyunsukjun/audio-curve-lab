@@ -472,3 +472,8 @@ PROJECT-SPECIFIC / IMPLEMENTED LOCAL REVIEW. Increase only Edit Audio / Source T
 ## Audio source volume + height — 2026-10-27
 
 PROJECT-SPECIFIC. The approved 256px source editor now includes Command/pencil linked volume, unity to mute and up to +6dB, Volume toggle, Reset volume and existing source Undo/Redo. This supersedes the earlier height-only trial boundary. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md). Publication and listening evidence are separate.
+
+
+## Straight source-volume segments — 2026-10-28
+
+APPROVED AUDIO REVISION. User requested straight connections between source-volume points. Draw direct segments and evaluate source gain along the same displayed dB ordinate, including viewport-edge cuts. Keep mute/+6dB, point times, gestures, source history, channel links and existing transform/fade paths. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).

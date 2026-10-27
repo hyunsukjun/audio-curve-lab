@@ -583,3 +583,8 @@ LOCAL REVIEW / Audio only. Source waveform viewport256px; transport output timel
 ## Source volume overlay — 2026-10-27
 
 Audio-only source editor remains 256px. Reuse existing 11/12px canvas roles, 64px axis gutter, quiet blue line, white selected point, focus rings and toolbar button states. Pencil appears only in source-volume mode; dB scale replaces lane labels there. Waveform/selection stay visible behind the gain line. A thin non-unity line remains outside editing. Volume toggle supports discoverability and keyboard access; transient Reset volume stays in the same toolbar. See [source-volume contract](docs/SOURCE_VOLUME.md).
+
+
+## Straight source-volume lines — 2026-10-28
+
+Audio revision: connect source-volume control points with direct straight segments in the existing dB/time axes. Insert evaluated viewport-edge anchors so zoom/pan does not invent a bend or omit a corner. Preserve line colors/weights, point/hit sizes, label roles, selection, 256px editor and layout. Existing corner-fade shapes and lower parameter curves are separate and remain unchanged.
