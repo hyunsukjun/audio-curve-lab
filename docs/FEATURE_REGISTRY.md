@@ -12,10 +12,10 @@ calculation; it does not imply complete listening or browser-matrix approval.
 **Purpose:** Start with an immediately playable teaching sample and allow a musician's
 own source to replace it without upload.
 
-**User behavior:** The app opens with an 8-second white-noise interval sample. Open
+**User behavior:** The app prepares the approved15-second Bach mallet MP3 without autoplay. Open
 Audio decodes a local file and replaces the source after successful decoding.
 
-**Input / output:** Generated stereo sample or browser-decoded audio becomes the source
+**Input / output:** The default MP3 or browser-decoded local audio becomes the source
 buffer, waveform, duration, and transform input.
 
 **Data model / parameters:** See `default_sample.*` in `PARAMETER_SPEC.md`.
@@ -494,3 +494,8 @@ IMPLEMENTED / USER-APPROVED WEB UI. Move the fixed Transform name from the curre
 **Status:** VERIFIED — scoped display/interaction checks; publication authorized by user.
 
 The existing source navigator adds a cached full-working-source waveform. The visible range is bright/outlined; the remainder is dimmed. Existing detailed source editing, navigation and all musical/transport behavior are retained. See [source overview contract](SOURCE_OVERVIEW.md) for cache/lifecycle, verification limits and native transfer. This feature does not add source editing or seeking to sibling Labs.
+
+
+## 2026-10-29 — Shared musical default source
+
+Use the approved shared Bach mallet MP3 in the role documented in [default source](DEFAULT_SOURCE.md). Stereo source and source editing are retained. DSP and musical mappings are unchanged.

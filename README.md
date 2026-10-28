@@ -1,5 +1,7 @@
 # Audio Curve Lab
 
+Current default/example: [Bach Prelude No.1 · mallet ·72BPM ·15s MP3](docs/DEFAULT_SOURCE.md). Prepared automatically without autoplay; Open Audio replaces it.
+
 Draw time, pitch, and space onto sound.
 
 Audio Curve Lab is a browser-based classroom tool for electronic music and sound composition. Students can load an audio file, draw speed, pitch, and pan curves between the original and speed-mapped waveforms, then export the result as a WAV file.

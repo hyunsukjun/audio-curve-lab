@@ -1,3 +1,4 @@
+import {createSourceLoadGate} from "../src/default-source.js";
 import {readAudioFile} from "../src/audio-import.js";
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -11,6 +12,7 @@ for(const action of actions){
  playButton:{disabled:false,textContent:'Play'},resetDialog:{hidden:true},spectrogram:{cancel(){},invalidate(){}},fileStatus:{},fileNotice:{},downloadReadout:{},readouts:{download:{}},renderAbortController:null, audioContext:{sampleRate:48000}, curves:{stretch:[]}, settings:()=>({durationSeconds:20}), checkFileSize(){}, preflightWav:async()=>{}, checkPCM(){}, updateDurationNotice(){}, estimateOutputDuration:()=>2, resetSourceWindowToMinimum(){}, sendSettings(){}, setBusy:x=>c.playButton.disabled=x,
  ensureAudio:async()=>{await gate;c.node={port:{postMessage:m=>messages.push(m)}}},ensureAudioContext:async()=>{},getPlaybackDuration:()=>8,
  setTransportBusy:x=>c.playButton.disabled=x,decodeAudioFile:async()=>({duration:2,numberOfChannels:1}),buildWaveform(){},sendBufferToWorklet(){},clearDownload(){},largeFileSeconds:300,resetCurrentReadouts(){},draw(){},console};
+ c.sourceLoadGate = createSourceLoadGate();
  vm.createContext(c);vm.runInContext(['nextPlaybackToken','playAudio',...actions].map(pick).join('\n'),c);
  const pending=c.playAudio();
  if(action==='loadAudioFile')await c.loadAudioFile({name:'replacement.wav',slice:()=>new Blob([new ArrayBuffer(8)]),arrayBuffer:async()=>new ArrayBuffer(8)});else c[action]();

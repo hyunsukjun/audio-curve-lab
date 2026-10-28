@@ -1,3 +1,4 @@
+import {createSourceLoadGate, fetchDefaultSource} from "./default-source.js?v=20261029-bach1";
 import {canvasAxisWidth, drawEditorGrid, frequencyTicks, frequencyLabel, spacedMarks, canvasLabelFont} from "./canvas-grid.js?v=20261026-graphite1";
 import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
@@ -22,6 +23,8 @@ import {
   valueAt
 } from "./transform-core.js?v=20261003-01";
 import { OutputMeterAnalyzer } from "./output-meter.js?v=20260929-04";
+
+const sourceLoadGate = createSourceLoadGate();
 
 const fileInput = document.getElementById("fileInput");
 const durationNotice = document.getElementById("durationNotice");
@@ -899,11 +902,13 @@ async function setupAudio() {
     sendCurves();
 }
 
-async function loadAudioFile(file) {
+async function loadAudioFile(file, { request = null } = {}) {
   if (!file) return;
   fileNotice.textContent = "";
   try { checkFileSize(file.size); }
   catch (error) { fileNotice.textContent = error.message; return; }
+  const sourceRequest = request || sourceLoadGate.begin();
+  if (!sourceRequest.current()) return;
   const previousStatus = fileStatus.textContent;
   const previousDownloadStatus = downloadReadout.textContent;
   if (renderAbortController) {
@@ -924,6 +929,7 @@ async function loadAudioFile(file) {
     await preflightWav(file, audioContext.sampleRate);
     const data = await readAudioFile(file, audioContext.sampleRate);
     const candidate = await decodeAudioFile(data);
+    if (!sourceRequest.current()) return;
     checkPCM(candidate.length, candidate.numberOfChannels);
     buffer = candidate;
     buildWaveform(buffer);
@@ -943,12 +949,13 @@ async function loadAudioFile(file) {
     resetCurrentReadouts();
     draw();
   } catch (error) {
+    if (!sourceRequest.current()) return;
     console.error(error);
-    fileStatus.textContent = previousStatus;
+    fileStatus.textContent = request ? "Open an audio file to begin." : previousStatus;
     setExportStatus(previousDownloadStatus);
-    fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."} Previous audio remains available.`;
+    fileNotice.textContent = `${error.message || "Could not load audio. Try WAV or MP3."}${buffer ? " Previous audio remains available." : ""}`;
   } finally {
-    setTransportBusy(false);
+    if (sourceRequest.current()) setTransportBusy(false);
     }
 }
 
@@ -1450,7 +1457,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 resizeCanvas();
-loadGeneratedExample();
+loadDefaultSource();
 startMeterAnimation();
 
 
@@ -1478,11 +1485,27 @@ sourceEditor = createSourceEditor({
     markDownloadStale();resetCurrentReadouts();draw();
   }
 });
-sourceEditor.load(buffer);
+if (buffer) sourceEditor.load(buffer);
+else sourceEditor.setAvailable(false);
 
 // Idle readiness is conveyed by the Download control; retain actionable feedback.
 function setExportStatus(message) {
   const output = document.getElementById("downloadReadout");
   output.textContent = message;
   output.parentElement.hidden = ["", "ready", "not ready", "needs export"].includes(message);
+}
+
+async function loadDefaultSource() {
+  const request = sourceLoadGate.begin();
+  fileStatus.textContent = "Loading default sample…";
+  setTransportBusy(false);
+  try {
+    const file = await fetchDefaultSource(request.signal);
+    if (request.current()) await loadAudioFile(file, { request });
+  } catch (error) {
+    if (!request.current()) return;
+    fileStatus.textContent = "Default sample unavailable. Open an audio file to begin.";
+    setExportStatus("not ready");
+    setTransportBusy(false);
+  }
 }

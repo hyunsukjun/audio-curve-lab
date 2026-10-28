@@ -382,3 +382,8 @@ STANDALONE ASSET / approved web UI. Move the fixed Transform name from the curre
 ## Whole-working-source waveform map — 2026-10-28
 
 STANDALONE ASSET / APPROVED AUDIO WEB REVISION. Add a whole-current-source waveform above the detailed source view. The bright outlined rectangle represents viewport only; dim the outside. Reuse authoritative source-frame ranges and bounded cached display summaries/colors, update after accepted edits/Undo/file replacement and clear empty/stale-source imagery. Keep selection, edit cursor, audition/pause position, native time/channel/Link semantics and result freshness distinct. Web18px height,64px gutter, stereo lanes and Canvas/pointer APIs are references, not native specifications. Preserve actual input roles/focus and independently verify native window/type/zoom/accessibility. Actual Brave125%/150% web checks passed with100% restored; this does not start native implementation or approve listening. See [SOURCE_OVERVIEW.md](SOURCE_OVERVIEW.md).
+
+
+## 2026-10-29 — Shared musical default source
+
+STANDALONE ASSET: approved source identity, user-file precedence and source-vs-IR meaning are portable. HTTP loading/MP3 delivery are web choices, not native requirements. See [default source](DEFAULT_SOURCE.md).

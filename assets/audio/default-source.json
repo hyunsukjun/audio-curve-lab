@@ -1,0 +1,18 @@
+{
+  "id": "CL-SOURCE-B-BWV846-v4-MP3-320kbps-20261029",
+  "name": "Bach Prelude No. 1 - Mallet",
+  "composition": "J. S. Bach, Prelude in C major, BWV846/1, first four measures",
+  "recording": "Original synthesized B mallet rendering for CurveLab; no third-party recording or soundfont.",
+  "tempoQuarterBPM": 72,
+  "durationSeconds": 15,
+  "sampleRate": 48000,
+  "channels": 2,
+  "codec": "MP3",
+  "bitRate": 320000,
+  "bytes": 601964,
+  "sha256": "ed401c52cd9ba71cc08e79d6ac57af48f101931d67e070e493a41bc1c9b3c997",
+  "sourceWavSha256": "8c8214a0b530d356aa8580e1a3d268ae2a1e176a6704ea5fa610064c1f1a5e4e",
+  "effects": "Very quiet short room already baked into the asset, not a new product DSP stage.",
+  "role": "Initial input sample; existing per-Lab processing retained",
+  "approval": "User selected source MP3 and approved six-Lab application, commit and deployment on2026-10-29."
+}

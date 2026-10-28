@@ -1,3 +1,4 @@
+import {createSourceLoadGate} from "../src/default-source.js";
 import {readAudioFile} from "../src/audio-import.js";
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -17,7 +18,9 @@ const c={sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],p
  decodeAudioFile:async()=>{decoded++;if(rejectDecode)throw new Error('Invalid audio');return candidate},
  checkPCM(){},buildWaveform(){},sendBufferToWorklet(){},updateDurationNotice(){},clearDownload(){},
  largeFileSeconds:300,estimateOutputDuration:()=>300,curves:{stretch:[]},resetCurrentReadouts(){},draw(){},console:{error(){}}};
-vm.createContext(c);vm.runInContext(contextCode+'\n'+loadCode,c);
+c.setExportStatus = message => { if(c.downloadReadout)c.downloadReadout.textContent = message; if(c.readouts?.download)c.readouts.download.textContent = message; };
+ c.sourceLoadGate = createSourceLoadGate();
+ vm.createContext(c);vm.runInContext(contextCode+'\n'+loadCode,c);
 const file={name:'test.wav',size:100,slice:()=>new Blob([new ArrayBuffer(8)]),arrayBuffer:async()=>new ArrayBuffer(8)};
 // A suspended AudioContext deliberately never resolves resume. Import must not await it.
 await Promise.race([c.loadAudioFile(file),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Import blocked by pending audio resume')),200))]);
