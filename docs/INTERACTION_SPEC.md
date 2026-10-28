@@ -354,3 +354,7 @@ Command temporarily opens the source-volume pencil; Volume toggles a persistent 
 ## Readout order and contextual shortcut guide — 2026-10-28
 
 PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Readout DOM order is Editing → Curve points → Speed → Pitch → Pan → Source playhead → Engine; existing values and stopped/playback captions are untouched. Shortcuts beside Pen/Eraser opens by click, Enter or Space. Its Space does not toggle transport. Escape closes the guide and returns focus to its summary before background editing cancellation; this preserves an already latched volume mode. Outside press, Tab leaving the guide, outer scrolling and resizing dismiss it; internal panel scrolling remains available. The existing Files disclosure retains its keyboard/outside-click behavior. No key assignment or source/curve/transport handler changed.
+
+## Source overview waveform — 2026-10-28 approved revision
+
+The existing `editPan` interactions are unchanged: click/drag centers the source viewport; arrows/Shift+arrows and Home/End navigate within the working source. Its new full-source waveform, outside masks and viewport outline are display only and never intercept input. Bright range means visible source view, not selection, playback start or a loop. Navigation retains source selection/edit cursor, paused/output position, Undo and result freshness. No new drag handle or keyboard command. See [SOURCE_OVERVIEW.md](SOURCE_OVERVIEW.md).

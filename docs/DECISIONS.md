@@ -533,3 +533,7 @@ Approved scope: Audio presentation only. User approved commit and deployment aft
 User requested consistent Timbre Shortcuts placement and higher Oscillator clear/reset utilities, then chose: fixed processor names in information; useful dynamic status retained. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. Preserve musical behavior and use web review before any new publication.
 
 The user confirmed both position changes and authorized commit/deployment on 2026-10-28, including the already-approved processor information scope. UI evidence does not certify new listening, native confirmation keyboard or Windows behavior.
+
+## Whole-source waveform navigation — 2026-10-28
+
+APPROVED AUDIO WEB REVISION / STANDALONE ASSET. The user supplied an ocenaudio image and approved adding a full-source waveform and bright current-view/dim outside treatment to Audio. Reuse the current navigator, geometry, colors, summaries and interaction handlers instead of introducing a second independent navigation model. Raster caching avoids re-analyzing PCM while panning. No new selection/playhead marker or DSP change. Preserve old documents as history; current contract: [SOURCE_OVERVIEW.md](SOURCE_OVERVIEW.md). The user subsequently authorized commit/release after actual Brave125%/150% verification. Both native zoom labels/layouts, navigation/Fit and150% footer/transport access passed;100% restored. No runtime fix was required by this zoom pass.

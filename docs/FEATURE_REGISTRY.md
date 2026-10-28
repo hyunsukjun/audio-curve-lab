@@ -486,3 +486,11 @@ PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Current values remain always vis
 ## Toolbar and information visibility — 2026-10-28
 
 IMPLEMENTED / USER-APPROVED WEB UI. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. No new controls, shortcuts, processing or value model. The user approved commit/deployment after visual review on 2026-10-28; publication success is verified separately.
+
+## ACL-UI-SOURCE-OVERVIEW-20261028: Whole-source waveform map
+
+**Category:** PROJECT-SPECIFIC / STANDALONE ASSET
+
+**Status:** VERIFIED — scoped display/interaction checks; publication authorized by user.
+
+The existing source navigator adds a cached full-working-source waveform. The visible range is bright/outlined; the remainder is dimmed. Existing detailed source editing, navigation and all musical/transport behavior are retained. See [source overview contract](SOURCE_OVERVIEW.md) for cache/lifecycle, verification limits and native transfer. This feature does not add source editing or seeking to sibling Labs.

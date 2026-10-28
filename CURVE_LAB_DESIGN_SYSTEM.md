@@ -597,3 +597,7 @@ APPROVED AUDIO WEB / COMMON CANDIDATE / STANDALONE ASSET. Keep edit context firs
 ## Toolbar roles and processor information — 2026-10-28
 
 APPROVED WEB UI / STANDALONE ASSET. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. Reuse existing controls, disclosure, typography and focus roles. Fixed implementation names may move to on-demand information; actionable routing, limits and safety remain visible. This supersedes only the prior Engine placement and stated toolbar positions, not musical readout formatting.
+
+## Source overview waveform — 2026-10-28 Audio approved revision
+
+Reuse the existing18px source navigator above the detailed waveform, preserving its alignment to the source/curve plot origin and existing focus ring/hit area. Show the whole working source with the established source-tone colors; preserve normal brightness inside the current viewport and apply a quiet dark mask outside. Retain a thin neutral viewport outline for quiet/silent material. The rectangle is a view indicator, not a selection or playback/loop marker. No extra label row, control, playhead or decorative grid is added. Pointer-transparent Canvas/masks retain navigation. Native adoption uses these semantic roles and measures its own sizes. See `docs/SOURCE_OVERVIEW.md`. Publication is user-authorized after actual Brave125%/150% navigation/Fit, glyph/raster alignment and footer-access checks;100% restored. Native sizes and listening remain separate.

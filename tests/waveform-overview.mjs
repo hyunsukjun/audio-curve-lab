@@ -10,6 +10,8 @@ console.log('PASS linked display gain, stereo ratio, last-sample visibility, imm
 const {readFileSync}=await import('node:fs');const vm=await import('node:vm');
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const start=app.indexOf('function markDownloadStale()');const fn=app.slice(start,app.indexOf('\nfunction clearDownload()',start));
-let cleared=0;const context={outputOverview:null,buffer:null,updateDurationNotice(){},fileNotice:{textContent:'WAV ready.'},clearDownload(){cleared++},downloadReadout:{}};
-vm.createContext(context);vm.runInContext(fn+';markDownloadStale();',context);assert.equal(cleared,1);assert.equal(context.downloadReadout.textContent,'empty audio');
+const statusStart=app.indexOf('function setExportStatus(');const statusFn=app.slice(statusStart,app.indexOf('\n}',statusStart)+2);
+const downloadReadout={parentElement:{hidden:true}};
+let cleared=0;const context={outputOverview:null,buffer:null,updateDurationNotice(){},fileNotice:{textContent:'WAV ready.'},clearDownload(){cleared++},document:{getElementById:()=>downloadReadout}};
+vm.createContext(context);vm.runInContext(statusFn+'\n'+fn+';markDownloadStale();',context);assert.equal(cleared,1);assert.equal(downloadReadout.textContent,'empty audio');assert.equal(downloadReadout.parentElement.hidden,false);
 console.log('PASS empty audio invalidates prior saved WAV recovery link');

@@ -3,6 +3,7 @@ import { analyzeSourceColors } from "./source-colors.js";
 import { canvasType } from "./canvas-typography.js?v=20261015-1";
 import { createSourceEditor } from "./source-editor.js?v=20261028-volume-line1";
 import { paintSourceVolume } from "./source-volume-view.js?v=20261028-volume-line1";
+import { createSourceOverview } from "./source-overview.js?v=20261028-overview1";
 import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
 import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261018-axis64";
 let sourceEditor = null;
@@ -30,6 +31,7 @@ const fileStatus = document.getElementById("fileStatus");
 const timeStatus = document.getElementById("timeStatus");
 const sourceWaveCanvas = document.getElementById("sourceWaveCanvas");
 const sourceWaveCtx = sourceWaveCanvas.getContext("2d");
+const paintSourceOverview = createSourceOverview(document.getElementById("sourceOverviewCanvas"));
 const outputWaveCanvas = document.getElementById("outputWaveCanvas");
 const outputWaveCtx = outputWaveCanvas.getContext("2d");
 const sourceReadout = document.getElementById("sourceReadout");
@@ -698,6 +700,7 @@ function drawSourceWaveform() {
   const playbackFrame=sourcePlayheadSeconds*(buffer?.sampleRate||48000);
   if(isPlaying)sourceEditor?.followPlayback(playbackFrame);
   const range=sourceEditor?.viewport||{start:0,end:count};
+  paintSourceOverview({peaks:waveform,colors:sourceColors,referencePeak:sourceDisplayPeak});
   const span=Math.max(1,range.end-range.start),rate=buffer?.sampleRate||48000;
   let peaks=waveform;
   if(buffer&&(range.start>0||range.end<count)){

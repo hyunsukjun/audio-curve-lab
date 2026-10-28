@@ -90,6 +90,12 @@
  box-sizing:border-box;background:#9faeb333;border:1px solid #a8bacb;border-radius:2px;pointer-events:none}
 #editPan[aria-disabled="true"]{opacity:.35;cursor:default}
 #editPan:focus-visible{outline:2px solid #d2dce5;outline-offset:2px}
+#sourceOverviewCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#editPan::before,#editPan::after{content:"";position:absolute;top:0;bottom:0;z-index:1;
+ background:rgba(8,11,15,.48);pointer-events:none}
+#editPan::before{left:0;width:var(--view-left,0%)}
+#editPan::after{right:0;width:max(0%,calc(100% - var(--view-left,0%) - var(--view-width,100%)))}
+#editPan .sourceViewport{z-index:2;background:transparent}
 
 /* Keep the transport track centered at y=17 in its 34px hit area. */
 .playbackBar .meterTrack{height:9px}
