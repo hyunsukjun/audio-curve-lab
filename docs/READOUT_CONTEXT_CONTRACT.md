@@ -32,3 +32,8 @@ Reuse existing Graphite/caption/tabular-number roles. Narrow range text may wrap
 Compare equal-sized before/after frames and equal source data; separate actual zoom from CSS-width fixtures, and long Korean layout text from actual import/error reproduction. Check selection/mode, pause/seek, no-file/file-present state, source metadata and relevant cancellation/recovery. Preserve processing hashes and compare prior numeric/value functions. Only scoped paths may be committed. Require completed Pages runs and public/local parity for release.
 
 Standalone should preserve these semantic distinctions and read-only observation, using native text/accessibility/input roles rather than copying web pixels. No continuous live announcement on every drag sample is added. Physical touch, listening, CPU headroom and unsupported environments remain unverified unless separately observed.
+
+
+## Audio-only layout follow-up — approved web revision — 2026-10-28
+
+Audio groups existing edit context before Speed/Pitch/Pan values; source playback position and Engine remain reference information. Related columns are kept near each other rather than stretched equally across a large display. All seven readouts remain visible, with the same labels, IDs, current-value origin, units and precision. Below900 CSSpx they reflow to4/3/2columns; captions and values retain11/14px roles. This follow-up is not automatic authorization for sibling Labs or native implementation.

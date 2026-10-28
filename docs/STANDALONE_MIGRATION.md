@@ -369,3 +369,8 @@ STANDALONE ASSET. Preserve native-source-frame gain, linked stereo, neutral defa
 ## Source-volume interpolation refinement — 2026-10-28
 
 STANDALONE ASSET / APPROVED AUDIO WEB REVISION. Preserve straight dB/time segments as the source-volume interpolation policy, with exact control gains, finite-floor mute semantics, shared evaluation at zoom boundaries and the same evaluated source for Preview/WAV. Do not substitute a host toolkit default smoothing curve. Point storage, channel linkage, native source time and transaction/history rules remain unchanged.
+
+
+## Readout groups and shortcut discoverability — 2026-10-28
+
+STANDALONE ASSET / approved Audio web revision. Preserve edit target vs parameter value vs source/output playhead vs engine-reference distinctions. Group related values through order/proximity while keeping required information available. Expose context-specific shortcuts in one discoverable reference, including source-only Undo/Redo and the different meanings of Home/arrow/Delete by focused editor. Native menus/tooltips may provide the reference; platform keyboard conventions take precedence over copying web labels/pixels. A help-dismissal Escape closes the foreground guide before canceling a background edit mode. No new native code or DSP/whole-product acceptance is implied.

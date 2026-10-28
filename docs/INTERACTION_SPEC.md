@@ -349,3 +349,8 @@ Stopped playhead / running telemetry; source edit position and selection are dis
 ## Source volume — 2026-10-27
 
 Command temporarily opens the source-volume pencil; Volume toggles a persistent editing mode. Point click/drag, Option erase, protected endpoints, keyboard selection/gain and one-gesture/one-source-Undo are defined in [SOURCE_VOLUME.md](SOURCE_VOLUME.md). Normal source selection/seek and lower-curve Shift/Option gestures remain independent. Gain editing preserves the stored source cursor/selection; applying uses the existing stopped source-edit lifecycle.
+
+
+## Readout order and contextual shortcut guide — 2026-10-28
+
+PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Readout DOM order is Editing → Curve points → Speed → Pitch → Pan → Source playhead → Engine; existing values and stopped/playback captions are untouched. Shortcuts beside Pen/Eraser opens by click, Enter or Space. Its Space does not toggle transport. Escape closes the guide and returns focus to its summary before background editing cancellation; this preserves an already latched volume mode. Outside press, Tab leaving the guide, outer scrolling and resizing dismiss it; internal panel scrolling remains available. The existing Files disclosure retains its keyboard/outside-click behavior. No key assignment or source/curve/transport handler changed.

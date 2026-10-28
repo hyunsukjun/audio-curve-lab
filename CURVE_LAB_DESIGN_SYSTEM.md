@@ -588,3 +588,8 @@ Audio-only source editor remains 256px. Reuse existing 11/12px canvas roles, 64p
 ## Straight source-volume lines — 2026-10-28
 
 Audio revision: connect source-volume control points with direct straight segments in the existing dB/time axes. Insert evaluated viewport-edge anchors so zoom/pan does not invent a bend or omit a corner. Preserve line colors/weights, point/hit sizes, label roles, selection, 256px editor and layout. Existing corner-fade shapes and lower parameter curves are separate and remain unchanged.
+
+
+## Audio readout hierarchy and shortcut reference — 2026-10-28
+
+APPROVED AUDIO WEB / COMMON CANDIDATE / STANDALONE ASSET. Keep edit context first, related musical values adjacent and reference status last. Audio reuses existing11px captions,14px values, Graphite neutral roles and native focus. Desktop uses only two semantic group dividers; narrow reflow uses whitespace, without hiding any value. Shortcuts uses the existing disclosure/panel component and a34px text summary beside tools. The guide clamps to the client viewport, scrolls internally on short screens and remains a read-only optional surface. Preserve the256px source editor and lower curve minimum; pixel widths/breakpoints are web measurements, not native specifications.

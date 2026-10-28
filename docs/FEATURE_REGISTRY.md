@@ -477,3 +477,8 @@ PROJECT-SPECIFIC. The approved 256px source editor now includes Command/pencil l
 ## Straight source-volume segments — 2026-10-28
 
 APPROVED AUDIO REVISION. User requested straight connections between source-volume points. Draw direct segments and evaluate source gain along the same displayed dB ordinate, including viewport-edge cuts. Keep mute/+6dB, point times, gestures, source history, channel links and existing transform/fade paths. See [SOURCE_VOLUME.md](SOURCE_VOLUME.md).
+
+
+## Audio readout rhythm and shortcut guide — 2026-10-28
+
+PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Current values remain always visible and use the existing read-only IDs/units/formatting: Editing, Curve points, Speed/Pitch/Pan, Source playhead, Engine. The optional Shortcuts disclosure reuses file-information panel roles and exposes existing curve/source/volume/transport bindings. It dispatches no audio or editing commands. Source Undo/Redo tooltips identify their existing source-only scope; no curve history or new shortcut is introduced.

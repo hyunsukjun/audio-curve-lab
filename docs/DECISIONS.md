@@ -522,3 +522,8 @@ The user extended the height-only trial and authorized one combined Audio commit
 ## Straight source-volume connections — 2026-10-28
 
 PROJECT-SPECIFIC. User rejected the curved appearance of amplitude-linear interpolation on the logarithmic display and requested straight point connections. Change both dB ordinate evaluation and line drawing so visual interpolation matches applied source volume. Retain the existing linear-amplitude point storage and source-frame endpoints; add no project migration or alternate Preview gain path. After web review, the user explicitly approved committing/deploying this Audio revision following edit/playback/WAV checks.
+
+
+## Audio readout/shortcut presentation boundary — 2026-10-28
+
+Approved scope: Audio presentation only. User approved commit and deployment after web review. Reuse existing readout controls and file-information disclosure for the additional guide; extend disclosure handling only because the same interaction now has two instances. Preserve all value/parameter IDs, processing, gestures and transport routing. No shortcut expansion, curve Undo, numeric point editing, sticky transport or family rollout is part of this change.

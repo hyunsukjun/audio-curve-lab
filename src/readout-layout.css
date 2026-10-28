@@ -34,3 +34,64 @@
   .panel.currentValues { padding-block:6px; row-gap:8px; }
   .currentValues > .readout { row-gap:2px; }
 }
+
+/* Audio-only context rhythm: direct readout IDs and value formatting stay intact. */
+.panel.currentValues {
+  grid-template-columns:120px 72px repeat(3,104px) 124px minmax(104px,1fr);
+  column-gap:12px;
+}
+.panel.currentValues > .readout { padding-inline:0; }
+.panel.currentValues > .readout::after { display:none; }
+@media(min-width:900px) {
+  .panel.currentValues > :is(.editContextEnd,.playbackGroupEnd)::after {
+    display:block;
+    right:4px;
+  }
+  .panel.currentValues > .sourcePositionReadout { padding-left:8px; }
+  .panel.currentValues > .referenceReadout { justify-self:end; min-width:104px; }
+}
+@media(min-width:640px) and (max-width:899px) {
+  .panel.currentValues { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media(min-width:440px) and (max-width:639px) {
+  .panel.currentValues { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:439px) {
+  .panel.currentValues { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* Reuse the file-information disclosure and Graphite panel roles for shortcuts. */
+.shortcutHelp > summary {
+  width:auto;
+  height:var(--cl-control-height,34px);
+  padding-inline:var(--cl-control-inset,12px);
+  border-radius:var(--cl-control-radius,4px);
+  font-size:var(--cl-type-body,12px);
+  font-weight:400;
+}
+.shortcutHelp .fileHelpPanel {
+  position:fixed;
+  right:auto;
+  width:min(460px,calc(100vw - 24px));
+  max-height:calc(100dvh - 24px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  text-transform:none;
+  letter-spacing:0;
+}
+.shortcutHelp .fileHelpPanel h3 {
+  margin:14px 0 0;
+  font-size:12px;
+  font-weight:500;
+  color:var(--cl-ink-primary,var(--cl-text));
+}
+.shortcutHelp .fileHelpPanel dl {
+  grid-template-columns:116px minmax(0,1fr);
+  gap:7px 12px;
+  margin:8px 0 0;
+}
+.shortcutHelp .fileHelpPanel dt,
+.shortcutHelp .fileHelpPanel dd { overflow-wrap:anywhere; }
+@media(max-width:439px) {
+  .shortcutHelp .fileHelpPanel dl { grid-template-columns:100px minmax(0,1fr); gap:7px 10px; }
+}
