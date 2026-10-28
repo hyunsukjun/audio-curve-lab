@@ -482,3 +482,7 @@ APPROVED AUDIO REVISION. User requested straight connections between source-volu
 ## Audio readout rhythm and shortcut guide — 2026-10-28
 
 PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Current values remain always visible and use the existing read-only IDs/units/formatting: Editing, Curve points, Speed/Pitch/Pan, Source playhead, Engine. The optional Shortcuts disclosure reuses file-information panel roles and exposes existing curve/source/volume/transport bindings. It dispatches no audio or editing commands. Source Undo/Redo tooltips identify their existing source-only scope; no curve history or new shortcut is introduced.
+
+## Toolbar and information visibility — 2026-10-28
+
+IMPLEMENTED / USER-APPROVED WEB UI. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. No new controls, shortcuts, processing or value model. The user approved commit/deployment after visual review on 2026-10-28; publication success is verified separately.

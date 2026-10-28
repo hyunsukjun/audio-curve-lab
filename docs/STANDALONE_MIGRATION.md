@@ -374,3 +374,7 @@ STANDALONE ASSET / APPROVED AUDIO WEB REVISION. Preserve straight dB/time segmen
 ## Readout groups and shortcut discoverability — 2026-10-28
 
 STANDALONE ASSET / approved Audio web revision. Preserve edit target vs parameter value vs source/output playhead vs engine-reference distinctions. Group related values through order/proximity while keeping required information available. Expose context-specific shortcuts in one discoverable reference, including source-only Undo/Redo and the different meanings of Home/arrow/Delete by focused editor. Native menus/tooltips may provide the reference; platform keyboard conventions take precedence over copying web labels/pixels. A help-dismissal Escape closes the foreground guide before canceling a background edit mode. No new native code or DSP/whole-product acceptance is implied.
+
+## Toolbar hierarchy and technical metadata — 2026-10-28
+
+STANDALONE ASSET / approved web UI. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. Group editing help with editing tools and reset utilities with upper file/task actions. Separate fixed implementation identity from actionable state. Native layout, focus conventions and dimensions require independent validation; no native implementation or listening acceptance implied.

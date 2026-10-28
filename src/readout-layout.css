@@ -37,7 +37,7 @@
 
 /* Audio-only context rhythm: direct readout IDs and value formatting stay intact. */
 .panel.currentValues {
-  grid-template-columns:120px 72px repeat(3,104px) 124px minmax(104px,1fr);
+  grid-template-columns:120px 72px repeat(3,104px) minmax(124px,1fr);
   column-gap:12px;
 }
 .panel.currentValues > .readout { padding-inline:0; }

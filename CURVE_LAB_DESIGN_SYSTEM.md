@@ -593,3 +593,7 @@ Audio revision: connect source-volume control points with direct straight segmen
 ## Audio readout hierarchy and shortcut reference — 2026-10-28
 
 APPROVED AUDIO WEB / COMMON CANDIDATE / STANDALONE ASSET. Keep edit context first, related musical values adjacent and reference status last. Audio reuses existing11px captions,14px values, Graphite neutral roles and native focus. Desktop uses only two semantic group dividers; narrow reflow uses whitespace, without hiding any value. Shortcuts uses the existing disclosure/panel component and a34px text summary beside tools. The guide clamps to the client viewport, scrolls internally on short screens and remains a read-only optional surface. Preserve the256px source editor and lower curve minimum; pixel widths/breakpoints are web measurements, not native specifications.
+
+## Toolbar roles and processor information — 2026-10-28
+
+APPROVED WEB UI / STANDALONE ASSET. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. Reuse existing controls, disclosure, typography and focus roles. Fixed implementation names may move to on-demand information; actionable routing, limits and safety remain visible. This supersedes only the prior Engine placement and stated toolbar positions, not musical readout formatting.

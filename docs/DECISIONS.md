@@ -527,3 +527,9 @@ PROJECT-SPECIFIC. User rejected the curved appearance of amplitude-linear interp
 ## Audio readout/shortcut presentation boundary — 2026-10-28
 
 Approved scope: Audio presentation only. User approved commit and deployment after web review. Reuse existing readout controls and file-information disclosure for the additional guide; extend disclosure handling only because the same interaction now has two instances. Preserve all value/parameter IDs, processing, gestures and transport routing. No shortcut expansion, curve Undo, numeric point editing, sticky transport or family rollout is part of this change.
+
+## Toolbar placement and Engine scope — 2026-10-28
+
+User requested consistent Timbre Shortcuts placement and higher Oscillator clear/reset utilities, then chose: fixed processor names in information; useful dynamic status retained. Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. Preserve musical behavior and use web review before any new publication.
+
+The user confirmed both position changes and authorized commit/deployment on 2026-10-28, including the already-approved processor information scope. UI evidence does not certify new listening, native confirmation keyboard or Windows behavior.

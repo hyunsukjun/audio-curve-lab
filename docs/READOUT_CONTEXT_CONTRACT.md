@@ -37,3 +37,7 @@ Standalone should preserve these semantic distinctions and read-only observation
 ## Audio-only layout follow-up — approved web revision — 2026-10-28
 
 Audio groups existing edit context before Speed/Pitch/Pan values; source playback position and Engine remain reference information. Related columns are kept near each other rather than stretched equally across a large display. All seven readouts remain visible, with the same labels, IDs, current-value origin, units and precision. Below900 CSSpx they reflow to4/3/2columns; captions and values retain11/14px roles. This follow-up is not automatic authorization for sibling Labs or native implementation.
+
+## Current-value visibility follow-up — 2026-10-28
+
+Move the fixed Transform name from the current-value strip into the existing Files information panel. Retain all six musical/editing/playhead fields and their origins. This explicitly approved visibility change supersedes the earlier requirement to show the fixed Engine field in the strip. Retained musical/readout IDs, text, units, precision, selected-point/playhead/Preview distinction and calculations remain unchanged. Fixed processor identity is still available in Files information.
