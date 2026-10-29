@@ -542,3 +542,7 @@ APPROVED AUDIO WEB REVISION / STANDALONE ASSET. The user supplied an ocenaudio i
 ## 2026-10-29 — Shared musical default source
 
 User approved the72BPM weak-room MP3 as the shared default/example asset and authorized all six commits/deployments. Preserve each Lab's source handling and keep an example recording distinct from an IR. See [default source](DEFAULT_SOURCE.md).
+
+## Read-only admission before source replacement (2026-10-29)
+
+USER-APPROVED SCOPE, IMPLEMENTED; release authorized2026-10-29. Extend the already shared audio-import module instead of creating another decoder or DSP sanitizer. Scan all decoded channels before adoption; reject nonfinite data rather than silently replacing samples. Preserve a previous valid input on failure. Bounded copy reads avoid mutating view readback in the observed Brave environment. Normal hot/clipped/DC/silent audio keeps its existing processing meaning. Verification/release/listening are separate. See [input contract](INPUT_VALIDATION.md).

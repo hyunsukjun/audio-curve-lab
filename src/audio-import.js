@@ -84,3 +84,39 @@ export async function readAudioFile(file, targetRate = 48000) {
   if (isForm && file.size > FILE_LIMIT) fail("File exceeds 128 MiB.");
   return aiffToWav(await file.arrayBuffer(), targetRate);
 }
+
+// Shared admission boundary only: read bounded PCM copies; never alter source data.
+// copyFromChannel avoids mutable readback views in privacy-hardened browsers.
+export async function validateAudioBuffer(buffer, { signal, isCurrent = () => true } = {}) {
+  const checkCurrent = () => {
+    if (signal?.aborted || !isCurrent()) throw new DOMException("Audio import cancelled", "AbortError");
+  };
+  const fail = message => { throw new Error(`Audio input: ${message}`); };
+  checkCurrent();
+  if (!buffer || !Number.isSafeInteger(buffer.length) || buffer.length <= 0
+      || !Number.isSafeInteger(buffer.numberOfChannels) || buffer.numberOfChannels <= 0
+      || !Number.isFinite(buffer.sampleRate) || buffer.sampleRate <= 0
+      || !Number.isFinite(buffer.duration) || buffer.duration <= 0
+      || typeof buffer.copyFromChannel !== "function") {
+    fail("The decoded audio is empty or invalid. Choose another file.");
+  }
+  const samples = new Float32Array(Math.min(65536, buffer.length));
+  let lastYield = performance.now();
+  for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+    for (let offset = 0; offset < buffer.length; offset += samples.length) {
+      checkCurrent();
+      const count = Math.min(samples.length, buffer.length - offset);
+      buffer.copyFromChannel(samples, channel, offset);
+      for (let i = 0; i < count; i += 1) {
+        if (!Number.isFinite(samples[i])) fail("The file contains invalid audio samples (NaN or Infinity). Choose another file.");
+      }
+      if (performance.now() - lastYield >= 8) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+        checkCurrent();
+        lastYield = performance.now();
+      }
+    }
+  }
+  checkCurrent();
+  return buffer;
+}

@@ -358,3 +358,7 @@ PROJECT-SPECIFIC / APPROVED AUDIO WEB REVISION. Readout DOM order is Editing →
 ## Source overview waveform — 2026-10-28 approved revision
 
 The existing `editPan` interactions are unchanged: click/drag centers the source viewport; arrows/Shift+arrows and Home/End navigate within the working source. Its new full-source waveform, outside masks and viewport outline are display only and never intercept input. Bright range means visible source view, not selection, playback start or a loop. Navigation retains source selection/edit cursor, paused/output position, Undo and result freshness. No new drag handle or keyboard command. See [SOURCE_OVERVIEW.md](SOURCE_OVERVIEW.md).
+
+## Failed input retains the valid source (2026-10-29)
+
+Supersedes earlier failed-decode behavior that cleared a source. File attempts still stop playback; rejected candidates do not reset source edits/window/curves or replace waveform/IR/analysis. Show the error and prior-source availability; do not autoplay. Completed old WAV availability follows unchanged source/settings; invalidate it on successful replacement. See [input contract](INPUT_VALIDATION.md).

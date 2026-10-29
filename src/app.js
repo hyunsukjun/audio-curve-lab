@@ -9,7 +9,7 @@ import { findSourceSeek } from "./source-seek.js?v=20261013-source8";
 import { summarizeChannels, peakOf, paintWaveform, paintSourceCursors } from "./waveform-view.js?v=20261018-axis64";
 let sourceEditor = null;
 let sourceDisplayPeak = 1;
-import { readAudioFile } from "./audio-import.js?v=20261011-aiff1";
+import { readAudioFile, validateAudioBuffer } from "./audio-import.js?v=20261029-input-validation1";
 import { MAX_OUTPUT_SECONDS } from "./output-policy.js?v=20261013-transport1";
 import { screenY, curveY, checkFileSize, checkPCM, preflightWav } from "./browser-safety.js?v=20261007-1";
 import {
@@ -929,6 +929,7 @@ async function loadAudioFile(file, { request = null } = {}) {
     await preflightWav(file, audioContext.sampleRate);
     const data = await readAudioFile(file, audioContext.sampleRate);
     const candidate = await decodeAudioFile(data);
+    await validateAudioBuffer(candidate, { signal: sourceRequest.signal, isCurrent: sourceRequest.current });
     if (!sourceRequest.current()) return;
     checkPCM(candidate.length, candidate.numberOfChannels);
     buffer = candidate;

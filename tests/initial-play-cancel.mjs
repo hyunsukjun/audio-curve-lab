@@ -1,5 +1,5 @@
 import {createSourceLoadGate} from "../src/default-source.js";
-import {readAudioFile} from "../src/audio-import.js";
+import {readAudioFile,validateAudioBuffer} from "../src/audio-import.js";
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -8,10 +8,10 @@ const pick=name=>{const match=new RegExp(`(?:async )?function ${name}\\(`).exec(
 const actions=['stopAudio','forceStopAudio','loadAudioFile'].filter(n=>source.includes('function '+n+'('));
 for(const action of actions){
  let ready;const gate=new Promise(resolve=>ready=resolve),messages=[];
- const c={setExportStatus(){},sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],peakOf:()=>1,readAudioFile,buffer:{duration:8},node:null,playbackToken:0,isPlaying:false,workletBufferLoaded:false,playheadSeconds:0,sourcePlayheadSeconds:0,isScrubbing:false,
+ const c={validateAudioBuffer,sourceFileLabel:"",setExportStatus(){},sourceEditor:null,outputOverview:null,sourceDisplayPeak:1,waveform:[],peakOf:()=>1,readAudioFile,buffer:{duration:8},node:null,playbackToken:0,isPlaying:false,workletBufferLoaded:false,playheadSeconds:0,sourcePlayheadSeconds:0,isScrubbing:false,
  playButton:{disabled:false,textContent:'Play'},resetDialog:{hidden:true},spectrogram:{cancel(){},invalidate(){}},fileStatus:{},fileNotice:{},downloadReadout:{},readouts:{download:{}},renderAbortController:null, audioContext:{sampleRate:48000}, curves:{stretch:[]}, settings:()=>({durationSeconds:20}), checkFileSize(){}, preflightWav:async()=>{}, checkPCM(){}, updateDurationNotice(){}, estimateOutputDuration:()=>2, resetSourceWindowToMinimum(){}, sendSettings(){}, setBusy:x=>c.playButton.disabled=x,
  ensureAudio:async()=>{await gate;c.node={port:{postMessage:m=>messages.push(m)}}},ensureAudioContext:async()=>{},getPlaybackDuration:()=>8,
- setTransportBusy:x=>c.playButton.disabled=x,decodeAudioFile:async()=>({duration:2,numberOfChannels:1}),buildWaveform(){},sendBufferToWorklet(){},clearDownload(){},largeFileSeconds:300,resetCurrentReadouts(){},draw(){},console};
+ setTransportBusy:x=>c.playButton.disabled=x,decodeAudioFile:async()=>({duration:2,numberOfChannels:1,length:96000,sampleRate:48000,getChannelData:()=>new Float32Array(96000),copyFromChannel:out=>out.fill(0)}),buildWaveform(){},sendBufferToWorklet(){},clearDownload(){},largeFileSeconds:300,resetCurrentReadouts(){},draw(){},console};
  c.sourceLoadGate = createSourceLoadGate();
  vm.createContext(c);vm.runInContext(['nextPlaybackToken','playAudio',...actions].map(pick).join('\n'),c);
  const pending=c.playAudio();
